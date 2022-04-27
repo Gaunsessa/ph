@@ -27,12 +27,7 @@
       NODE(IDENTIFIER, span_t, value)                                                                                            \
       NODE(NUMBER_LITERAL, size_t, value)                                                                                        \
       NODE(STRING_LITERAL, span_t, span)                                                                                         \
-      NODE(DATA_TYPE, type_t, type)                                                                                              \
-      NODE(INFER_TYPE)                                                                                                           \
-      NODE(BASE_TYPE, span_t, value)                                                                                             \
-      NODE(PTR_TYPE, struct node_t *, type)                                                                                      \
-      NODE(ARRAY_TYPE, size_t, len, struct node_t *, type)                                                                       \
-      NODE(FUNCTION_TYPE, dynarr_t(struct node_t *), arg_names, dynarr_t(struct node_t *), arg_types, struct node_t *, ret_type) \
+      NODE(DATA_TYPE, type_t *, type)                                                                                            \
       NODE(VARIABLE_DECLARATION, struct node_t *, ident, struct node_t *, type, struct node_t *, expr, bool, immutable)          \
       NODE(FUNCTION_DECLARATION, struct node_t *, type, struct node_t *, stmt)                                                   \
       NODE(IF, struct node_t *, cond, struct node_t *, truecase, struct node_t *, falsecase)                                     \

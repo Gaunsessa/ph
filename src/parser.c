@@ -435,6 +435,14 @@ node_t *parser_arrow_block(parser_t *p) {
    ---- */
 
 node_t *parser_type(parser_t *p) {
+   return node_init(NODE_DATA_TYPE, .DATA_TYPE = { _parser_type(p) });
+}
+
+node_t *parser_infer_type(parser_t *p) {
+   return node_init(NODE_DATA_TYPE, .DATA_TYPE = { type_init(TYPE_NONE) });
+}
+
+type_t *_parser_type(parser_t *p) {
    switch (lookahead(0).type) {
       case TOKEN_CARET: return parser_ptr_type(p);
       case TOKEN_LEFT_BRACKET: return parser_array_type(p);
@@ -443,41 +451,47 @@ node_t *parser_type(parser_t *p) {
    }
 }
 
-node_t *parser_base_type(parser_t *p) {
-   return node_init(NODE_BASE_TYPE, .BASE_TYPE = { parser_eat(p, TOKEN_IDENTIFIER).span });
+type_t *parser_base_type(parser_t *p) {
+   return type_init(TYPE_NONE, parser_identifer(p)->IDENTIFIER.value);
 }
 
-node_t *parser_ptr_type(parser_t *p) {
+type_t *parser_ptr_type(parser_t *p) {
    parser_eat(p, TOKEN_CARET);
 
-   return node_init(NODE_PTR_TYPE, .PTR_TYPE = { parser_type(p) });
+   return type_init(TYPE_PTR, .ptr_base = _parser_type(p));
 }
 
-node_t *parser_array_type(parser_t *p) {
-   node_t *type = node_init(NODE_ARRAY_TYPE);
+type_t *parser_array_type(parser_t *p) {
+   type_t *type = type_init(TYPE_ARRAY);
 
    parser_eat(p, TOKEN_LEFT_BRACKET);
 
-   type->ARRAY_TYPE.len = parser_eat(p, TOKEN_NUMBER).num;
+   type->length = parser_eat(p, TOKEN_NUMBER).num;
 
    parser_eat(p, TOKEN_RIGHT_BRACKET);
 
-   type->ARRAY_TYPE.type = parser_type(p);
+   type->arr_base = _parser_type(p);
 
    return type;
 }
 
-node_t *parser_function_type(parser_t *p) {
-   node_t *funct = node_init(NODE_FUNCTION_TYPE, .FUNCTION_TYPE = { dy_init(node_t *), dy_init(node_t *) });
+type_t *parser_function_type(parser_t *p) {
+   type_t *funct = type_init(TYPE_FUNCTION);
+
+   funct->args = dy_init(struct { span_t name; struct type_t *type; });
 
    parser_eat(p, TOKEN_LEFT_PARENTHESES);
 
    while (lookahead(0).type != TOKEN_RIGHT_PARENTHESES) {
-      dy_push(funct->FUNCTION_TYPE.arg_names, parser_identifer(p));
+      struct { span_t name; struct type_t *type; } arg;
+
+      arg.name = parser_identifer(p)->IDENTIFIER.value;
 
       parser_eat(p, TOKEN_COLON);
 
-      dy_push(funct->FUNCTION_TYPE.arg_types, parser_type(p));
+      arg.type = _parser_type(p);
+
+      dy_push_unsafe(funct->args, arg);
 
       if (lookahead(0).type == TOKEN_COMMA) parser_eat(p, TOKEN_COMMA);
    }
@@ -486,9 +500,9 @@ node_t *parser_function_type(parser_t *p) {
    parser_eat(p, TOKEN_COLON);
 
    if (M_COMPARE(lookahead(0).type, TOKEN_IDENTIFIER, TOKEN_CARET, TOKEN_LEFT_BRACKET, TOKEN_LEFT_PARENTHESES))
-      funct->FUNCTION_TYPE.ret_type = parser_type(p);
+      funct->ret = _parser_type(p);
    else
-      funct->FUNCTION_TYPE.ret_type = node_init(NODE_INFER_TYPE);
+      funct->ret = type_init(TYPE_BASE, .const_name = "void");
 
    return funct;
 }
@@ -545,7 +559,7 @@ node_t *parser_variable_declaration(parser_t *p) {
 
       eq = parser_eat(p, TOKEN_EQUALS, TOKEN_COLON);
 
-      dec->VARIABLE_DECLARATION.type = node_init(NODE_INFER_TYPE);
+      dec->VARIABLE_DECLARATION.type = parser_infer_type(p);
 
       dec->VARIABLE_DECLARATION.expr = parser_statement(p);
    }
@@ -558,7 +572,7 @@ node_t *parser_variable_declaration(parser_t *p) {
 node_t *underscore_func(parser_t *p) {
    parser_eat(p, TOKEN_UNDERSCORE);
 
-   return node_init(NODE_INFER_TYPE);
+   return parser_infer_type(p);
 }
 
 node_t *parser_multi_variable_declaration(parser_t *p) {
@@ -606,7 +620,7 @@ node_t *parser_multi_variable_declaration(parser_t *p) {
    -------- */
 
 node_t *parser_function_declaration(parser_t *p) {
-   node_t *funct = parser_function_type(p);
+   node_t *funct = parser_type(p);
 
    if (lookahead(0).type == TOKEN_EQUALS) {
       parser_eat(p, TOKEN_EQUALS);

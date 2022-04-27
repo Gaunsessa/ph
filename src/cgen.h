@@ -41,6 +41,7 @@ void cgen_variable_declaration(buf_t buf, node_t *vard);
 void cgen_block(buf_t buf, node_t *block);
 
 void cgen_type(buf_t buf, node_t *type);
+void _cgen_type(buf_t buf, type_t *type);
 
 void cgen_identifier(buf_t buf, node_t *ident);
 

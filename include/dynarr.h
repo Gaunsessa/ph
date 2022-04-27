@@ -10,18 +10,26 @@
 
 #define dyi(arr) (*(arr))
 
+// dynarr_t(type) arr = (dynarr_t(type))_dynarr_init(sizeof(type));                                         
+
 #define dy_init(type, ...)                                                                                     \
    ({                                                                                                          \
-      dynarr_t(type) arr = (dynarr_t(type))_dynarr_init(sizeof(type));                                         \
+      dynarr_t(type) arr = (void *)_dynarr_init(sizeof(type));                                                 \
       type data[] = { __VA_ARGS__ };                                                                           \
       for (int i = 0; i < sizeof(data) / sizeof(type); i++)                                                    \
-         dy_push(arr, data[i]);                                                                                \
-      arr;                                                                                                     \
+         dy_push_unsafe(arr, data[i]);                                                                         \
+      (void *)arr;                                                                                             \
    })                                                                                                          \
 
 #define dy_push(arr, v)                                                                                        \
    ({                                                                                                          \
       dyi(arr)[_dy_info((arr))->index++] = (v);                                                                \
+      _dynarr_grow((void **)(arr));                                                                            \
+   })                                                                                                          \
+
+#define dy_push_unsafe(arr, v)                                                                                 \
+   ({                                                                                                          \
+      memcpy(dyi(arr) + _dy_info((arr))->index++, (__typeof__(v)[1]) { (v) }, sizeof(dyi(arr)[0]));            \
       _dynarr_grow((void **)(arr));                                                                            \
    })                                                                                                          \
 
@@ -60,7 +68,7 @@ typedef struct dynarr_info_t {
 static inline void **_dynarr_init(size_t size) {
    void **arr = malloc(sizeof(void *));
 
-   *arr = (dynarr_info_t *)calloc(1, sizeof(dynarr_info_t) + sizeof(size)) + 1;
+   *arr = (dynarr_info_t *)calloc(1, sizeof(dynarr_info_t) + size) + 1;
 
    _dy_info(arr)->elm_size = size;
    _dy_info(arr)->length   = 1;

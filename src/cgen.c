@@ -2,8 +2,8 @@
 
 #define node_def(n, t) ASSERT(n->type, NODE_##t); __typeof__(n->t) *node = &n->t
 
-#define dy_push_str(arr, str) ({ for (int i = 0; (str)[i] != '\0'; i++ ) dy_push((arr), (str)[i]); })
-#define dy_push_ptr(arr, ptr, len) ({ for (int i = 0; i < len; i++ ) dy_push((arr), (ptr)[i]); })
+#define dy_push_str(arr, str) ({ for (int _i_ = 0; (str)[_i_] != '\0'; _i_++) dy_push((arr), (str)[_i_]); })
+#define dy_push_ptr(arr, ptr, len) ({ for (int _i_ = 0; _i_ < len; _i_++) dy_push((arr), (ptr)[_i_]); })
 #define dy_push_span(arr, span) dy_push_ptr(arr, (span).ptr, (span).len)
 
 char *cgen_generate(node_t *AST) {
@@ -181,7 +181,7 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
    if (node->expr->type == NODE_FUNCTION_DECLARATION) {
       node_t *funct = node->expr->FUNCTION_DECLARATION.type;
 
-      cgen_type(buf, funct->FUNCTION_TYPE.ret_type);
+      _cgen_type(buf, funct->DATA_TYPE.type->ret);
 
       dy_push(buf, ' ');
 
@@ -189,14 +189,14 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
 
       dy_push(buf, '(');
 
-      for (int i = 0; i < dy_len(funct->FUNCTION_TYPE.arg_names); i++) {
+      for (int i = 0; i < dy_len(funct->DATA_TYPE.type->args); i++) {
          if (i != 0) dy_push(buf, ',');
 
-         cgen_type(buf, dyi(funct->FUNCTION_TYPE.arg_types)[i]);
+         _cgen_type(buf, dyi(funct->DATA_TYPE.type->args)[i].type);
 
          dy_push(buf, ' ');
 
-         cgen_identifier(buf, dyi(funct->FUNCTION_TYPE.arg_names)[i]);
+         dy_push_span(buf, dyi(funct->DATA_TYPE.type->args)[i].name);
       }
 
       dy_push(buf, ')');
@@ -240,19 +240,24 @@ void cgen_block(buf_t buf, node_t *block) {
 }
 
 void cgen_type(buf_t buf, node_t *type) {
-   ASSERT(type->type, NODE_BASE_TYPE, NODE_PTR_TYPE, NODE_ARRAY_TYPE);
+   node_def(type, DATA_TYPE);
 
+   _cgen_type(buf, node->type);
+}
+
+void _cgen_type(buf_t buf, type_t *type) {
    switch (type->type) {
-      case NODE_BASE_TYPE:
-         dy_push_span(buf, type->BASE_TYPE.value);
+      case TYPE_NONE:
+         dy_push_span(buf, type->name);
          break;
-      case NODE_PTR_TYPE:
-         cgen_type(buf, type->PTR_TYPE.type);
+      case TYPE_BASE:
+         dy_push_str(buf, type->const_name);
+         break;
+      case TYPE_PTR:
+         _cgen_type(buf, type->ptr_base);
          dy_push(buf, '*');
          break;
-      case NODE_ARRAY_TYPE:
-         ERROR("Unimplemented!");
-      default: unreachable();
+      default: ERROR("Unimplemented Type!");
    }
 }
 

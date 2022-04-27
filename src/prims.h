@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "node.h"
+#include "types.h"
 
 #define PRIM_TYPES                                                                                \
       PTYPE(S8,        signed char,               { printf("%d", *v); },   {})                    \
@@ -31,6 +32,7 @@
          for (int i = 0; i < dy_len(*v); i++) node_free(dyi(*v)[i]);                              \
          dy_free(*v);                                                                             \
       })                                                                                          \
+      PTYPE(TYPEPTR, type_t *, { print_type(*v); }, { free(*v); })                                \
 
 typedef enum PRIM_TYPE {
    PRIM_NONE,

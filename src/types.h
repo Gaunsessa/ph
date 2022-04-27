@@ -12,6 +12,8 @@
 #include <dynarr.h>
 #include <print.h>
 
+#include "util.h"
+
 #define BASE_TYPES                 \
       TYPE(U8, "u8", "uint8_t")    \
       TYPE(U16, "u16", "uint16_t") \
@@ -46,7 +48,9 @@ typedef enum TYPE_TYPE {
 
 typedef struct type_t {
    TYPE_TYPE type;
-   char *name;
+
+   span_t name;
+   char *const_name;
 
    bool distinct;
 
@@ -58,13 +62,13 @@ typedef struct type_t {
 
       // Function
       struct {
-         dynarr_t(struct { char *name; struct type_t *type; }) args;
+         dynarr_t(struct { span_t name; struct type_t *type; }) args;
          struct type_t *ret;
       };
 
       // Struct
       struct {
-         dynarr_t(struct { char *name; struct type_t *type; }) feilds;
+         dynarr_t(struct { span_t name; struct type_t *type; }) feilds;
       };
 
       // Ptr
@@ -81,5 +85,36 @@ typedef struct type_t {
       // TODO: string, enums, maps, slices, dynarr, union, any
    };
 } type_t;
+
+#define type_init(...) ({ type_t *t = calloc(1, sizeof(type_t)); memcpy(t, &(type_t) { __VA_ARGS__ }, sizeof(type_t)); t; })
+
+static inline void print_type(type_t *type) {
+   switch (type->type) {
+      case TYPE_NONE:
+         printf("Type: None | ");
+         print_span(&type->name);
+         break;
+      case TYPE_BASE:
+         printf("Type: Base | %s\n", type->const_name);
+         break;
+      case TYPE_PTR:
+         printf("Type: Ptr | ");
+         print_type(type->ptr_base);
+         break;
+      case TYPE_FUNCTION:
+         printf("Type: Function | ");
+         for (int i = 0; i < dy_len(type->args); i++) {
+            print_span(&dyi(type->args)[i].name);
+
+            printf(": ");
+
+            print_type(dyi(type->args)[i].type);
+
+            printf(" ");
+         }
+         break;
+      default: printf("Not printable type!\n");
+   }
+}
 
 #endif
