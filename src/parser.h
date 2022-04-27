@@ -1,0 +1,75 @@
+#ifndef PARSER_H
+#define PARSER_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
+
+#include <dynarr.h>
+#include <print.h>
+
+#include "util.h"
+#include "lexer.h"
+#include "node.h"
+#include "prims.h"
+#include "error.h"
+
+typedef struct parser_t {
+   lexer_t *lexer;
+   token_t lookaheads[2];
+
+   bool req_semi;
+} parser_t;
+
+node_t *parser_parse(char *str);
+
+node_t *parser_file(parser_t *p);
+
+node_t *parser_statement(parser_t *p);
+node_t *parser_parenthesized_statement(parser_t *p);
+
+node_t *parser_expression(parser_t *p, int precedence);
+node_t *parser_primary_expression(parser_t *p);
+node_t *parser_unary_expression(parser_t *p);
+node_t *parser_call_expression(parser_t *p);
+
+node_t *parser_if(parser_t *p);
+
+node_t *parser_for(parser_t *p);
+node_t *parser_break(parser_t *p);
+node_t *parser_continue(parser_t *p);
+
+node_t *parser_arrow_block(parser_t *p);
+
+node_t *parser_type(parser_t *p);
+node_t *parser_base_type(parser_t *p);
+node_t *parser_ptr_type(parser_t *p);
+node_t *parser_array_type(parser_t *p);
+node_t *parser_function_type(parser_t *p);
+
+node_t *parser_literal(parser_t *p);
+
+node_t *parser_identifer(parser_t *p);
+
+node_t *parser_variable_declaration(parser_t *p);
+node_t *parser_multi_variable_declaration(parser_t *p);
+
+node_t *parser_function_declaration(parser_t *p);
+
+node_t *parser_return(parser_t *p);
+
+node_t *parser_block(parser_t *p);
+
+void parser_skip_newlines(parser_t *p);
+
+dynarr_t(node_t *) parser_sep_list(parser_t *p, TOKEN_TYPE sep, TOKEN_TYPE end);
+dynarr_t(node_t *) parser_sep_list_func(parser_t *p, TOKEN_TYPE sep, TOKEN_TYPE end, node_t *(*v_func)(parser_t *p), node_t *(*u_func)(parser_t *p));
+
+#define parser_eat(p, ...) _parser_eat(p, sizeof((TOKEN_TYPE[]) {__VA_ARGS__}) / sizeof(TOKEN_TYPE), __VA_ARGS__)
+token_t _parser_eat(parser_t *p, size_t n, ...);
+
+#endif
