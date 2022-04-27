@@ -19,15 +19,15 @@
       NODE(NONE)                                                                                                                 \
       NODE(EMPTY)                                                                                                                \
       NODE(MULTI, dynarr_t(struct node_t *), nodes)                                                                              \
-      NODE(FILE, char *, name, dynarr_t(struct node_t *), stmts)                                                                 \
+      NODE(FILE, dynarr_t(struct node_t *), stmts)                                                                 \
       NODE(BLOCK, dynarr_t(struct node_t *), stmts)                                                                              \
       NODE(BINARY_EXPRESSION, TOKEN_TYPE, op, struct node_t *, left, struct node_t *, right)                                     \
       NODE(UNARY_EXPRESSION, TOKEN_TYPE, op, struct node_t *, ident)                                                             \
       NODE(CALL_EXPRESSION, struct node_t *, func, dynarr_t(struct node_t *), args, bool, curried)                               \
-      NODE(IDENTIFIER, span_t, value)                                                                                            \
+      NODE(IDENTIFIER, char *, value)                                                                                            \
       NODE(NUMBER_LITERAL, size_t, value)                                                                                        \
-      NODE(STRING_LITERAL, span_t, span)                                                                                         \
-      NODE(DATA_TYPE, type_t *, type)                                                                                              \
+      NODE(STRING_LITERAL, char *, span)                                                                                         \
+      NODE(DATA_TYPE, type_t *, type)                                                                                            \
       NODE(VARIABLE_DECLARATION, struct node_t *, ident, struct node_t *, type, struct node_t *, expr, bool, immutable)          \
       NODE(FUNCTION_DECLARATION, struct node_t *, type, struct node_t *, stmt)                                                   \
       NODE(IF, struct node_t *, cond, struct node_t *, truecase, struct node_t *, falsecase)                                     \

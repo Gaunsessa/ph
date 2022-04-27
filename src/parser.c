@@ -132,7 +132,7 @@ node_t *parser_parse(char *str) {
    ---- */
 
 node_t *parser_file(parser_t *p) {
-   node_t *file = node_init(NODE_FILE, .FILE = { "main", dy_init(node_t *) });
+   node_t *file = node_init(NODE_FILE, .FILE = { dy_init(node_t *) });
 
    while (!(M_COMPARE(lookahead(0).type, TOKEN_END))) { 
       if (lookahead(0).type == TOKEN_NONE)
@@ -478,12 +478,12 @@ type_t *parser_array_type(parser_t *p) {
 type_t *parser_function_type(parser_t *p) {
    type_t *funct = type_init(TYPE_FUNCTION);
 
-   funct->args = dy_init(struct { span_t name; struct type_t *type; });
+   funct->args = dy_init(struct { char *name; struct type_t *type; });
 
    parser_eat(p, TOKEN_LEFT_PARENTHESES);
 
    while (lookahead(0).type != TOKEN_RIGHT_PARENTHESES) {
-      struct { span_t name; struct type_t *type; } arg;
+      struct { char *name; struct type_t *type; } arg;
 
       arg.name = parser_identifer(p)->IDENTIFIER.value;
 
@@ -502,7 +502,7 @@ type_t *parser_function_type(parser_t *p) {
    if (M_COMPARE(lookahead(0).type, TOKEN_IDENTIFIER, TOKEN_CARET, TOKEN_LEFT_BRACKET, TOKEN_LEFT_PARENTHESES))
       funct->ret = _parser_type(p);
    else
-      funct->ret = type_init(TYPE_BASE, .const_name = "void");
+      funct->ret = type_init(TYPE_BASE, .name = "void");
 
    return funct;
 }
@@ -516,7 +516,7 @@ node_t *parser_literal(parser_t *p) {
 
    switch (token.type) {
       case TOKEN_NUMBER: return node_init(NODE_NUMBER_LITERAL, .NUMBER_LITERAL = { token.num });
-      case TOKEN_STRING: return node_init(NODE_STRING_LITERAL, .STRING_LITERAL = { token.span });
+      case TOKEN_STRING: return node_init(NODE_STRING_LITERAL, .STRING_LITERAL = { token.str });
 
       default: eprint("Error: expected literal!");
    }
@@ -531,7 +531,7 @@ node_t *parser_identifer(parser_t *p) {
       parser_eat(p, TOKEN_UNDERSCORE);
 
       return node_init(NODE_NONE);
-   } else return node_init(NODE_IDENTIFIER, .IDENTIFIER = { parser_eat(p, TOKEN_IDENTIFIER).span });
+   } else return node_init(NODE_IDENTIFIER, .IDENTIFIER = { parser_eat(p, TOKEN_IDENTIFIER).str });
 }
 
 /* -------------------- 

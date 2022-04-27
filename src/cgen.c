@@ -4,7 +4,6 @@
 
 #define dy_push_str(arr, str) ({ for (int _i_ = 0; (str)[_i_] != '\0'; _i_++) dy_push((arr), (str)[_i_]); })
 #define dy_push_ptr(arr, ptr, len) ({ for (int _i_ = 0; _i_ < len; _i_++) dy_push((arr), (ptr)[_i_]); })
-#define dy_push_span(arr, span) dy_push_ptr(arr, (span).ptr, (span).len)
 
 char *cgen_generate(node_t *AST) {
    if (AST->type != NODE_FILE) eprint("Error: Invalid AST!");
@@ -75,7 +74,7 @@ void cgen_expression(buf_t buf, node_t *expr) {
 
          break;
       case NODE_CALL_EXPRESSION:
-         dy_push_span(buf, expr->CALL_EXPRESSION.func->IDENTIFIER.value);
+         dy_push_str(buf, expr->CALL_EXPRESSION.func->IDENTIFIER.value);
 
          dy_push(buf, '(');
 
@@ -196,7 +195,7 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
 
          dy_push(buf, ' ');
 
-         dy_push_span(buf, dyi(funct->DATA_TYPE.type->args)[i].name);
+         dy_push_str(buf, dyi(funct->DATA_TYPE.type->args)[i].name);
       }
 
       dy_push(buf, ')');
@@ -248,10 +247,10 @@ void cgen_type(buf_t buf, node_t *type) {
 void _cgen_type(buf_t buf, type_t *type) {
    switch (type->type) {
       case TYPE_NONE:
-         dy_push_span(buf, type->name);
+         dy_push_str(buf, type->name);
          break;
       case TYPE_BASE:
-         dy_push_str(buf, type->const_name);
+         dy_push_str(buf, type->name);
          break;
       case TYPE_PTR:
          _cgen_type(buf, type->ptr_base);
@@ -264,7 +263,7 @@ void _cgen_type(buf_t buf, type_t *type) {
 void cgen_identifier(buf_t buf, node_t *ident) {
    node_def(ident, IDENTIFIER);
 
-   dy_push_span(buf, node->value);
+   dy_push_str(buf, node->value);
 }
 
 void cgen_literal(buf_t buf, node_t *lit) {
@@ -279,7 +278,7 @@ void cgen_literal(buf_t buf, node_t *lit) {
       } break;
       case NODE_STRING_LITERAL:
          dy_push(buf, '"');
-         dy_push_span(buf, lit->STRING_LITERAL.span);
+         dy_push_str(buf, lit->STRING_LITERAL.span);
          dy_push(buf, '"');
          break;
       default: unreachable();

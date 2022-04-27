@@ -15,19 +15,14 @@ void checker_file(checker_t *ckr, node_t *file) {
 
       if (stmt->type != NODE_VARIABLE_DECLARATION) continue;
 
-      char *name = span_to_str(&stmt->VARIABLE_DECLARATION.ident->IDENTIFIER.value);
+      char *name = stmt->VARIABLE_DECLARATION.ident->IDENTIFIER.value;
 
       // printf("%d\n", stmt->VARIABLE_DECLARATION.type->DATA_TYPE.type->type);
       if (stmt->VARIABLE_DECLARATION.type->DATA_TYPE.type->type == TYPE_INFER)
          ht_set_sv(ckr->file_decls, name, checker_infer_stmt_type(ckr, stmt->VARIABLE_DECLARATION.expr));
       else
          ht_set_sv(ckr->file_decls, name, stmt->VARIABLE_DECLARATION.type->DATA_TYPE.type);
-
-      free(name);
    }
-
-   print_span(&ht_get_sv(ckr->file_decls, "main")->ret->name);
-   printf("%d\n", ht_get_sv(ckr->file_decls, "main")->type);
 }
 
 type_t *checker_infer_stmt_type(checker_t *ckr, node_t *stmt) {

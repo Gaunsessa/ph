@@ -22,8 +22,7 @@
       PTYPE(F64,       double,                    { printf("%f", *v); },   {})                    \
       PTYPE(F128,      long double,               { printf("%Lf", *v); },  {})                    \
       PTYPE(BOOL,      bool,                      { printf("%s\n", *v ? "true" : "false"); }, {}) \
-      PTYPE(STR,       char *,                    { printf("%s", *v); },   {})                    \
-      PTYPE(SPAN,      span_t,                    { print_span(v); },      {})                    \
+      PTYPE(STR,       char *,                    { printf("%s", *v); },   { free(*v); })         \
       PTYPE(NODEPTR,   node_t *,                  { print_node(*v); },     { node_free(*v); })    \
       PTYPE(DYNNODE,   dynarr_t(struct node_t *), {                                               \
          for (int i = 0; i < dy_len(*v); i++)                                                     \

@@ -58,22 +58,6 @@
 
 #define unreachable() __builtin_unreachable()
 
-typedef struct span_t {
-   char *ptr; 
-   size_t len;
-} span_t;
-
-static inline void print_span(span_t *span) {
-   for (int i = 0; i < span->len; i++) printf("%c", span->ptr[i]);
-}
-
-static inline char *span_to_str(span_t *span) {
-   char *str = malloc(span->len + 1);
-   str[span->len] = '\0';
-
-   memcpy(str, span->ptr, span->len);
-
-   return str;
-}
+#define dup_str(s, l) ({ char *str = malloc(l + 1); str[l] = '\0'; memcpy(str, s, l); str; })
 
 #endif

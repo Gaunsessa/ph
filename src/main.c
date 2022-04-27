@@ -53,11 +53,9 @@ void comple_file(const char *path, bool compl, bool pretty) {
          printf("%s\n", code);
       }
    } else {
-      // print_node(AST);
-      // print("");
+      print_node(AST);
+      print("");
    }
-
-
 
    node_free(AST);
 }
@@ -65,5 +63,5 @@ void comple_file(const char *path, bool compl, bool pretty) {
 int main(int argc, char **argv) {
    lexer_module_init();
 
-   comple_file("tests/test.ph", false, false);
+   comple_file("tests/test.ph", true, false);
 }

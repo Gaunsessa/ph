@@ -105,7 +105,7 @@ typedef struct token_t {
 
    union {
       // String | Identifier
-      span_t span;
+      char *str;
 
       // Number
       struct {

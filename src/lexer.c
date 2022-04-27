@@ -84,7 +84,7 @@ token_t lexer_get_next_token(lexer_t *lexer) {
       int i = 1;
       while (lexer->buf[lexer->cursor + i] != '"') i++;
 
-      token_t token = (token_t) { TOKEN_STRING, lexer->line, lexer->cursor, { .span.ptr = lexer->buf + lexer->cursor + 1, .span.len = i - 1 } };
+      token_t token = (token_t) { TOKEN_STRING, lexer->line, lexer->cursor, { .str = dup_str(lexer->buf + lexer->cursor + 1, i - 1) } };
 
       lexer->cursor += i + 1;
 
@@ -118,7 +118,7 @@ token_t lexer_get_next_token(lexer_t *lexer) {
       int i = 0;
       while (isalnum(lexer->buf[lexer->cursor + i]) || lexer->buf[lexer->cursor + i] == '_') i++;
 
-      token_t token = (token_t) { TOKEN_IDENTIFIER, lexer->line, lexer->cursor, { .span.ptr = lexer->buf + lexer->cursor, .span.len = i } };
+      token_t token = (token_t) { TOKEN_IDENTIFIER, lexer->line, lexer->cursor, { .str = dup_str(lexer->buf + lexer->cursor, i) } };
 
       lexer->cursor += i;
 
@@ -145,23 +145,13 @@ void print_token(token_t token) {
          printf("TOKEN: NEWLINE\n");
          break;
       case TOKEN_STRING:
-         printf("TOKEN: STRING | \"");
-
-         print_span(&token.span);
-
-         printf("\"\n");
-
+         printf("TOKEN: STRING | \"%s\"", token.str);
          break;
       case TOKEN_NUMBER:
          printf("TOKEN: NUMBER | %lu\n", token.num);
          break;
       case TOKEN_IDENTIFIER:
-         printf("TOKEN: IDENTIFIER | ");
-
-         print_span(&token.span);
-
-         printf("\n");
-
+         printf("TOKEN: IDENTIFIER | %s\n", token.str);
          break;
       default:
          printf("TOKEN: KEYWORD | ");

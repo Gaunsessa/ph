@@ -49,9 +49,7 @@ typedef enum TYPE_TYPE {
 
 typedef struct type_t {
    TYPE_TYPE type;
-
-   span_t name;
-   char *const_name;
+   char *name;
 
    bool distinct;
 
@@ -63,13 +61,13 @@ typedef struct type_t {
 
       // Function
       struct {
-         dynarr_t(struct { span_t name; struct type_t *type; }) args;
+         dynarr_t(struct { char *name; struct type_t *type; }) args;
          struct type_t *ret;
       };
 
       // Struct
       struct {
-         dynarr_t(struct { span_t name; struct type_t *type; }) feilds;
+         dynarr_t(struct { char *name; struct type_t *type; }) feilds;
       };
 
       // Ptr
@@ -92,11 +90,10 @@ typedef struct type_t {
 static inline void print_type(type_t *type) {
    switch (type->type) {
       case TYPE_NONE:
-         printf("Type: None | ");
-         print_span(&type->name);
+         printf("Type: None | %s\n", type->name);
          break;
       case TYPE_BASE:
-         printf("Type: Base | %s\n", type->const_name);
+         printf("Type: Base | %s\n", type->name);
          break;
       case TYPE_PTR:
          printf("Type: Ptr | ");
@@ -105,9 +102,7 @@ static inline void print_type(type_t *type) {
       case TYPE_FUNCTION:
          printf("Type: Function | ");
          for (int i = 0; i < dy_len(type->args); i++) {
-            print_span(&dyi(type->args)[i].name);
-
-            printf(": ");
+            printf("%s: ", dyi(type->args)[i].name);
 
             print_type(dyi(type->args)[i].type);
 
