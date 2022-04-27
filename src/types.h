@@ -38,6 +38,7 @@ typedef enum BASE_TYPE {
 
 typedef enum TYPE_TYPE {
    TYPE_NONE,
+   TYPE_INFER,
    TYPE_BASE,
    TYPE_PTR,
    TYPE_ARRAY,

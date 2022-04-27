@@ -439,7 +439,7 @@ node_t *parser_type(parser_t *p) {
 }
 
 node_t *parser_infer_type(parser_t *p) {
-   return node_init(NODE_DATA_TYPE, .DATA_TYPE = { type_init(TYPE_NONE) });
+   return node_init(NODE_DATA_TYPE, .DATA_TYPE = { type_init(TYPE_INFER) });
 }
 
 type_t *_parser_type(parser_t *p) {

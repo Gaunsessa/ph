@@ -10,10 +10,13 @@
 #include "node.h"
 #include "parser.h"
 #include "lexer.h"
+#include "checker.h"
 
 #include "prims.h"
 #include "print.h"
 #include "util.h"
+
+// TODO: 1) Change from spans to malloced char*
 
 void comple_file(const char *path, bool compl, bool pretty) {
    FILE *f = fopen(path, "r");
@@ -29,6 +32,8 @@ void comple_file(const char *path, bool compl, bool pretty) {
    fclose(f);
 
    node_t *AST = parser_parse(buf);
+
+   checker_check(AST);
 
    // printf("%s\n", cgen_generate(AST));
 
@@ -48,8 +53,8 @@ void comple_file(const char *path, bool compl, bool pretty) {
          printf("%s\n", code);
       }
    } else {
-      print_node(AST);
-      print("");
+      // print_node(AST);
+      // print("");
    }
 
 
@@ -60,5 +65,5 @@ void comple_file(const char *path, bool compl, bool pretty) {
 int main(int argc, char **argv) {
    lexer_module_init();
 
-   comple_file("tests/test.ph", true, false);
+   comple_file("tests/test.ph", false, false);
 }
