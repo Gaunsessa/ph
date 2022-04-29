@@ -61,6 +61,8 @@ node_t *parser_multi_variable_declaration(parser_t *p);
 
 node_t *parser_function_declaration(parser_t *p);
 
+node_t *parser_alias(parser_t *p);
+
 node_t *parser_return(parser_t *p);
 
 node_t *parser_block(parser_t *p);

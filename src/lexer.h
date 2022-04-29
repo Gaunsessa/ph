@@ -77,6 +77,7 @@
       TOKEN(BREAK, "break")             \
       TOKEN(CONTINUE, "continue")       \
       TOKEN(RETURN, "return")           \
+      TOKEN(ALIAS, "alias")             \
    
 
 const static size_t MAX_KEYWORD_LEN = 32;

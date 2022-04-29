@@ -206,6 +206,8 @@ node_t *parser_statement(parser_t *p) {
          return parser_continue(p);
       case TOKEN_RETURN:
          return parser_return(p);
+      case TOKEN_ALIAS:
+         return parser_alias(p);
       case TOKEN_SEMI_COLON:
       case TOKEN_NEWLINE:
          return node_init(NODE_EMPTY);
@@ -315,7 +317,7 @@ node_t *parser_call_expression(parser_t *p) {
 
    parser_eat(p, TOKEN_LEFT_PARENTHESES);
 
-   expr->CALL_EXPRESSION.args = parser_sep_list_func(p, TOKEN_COMMA, TOKEN_RIGHT_PARENTHESES, parser_statement, NULL);
+   expr->CALL_EXPRESSION.args = parser_sep_list_func(p, TOKEN_COMMA, TOKEN_RIGHT_PARENTHESES, (node_t *(*)(parser_t *p))parser_expression, NULL);
 
    parser_eat(p, TOKEN_RIGHT_PARENTHESES);
 
@@ -439,7 +441,7 @@ node_t *parser_type(parser_t *p) {
 }
 
 node_t *parser_infer_type(parser_t *p) {
-   return node_init(NODE_DATA_TYPE, .DATA_TYPE = { type_init(TYPE_INFER) });
+   return node_init(NODE_DATA_TYPE, .DATA_TYPE = { type_init((type_t) { TYPE_INFER }) });
 }
 
 type_t *_parser_type(parser_t *p) {
@@ -452,17 +454,19 @@ type_t *_parser_type(parser_t *p) {
 }
 
 type_t *parser_base_type(parser_t *p) {
-   return type_init(TYPE_NONE, parser_identifer(p)->IDENTIFIER.value);
+   char *name = parser_identifer(p)->IDENTIFIER.value;
+
+   return ht_exists_sv(BASE_TYPE_STR_VALUES, name) ? ht_get_sv(BASE_TYPE_STR_VALUES, name) : type_init((type_t) { TYPE_ALIAS, name });
 }
 
 type_t *parser_ptr_type(parser_t *p) {
    parser_eat(p, TOKEN_CARET);
 
-   return type_init(TYPE_PTR, .ptr_base = _parser_type(p));
+   return type_init((type_t) { TYPE_PTR, .ptr_base = _parser_type(p) });
 }
 
 type_t *parser_array_type(parser_t *p) {
-   type_t *type = type_init(TYPE_ARRAY);
+   type_t *type = type_init((type_t) { TYPE_ARRAY });
 
    parser_eat(p, TOKEN_LEFT_BRACKET);
 
@@ -476,7 +480,7 @@ type_t *parser_array_type(parser_t *p) {
 }
 
 type_t *parser_function_type(parser_t *p) {
-   type_t *funct = type_init(TYPE_FUNCTION);
+   type_t *funct = type_init((type_t) { TYPE_FUNCTION });
 
    funct->args = dy_init(struct { char *name; struct type_t *type; });
 
@@ -502,7 +506,7 @@ type_t *parser_function_type(parser_t *p) {
    if (M_COMPARE(lookahead(0).type, TOKEN_IDENTIFIER, TOKEN_CARET, TOKEN_LEFT_BRACKET, TOKEN_LEFT_PARENTHESES))
       funct->ret = _parser_type(p);
    else
-      funct->ret = type_init(TYPE_BASE, .name = "void");
+      funct->ret = ht_get(BASE_TYPE_ENUM_VALUES, BASE_VOID);
 
    return funct;
 }
@@ -629,6 +633,16 @@ node_t *parser_function_declaration(parser_t *p) {
 
       return node_init(NODE_FUNCTION_DECLARATION, .FUNCTION_DECLARATION = { funct, parser_statement(p) });
    } else return funct;
+}
+
+/* ----- 
+   ALIAS 
+   ----- */
+
+node_t *parser_alias(parser_t *p) {
+   parser_eat(p, TOKEN_ALIAS);
+
+   return node_init(NODE_ALIAS, .ALIAS = { parser_type(p) });
 }
 
 /* ------ 

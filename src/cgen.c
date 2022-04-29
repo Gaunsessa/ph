@@ -1,7 +1,5 @@
 #include "cgen.h"
 
-#define node_def(n, t) ASSERT(n->type, NODE_##t); __typeof__(n->t) *node = &n->t
-
 #define dy_push_str(arr, str) ({ for (int _i_ = 0; (str)[_i_] != '\0'; _i_++) dy_push((arr), (str)[_i_]); })
 #define dy_push_ptr(arr, ptr, len) ({ for (int _i_ = 0; _i_ < len; _i_++) dy_push((arr), (ptr)[_i_]); })
 
@@ -209,6 +207,14 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
 
          dy_push(buf, '}');
       }
+   } else if (node->expr->type == NODE_ALIAS) {
+      dy_push_str(buf, "typedef ");
+
+      cgen_type(buf, node->expr->ALIAS.type);
+
+      dy_push(buf, ' ');
+
+      cgen_identifier(buf, node->ident);
    } else {
       cgen_type(buf, node->type);
 
@@ -247,16 +253,19 @@ void cgen_type(buf_t buf, node_t *type) {
 void _cgen_type(buf_t buf, type_t *type) {
    switch (type->type) {
       case TYPE_NONE:
-         dy_push_str(buf, type->name);
+         ERROR("Tried to Generate None Type!");
          break;
       case TYPE_BASE:
+         dy_push_str(buf, type->name);
+         break;
+      case TYPE_ALIAS:
          dy_push_str(buf, type->name);
          break;
       case TYPE_PTR:
          _cgen_type(buf, type->ptr_base);
          dy_push(buf, '*');
          break;
-      default: ERROR("Unimplemented Type!");
+      default: ERROR("Unimplemented Type!", type->type);
    }
 }
 

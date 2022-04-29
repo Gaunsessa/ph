@@ -33,7 +33,7 @@ typedef struct ht_const_t {
 #define _ht_size(s, v) ((s) ?: (strlen((void *)(v)) + 1))
 #define _ht_cmp(s, v1, v2) (s ? memcmp(v1, v2, s) : strcmp(v1, v2))
 
-#define ht_t(k, v) struct { k key; v value; } *
+#define ht_t(k, v) struct __attribute__((__packed__)) { k key; v value; } *
 
 #define ht_c(k, v, ...)    (void *)&(ht_const_t) { sizeof(k), sizeof(v), sizeof((struct { k key; v value; }[]) { __VA_ARGS__ }) / sizeof(struct { k key; v value; }), (void *)(struct __attribute__((__packed__)) { k key; v value; }[]) { __VA_ARGS__ }}
 #define ht_c_ss(...)       (void *)&(ht_const_t) { 0, 0, sizeof((struct { char *key; char *value; }[]) { __VA_ARGS__ }) / sizeof(struct { char *key; char *value; }), (void *)(struct __attribute__((__packed__)) { char *key; char *value; }[]) { __VA_ARGS__ }}

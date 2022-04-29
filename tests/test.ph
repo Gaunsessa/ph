@@ -1,14 +1,21 @@
 // Hello World
 
+a :: alias int
+b :: alias a
+
+t2 :: (x: int): int = {}
+
+test :: (x: a, y: u64): int = {
+   return x * 2
+}
+
 main :: (argc: int, argv: ^^char): int = {
-   for i: int = 1; i <= 30; i += 1 {
-      if i % 3 == 0 -> printf("fizz")
-      if i % 5 == 0 -> printf("buzz")
+   c :: alias b
 
-      if i % 3 != 0 && i % 5 != 0 -> printf("%d", i)
+   x: c = 3
+   y: u64
 
-      printf("\n")
-   }
+   test(x, y)
 
-   return 0
+   return x
 }

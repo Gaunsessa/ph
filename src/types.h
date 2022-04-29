@@ -9,42 +9,46 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <ht.h>
 #include <dynarr.h>
 #include <print.h>
 
 #include "util.h"
 
-#define BASE_TYPES                 \
-      TYPE(U8, "u8", "uint8_t")    \
-      TYPE(U16, "u16", "uint16_t") \
-      TYPE(U32, "u32", "uint32_t") \
-      TYPE(U64, "u64", "uint64_t") \
-      TYPE(I8, "i8", "int8_t")     \
-      TYPE(I16, "i16", "int16_t")  \
-      TYPE(I32, "i32", "int32_t")  \
-      TYPE(I64, "i64", "int64_t")  \
-      TYPE(F32, "f32", "float")    \
-      TYPE(F64, "f64", "double")   \
-      TYPE(BOOL, "bool", "bool")   \
-      TYPE(INT, "int", "int")      \
-      TYPE(VOID, "void", "void")   \
-      TYPE(FUNCTION, NULL, NULL)   \
+#define BASE_TYPES                  \
+      TYPE(NONE, "", "")            \
+      TYPE(U8, "u8", "uint8_t")     \
+      TYPE(U16, "u16", "uint16_t")  \
+      TYPE(U32, "u32", "uint32_t")  \
+      TYPE(U64, "u64", "uint64_t")  \
+      TYPE(I8, "i8", "int8_t")      \
+      TYPE(I16, "i16", "int16_t")   \
+      TYPE(I32, "i32", "int32_t")   \
+      TYPE(I64, "i64", "int64_t")   \
+      TYPE(F32, "f32", "float")     \
+      TYPE(F64, "f64", "double")    \
+      TYPE(BOOL, "bool", "bool")    \
+      TYPE(INT, "int", "int")       \
+      TYPE(VOID, "void", "void")    \
+      TYPE(STRING, "str", "string") \
+      TYPE(FUNCTION, "", "")        \
 
 typedef enum BASE_TYPE {
 #define TYPE(ident, ...) BASE_##ident,
    BASE_TYPES
 #undef TYPE
+   _BASE_COUNT_,
 } BASE_TYPE;
 
 typedef enum TYPE_TYPE {
    TYPE_NONE,
    TYPE_INFER,
    TYPE_BASE,
+   TYPE_ALIAS,
    TYPE_PTR,
    TYPE_ARRAY,
    TYPE_FUNCTION,
    TYPE_STRUCT,
-   TYPE_ENUM,
 } TYPE_TYPE;
 
 typedef struct type_t {
@@ -81,36 +85,31 @@ typedef struct type_t {
          size_t length;
       };
 
-      // TODO: string, enums, maps, slices, dynarr, union, any
+      // TODO: string, tuple, enums, maps, slices, dynarr, union, any
    };
 } type_t;
 
-#define type_init(...) ({ type_t *t = calloc(1, sizeof(type_t)); memcpy(t, &(type_t) { __VA_ARGS__ }, sizeof(type_t)); t; })
+ht_t(BASE_TYPE, type_t *) BASE_TYPE_ENUM_VALUES;
+ht_t(char *, type_t *) BASE_TYPE_STR_VALUES;
 
-static inline void print_type(type_t *type) {
-   switch (type->type) {
-      case TYPE_NONE:
-         printf("Type: None | %s\n", type->name);
-         break;
-      case TYPE_BASE:
-         printf("Type: Base | %s\n", type->name);
-         break;
-      case TYPE_PTR:
-         printf("Type: Ptr | ");
-         print_type(type->ptr_base);
-         break;
-      case TYPE_FUNCTION:
-         printf("Type: Function | ");
-         for (int i = 0; i < dy_len(type->args); i++) {
-            printf("%s: ", dyi(type->args)[i].name);
+dynarr_t(type_t *) ALLOCATED_TYPES;
 
-            print_type(dyi(type->args)[i].type);
+#define _type_init(...) ({ type_t *t = calloc(1, sizeof(type_t)); memcpy(t, &(type_t) { __VA_ARGS__ }, sizeof(type_t)); t; })
 
-            printf(" ");
-         }
-         break;
-      default: printf("Not printable type!\n");
-   }
-}
+void type_module_init();
+
+type_t *type_init(type_t type);
+void type_free_all();
+
+bool type_is_base(type_t *t);
+bool type_is_numeric(type_t *t);
+bool type_is_ptr(type_t *t);
+bool type_is_indexable(type_t *t);
+
+bool type_cmp(type_t *t1, type_t *t2);
+
+const char *type_base_cname(type_t *t);
+
+void print_type(type_t *type);
 
 #endif

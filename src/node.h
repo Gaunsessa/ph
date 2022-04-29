@@ -19,11 +19,12 @@
       NODE(NONE)                                                                                                                 \
       NODE(EMPTY)                                                                                                                \
       NODE(MULTI, dynarr_t(struct node_t *), nodes)                                                                              \
-      NODE(FILE, dynarr_t(struct node_t *), stmts)                                                                 \
+      NODE(FILE, dynarr_t(struct node_t *), stmts)                                                                               \
       NODE(BLOCK, dynarr_t(struct node_t *), stmts)                                                                              \
       NODE(BINARY_EXPRESSION, TOKEN_TYPE, op, struct node_t *, left, struct node_t *, right)                                     \
       NODE(UNARY_EXPRESSION, TOKEN_TYPE, op, struct node_t *, ident)                                                             \
       NODE(CALL_EXPRESSION, struct node_t *, func, dynarr_t(struct node_t *), args, bool, curried)                               \
+      NODE(ALIAS, struct node_t *, type)                                                                                         \
       NODE(IDENTIFIER, char *, value)                                                                                            \
       NODE(NUMBER_LITERAL, size_t, value)                                                                                        \
       NODE(STRING_LITERAL, char *, span)                                                                                         \
@@ -54,6 +55,8 @@ typedef struct node_t {
 } node_t;
 
 #define node_init(...) ({ node_t *n = calloc(1, sizeof(node_t)); memcpy(n, &(node_t) { __VA_ARGS__ }, sizeof(node_t)); n; })
+
+void node_walker(node_t *node, void (*walker)(node_t *node));
 
 void node_free(node_t *node);
 

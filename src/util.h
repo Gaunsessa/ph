@@ -60,4 +60,6 @@
 
 #define dup_str(s, l) ({ char *str = malloc(l + 1); str[l] = '\0'; memcpy(str, s, l); str; })
 
+#define node_def(n, t) ASSERT(n->type, NODE_##t); __typeof__(n->t) *node = &n->t
+
 #endif

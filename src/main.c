@@ -11,12 +11,22 @@
 #include "parser.h"
 #include "lexer.h"
 #include "checker.h"
+#include "types.h"
 
 #include "prims.h"
 #include "print.h"
 #include "util.h"
 
-// TODO: 1) Change from spans to malloced char*
+// Todo: 1) Checker & Types
+//          Resolve all types
+//          Errors
+//       2) Unary Expressions
+//       3) Structs
+//       4) Modules
+//       5) Strings
+//       6) Arrays
+//       7) Labeled breaks and continues
+//       8) Curried Functions
 
 void comple_file(const char *path, bool compl, bool pretty) {
    FILE *f = fopen(path, "r");
@@ -58,9 +68,11 @@ void comple_file(const char *path, bool compl, bool pretty) {
    }
 
    node_free(AST);
+   type_free_all();
 }
 
 int main(int argc, char **argv) {
+   type_module_init();
    lexer_module_init();
 
    comple_file("tests/test.ph", true, false);
