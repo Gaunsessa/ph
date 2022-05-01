@@ -20,7 +20,7 @@
 
 typedef struct parser_t {
    lexer_t *lexer;
-   token_t lookaheads[2];
+   token_t lookaheads[4];
 
    bool req_semi;
 } parser_t;
@@ -32,10 +32,21 @@ node_t *parser_file(parser_t *p);
 node_t *parser_statement(parser_t *p);
 node_t *parser_parenthesized_statement(parser_t *p);
 
-node_t *parser_expression(parser_t *p, int precedence);
-node_t *parser_primary_expression(parser_t *p);
-node_t *parser_unary_expression(parser_t *p);
+node_t *parser_expression(parser_t *p);
+node_t *_parser_binary_expression(parser_t *p, int precedence);
+node_t *_parser_expression(parser_t *p, int precedence);
+
+node_t *parser_sign_expression(parser_t *p);
+node_t *parser_pre_incdec_expression(parser_t *p);
+node_t *parser_post_incdec_expression(parser_t *p);
+node_t *parser_not_expression(parser_t *p);
+node_t *parser_subscript_expression(parser_t *p);
+node_t *parser_deref_expression(parser_t *p);
+node_t *parser_addr_expression(parser_t *p);
+node_t *parser_cast_expression(parser_t *p);
 node_t *parser_call_expression(parser_t *p);
+
+node_t *parser_primary_expression(parser_t *p);
 
 node_t *parser_if(parser_t *p);
 

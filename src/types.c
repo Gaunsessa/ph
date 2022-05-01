@@ -48,8 +48,17 @@ bool type_is_indexable(type_t *t) {
    return t->type == TYPE_ARRAY;
 }
 
+type_t *type_deref_ref(type_t *t) {
+   return t != NULL && t->type == TYPE_TYPE_REF ? type_deref_ref(t->ref) : t;
+}
+
 // True = equal, False = not equal
 bool type_cmp(type_t *t1, type_t *t2) {
+   if (t1 == NULL || t2 == NULL) return false;
+
+   if (t1->type == TYPE_TYPE_REF) t1 = type_deref_ref(t1);
+   if (t2->type == TYPE_TYPE_REF) t2 = type_deref_ref(t2);
+
    if (!(t1->type == TYPE_ALIAS || t2->type == TYPE_ALIAS) && t1->type != t2->type) 
       return false;
 
@@ -91,7 +100,7 @@ bool type_cmp(type_t *t1, type_t *t2) {
          }
 
          return true;
-      default: eprint("Unreachable Statement!");
+      default: eprint("Unreachable Statement!", t1->type);
    }
 }
 

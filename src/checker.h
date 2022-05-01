@@ -34,47 +34,47 @@ typedef struct checker_t {
 } checker_t;
 
 bool checker_check(node_t *AST);
+void checker_check_start(node_t *node, checker_t *ckr);
+void checker_check_end(node_t *node, checker_t *ckr);
 
-// NODE(NONE)                                                                                                                 \
-// NODE(EMPTY)                                                                                                                \
-
-// NODE(DATA_TYPE, type_t *, type)                                                                                            \
-
-// NODE(BREAK)                                                                                                                \
-// NODE(CONTINUE)                                                                                                             
-
-type_t *checker_file(checker_t *ckr, node_t *file);
-
-type_t *checker_statement(checker_t *ckr, node_t *stmt);
-
-type_t *checker_block(checker_t *ckr, node_t *block);
-
-type_t *checker_expression(checker_t *ckr, node_t *expr);
-type_t *checker_binary_expression(checker_t *ckr, node_t *expr);
-type_t *checker_unary_expression(checker_t *ckr, node_t *expr);
-type_t *checker_call_expression(checker_t *ckr, node_t *expr);
-
-type_t *checker_literal(checker_t *ckr, node_t *lit);
-
-type_t *checker_identifier(checker_t *ckr, node_t *ident);
-
-type_t *checker_variable_declaration(checker_t *ckr, node_t *vard);
-type_t *checker_function_declaration(checker_t *ckr, node_t *funcd);
-
-type_t *checker_if(checker_t *ckr, node_t *ifstmt);
-type_t *checker_for(checker_t *ckr, node_t *forstmt);
-
-type_t *checker_return(checker_t *ckr, node_t *ret);
-
-type_t *checker_alias(checker_t *ckr, node_t *alias);
-
-// type_t *checker_reslove_type(checker_t *ckr, type_t *type);
-bool checker_can_reslove_type(checker_t *ckr, type_t *type);
-type_t *checker_reslove_type(checker_t *ckr, type_t *type);
 type_t *checker_get_type(checker_t *ckr, char *ident);
+type_t *checker_reslove_type(checker_t *ckr, type_t *type);
 
-// type_t *checker_variable_declartion_type(checker_t *ckr, node_t *vard);
+// Check
+bool checker_check_check(checker_t *ckr, node_t *node);
 
-// type_t *checker_infer_stmt_type(checker_t *ckr, node_t *stmt);
+bool checker_check_file(checker_t *ckr, node_t *file);
+
+bool checker_check_block(checker_t *ckr, node_t *block);
+bool checker_check_block_end(checker_t *ckr, node_t *block);
+
+bool checker_check_func_decl(checker_t *ckr, node_t *funcd);
+bool checker_check_func_decl_end(checker_t *ckr, node_t *funcd);
+
+bool checker_check_binexpr(checker_t *ckr, node_t *expr);
+bool checker_check_uryexpr(checker_t *ckr, node_t *expr);
+bool checker_check_callexpr(checker_t *ckr, node_t *expr);
+bool checker_check_identifier(checker_t *ckr, node_t *ident);
+bool checker_check_literal(checker_t *ckr, node_t *lit);
+
+bool checker_check_data_type(checker_t *ckr, node_t *dtype);
+bool checker_check_var_decl(checker_t *ckr, node_t *vard);
+bool checker_check_if(checker_t *ckr, node_t *stmt);
+bool checker_check_for(checker_t *ckr, node_t *stmt);
+bool checker_check_break(checker_t *ckr, node_t *brk);
+bool checker_check_continue(checker_t *ckr, node_t *cnt);
+bool checker_check_return(checker_t *ckr, node_t *retn);
+
+// Infer
+type_t *checker_infer_expression(checker_t *ckr, node_t *expr);
+type_t *checker_infer_binexpr(checker_t *ckr, node_t *expr);
+type_t *checker_infer_uryexpr(checker_t *ckr, node_t *expr);
+type_t *checker_infer_callexpr(checker_t *ckr, node_t *expr);
+type_t *checker_infer_callexpr_funct(checker_t *ckr, node_t *expr);
+type_t *checker_infer_literal(checker_t *ckr, node_t *lit);
+type_t *checker_infer_identifier(checker_t *ckr, node_t *ident);
+
+type_t *checker_infer_var_decl(checker_t *ckr, node_t *vard);
+type_t *checker_infer_alias(checker_t *ckr, node_t *alias);
 
 #endif

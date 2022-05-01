@@ -32,12 +32,12 @@
       TYPE(VOID, "void", "void")    \
       TYPE(STRING, "str", "string") \
       TYPE(FUNCTION, "", "")        \
+      TYPE(TYPE_, "Type", "type")   \
 
 typedef enum BASE_TYPE {
 #define TYPE(ident, ...) BASE_##ident,
    BASE_TYPES
 #undef TYPE
-   _BASE_COUNT_,
 } BASE_TYPE;
 
 typedef enum TYPE_TYPE {
@@ -45,6 +45,8 @@ typedef enum TYPE_TYPE {
    TYPE_INFER,
    TYPE_BASE,
    TYPE_ALIAS,
+   TYPE_TYPE_REF,
+   TYPE_UNTYPED,
    TYPE_PTR,
    TYPE_ARRAY,
    TYPE_FUNCTION,
@@ -61,6 +63,16 @@ typedef struct type_t {
       // Base
       struct {
          BASE_TYPE base;
+      };
+
+      // TypeRef
+      struct {
+         struct type_t *ref;
+      };
+
+      // Untyped
+      struct {
+         struct type_t *uninfer;
       };
 
       // Function
@@ -105,6 +117,8 @@ bool type_is_base(type_t *t);
 bool type_is_numeric(type_t *t);
 bool type_is_ptr(type_t *t);
 bool type_is_indexable(type_t *t);
+
+type_t *type_deref_ref(type_t *t);
 
 bool type_cmp(type_t *t1, type_t *t2);
 

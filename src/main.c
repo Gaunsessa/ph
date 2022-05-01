@@ -75,5 +75,5 @@ int main(int argc, char **argv) {
    type_module_init();
    lexer_module_init();
 
-   comple_file("tests/test.ph", true, false);
+   comple_file("tests/test.ph", false, false);
 }

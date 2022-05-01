@@ -9,18 +9,23 @@
    Statement*
       : Expression
       | VariableDeclaration
-      | FunctionDeclaration
       | Block
       | If
       | Return
       ;
-
+   
+   (Returns Value)
    Expression*
       : Literal
       | Identifier
       | BinaryExpression
       | UnaryExpression
-      | CallExpression
+      | Alias
+      | FunctionDeclaration
+      ;
+
+   Alias
+      : 'alias' Type
       ;
 
    If
@@ -66,14 +71,49 @@
       : Expression '+'|'-'|'*'|'/' ('=') Expression
       ;
 
-   UnaryExpression
-      : Identifier '++'|'--'
-      | '++'|'--' Identifier
+   UnaryExpression*
+      : SignExpression
+      | CallExpression
+      | IncDecExpression
+      | NotExpression
+      | SubscriptExpression
+      | DerefExpression
+      | AddrExpression
+      | CastExpression
       ;
 
    CallExpression
       : Identifier ('!') '(' Expression(,) ')'
       ; 
+
+   NotExpression
+      : '!'|'~' Expression
+      ;
+
+   SignExpression
+      : '+'|'-' Expression
+      ;
+
+   IncDecExpression
+      : Identifier '++'|'--'
+      | '++'|'--' Identifier
+      ;
+
+   SubscriptExpression
+      : Identifier '[' Expression ']'
+      ;
+
+   DerefExpression
+      : Expression '^'
+      ;
+
+   AddrExpression
+      : '&' Expression
+      ;
+
+   CastExpression
+      : '(' Type ')' Expression
+      ;
 
    VariableDeclaration
       : Identifiers(,) ':' Types(,)
@@ -116,6 +156,8 @@ node_t *parser_parse(char *str) {
    inner->lexer = lexer_new(str, strlen(str));
    inner->lookaheads[0] = lexer_get_next_token(inner->lexer);
    inner->lookaheads[1] = lexer_get_next_token(inner->lexer);
+   inner->lookaheads[2] = lexer_get_next_token(inner->lexer);
+   inner->lookaheads[3] = lexer_get_next_token(inner->lexer);
    inner->req_semi = true;
 
    node_t *ast = parser_file(inner);
@@ -181,36 +223,31 @@ SWITCHEND:
 node_t *parser_statement(parser_t *p) {
    switch (lookahead(0).type) {
       case TOKEN_LEFT_PARENTHESES:
-         return parser_parenthesized_statement(p);
       case TOKEN_STRING:
-      case TOKEN_NUMBER:
-      // case TOKEN_PLUS_PLUS:
-      // case TOKEN_MINUS_MINUS:
-         return parser_expression(p, 0);
+      case TOKEN_AND:
+      case TOKEN_PLUS:
+      case TOKEN_MINUS:
+      case TOKEN_PLUS_PLUS:
+      case TOKEN_MINUS_MINUS:
+      case TOKEN_BANG:
+      case TOKEN_TILDE:
+      case TOKEN_NUMBER: return parser_expression(p);
       case TOKEN_UNDERSCORE:
       case TOKEN_IDENTIFIER:
          switch (lookahead(1).type) {
             case TOKEN_COLON: return parser_variable_declaration(p);
             case TOKEN_COMMA: return parser_multi_variable_declaration(p);
-            default:          return parser_expression(p, 0);
+            default:          return parser_expression(p);
          }
-      case TOKEN_LEFT_BRACE:
-         return parser_block(p);
-      case TOKEN_IF:
-         return parser_if(p);
-      case TOKEN_FOR:
-         return parser_for(p);
-      case TOKEN_BREAK:
-         return parser_break(p);
-      case TOKEN_CONTINUE:
-         return parser_continue(p);
-      case TOKEN_RETURN:
-         return parser_return(p);
-      case TOKEN_ALIAS:
-         return parser_alias(p);
+      case TOKEN_LEFT_BRACE: return parser_block(p);
+      case TOKEN_IF: return parser_if(p);
+      case TOKEN_FOR: return parser_for(p);
+      case TOKEN_BREAK: return parser_break(p);
+      case TOKEN_CONTINUE: return parser_continue(p);
+      case TOKEN_RETURN: return parser_return(p);
+      case TOKEN_ALIAS: return parser_alias(p);
       case TOKEN_SEMI_COLON:
-      case TOKEN_NEWLINE:
-         return node_init(NODE_EMPTY);
+      case TOKEN_NEWLINE: return node_init(NODE_EMPTY);
       default: error_token(p->lexer, lookahead(0), "Error: Unexpected Token!");
    }
 }
@@ -224,7 +261,7 @@ node_t *parser_parenthesized_statement(parser_t *p) {
 
    switch (p->lexer->buf[p->lexer->cursor + i + 1]) {
       case ':': return parser_function_declaration(p);
-      default: return parser_expression(p, 0);
+      default: return _parser_binary_expression(p, 0);
    }
 }
 
@@ -232,25 +269,42 @@ node_t *parser_parenthesized_statement(parser_t *p) {
    EXPRESSION 
    ---------- */
 
+node_t *parser_expression(parser_t *p) {
+   switch (lookahead(0).type) {
+      case TOKEN_LEFT_PARENTHESES: return parser_parenthesized_statement(p);
+      case TOKEN_STRING:
+      case TOKEN_NUMBER:
+      case TOKEN_AND:
+      case TOKEN_PLUS:
+      case TOKEN_MINUS:
+      case TOKEN_PLUS_PLUS:
+      case TOKEN_MINUS_MINUS:
+      case TOKEN_BANG:
+      case TOKEN_TILDE:
+      case TOKEN_UNDERSCORE:
+      case TOKEN_IDENTIFIER: return _parser_binary_expression(p, 0);
+      case TOKEN_ALIAS: return parser_alias(p);
+      case TOKEN_SEMI_COLON:
+      case TOKEN_NEWLINE: return node_init(NODE_EMPTY);
+      default: error_token(p->lexer, lookahead(0), "Error: Unexpected Token!");
+   }
+}
+
 #define _binary_expression(precedence, ...)                                 \
    ({                                                                       \
       case precedence:                                                      \
-         expr = parser_expression(p, precedence + 1);                       \
+         expr = _parser_binary_expression(p, precedence + 1);               \
          while (M_COMPARE(lookahead(0).type, __VA_ARGS__)) {                \
             expr = node_init(NODE_BINARY_EXPRESSION, .BINARY_EXPRESSION = { \
                parser_eat(p, __VA_ARGS__).type,                             \
                expr,                                                        \
-               parser_expression(p, precedence + 1)                         \
+               _parser_binary_expression(p, precedence + 1)                 \
             });                                                             \
          }                                                                  \
          break;                                                             \
    })                                                                       \
 
-node_t *parser_expression(parser_t *p, int precedence) {
-   // if (M_COMPARE(lookahead(0).type, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS) || 
-   //    M_COMPARE(lookahead(1).type, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS))
-   //    return parser_unary_expression(p);
-
+node_t *_parser_binary_expression(parser_t *p, int precedence) {
    node_t *expr = NULL;
 
    switch (precedence) {
@@ -268,8 +322,106 @@ node_t *parser_expression(parser_t *p, int precedence) {
       _binary_expression(8, TOKEN_LEFT_SHIFT, TOKEN_RIGHT_SHIFT);
       _binary_expression(9, TOKEN_PLUS, TOKEN_MINUS);
       _binary_expression(10, TOKEN_ASTERISK, TOKEN_FORWARD_SLASH, TOKEN_MOD);
-      default: expr = parser_primary_expression(p);
+      default: expr = parser_addr_expression(p);
    }
+
+   return expr;
+}
+
+node_t *parser_addr_expression(parser_t *p) {
+   if (lookahead(0).type == TOKEN_AND) {
+      parser_eat(p, TOKEN_AND);
+
+      return node_init(NODE_ADDR_EXPRESSION, .ADDR_EXPRESSION = { parser_addr_expression(p) });
+   } else return parser_deref_expression(p);
+}
+
+node_t *parser_deref_expression(parser_t *p) {
+   node_t *expr = parser_cast_expression(p);
+
+   while (lookahead(0).type == TOKEN_CARET) {
+      parser_eat(p, TOKEN_CARET);
+
+      expr = node_init(NODE_DEREF_EXPRESSION, .DEREF_EXPRESSION = { expr });
+   }
+
+   return expr;
+}
+
+node_t *parser_cast_expression(parser_t *p) {
+   if (lookahead(0).type == TOKEN_LEFT_PARENTHESES && 
+       lookahead(1).type == TOKEN_IDENTIFIER && 
+       lookahead(2).type == TOKEN_RIGHT_PARENTHESES && 
+       M_COMPARE(lookahead(3).type, TOKEN_IDENTIFIER, TOKEN_STRING, TOKEN_NUMBER, TOKEN_LEFT_PARENTHESES, TOKEN_PLUS, TOKEN_MINUS, TOKEN_BANG, TOKEN_TILDE)) {
+      parser_eat(p, TOKEN_LEFT_PARENTHESES);
+
+      node_t *type = parser_type(p);
+
+      parser_eat(p, TOKEN_RIGHT_PARENTHESES);
+
+      return node_init(NODE_CAST_EXPRESSION, .CAST_EXPRESSION = { type, parser_cast_expression(p) });
+   } else return parser_not_expression(p);
+}
+
+node_t *parser_not_expression(parser_t *p) {
+   if (M_COMPARE(lookahead(0).type, TOKEN_BANG, TOKEN_TILDE))
+      return node_init(NODE_NOT_EXPRESSION, .NOT_EXPRESSION = { parser_eat(p, TOKEN_BANG, TOKEN_TILDE).type, parser_not_expression(p) });
+   else return parser_sign_expression(p);
+}
+
+node_t *parser_sign_expression(parser_t *p) {
+   if (M_COMPARE(lookahead(0).type, TOKEN_PLUS, TOKEN_MINUS))
+      return node_init(NODE_SIGN_EXPRESSION, .SIGN_EXPRESSION = { parser_eat(p, TOKEN_PLUS, TOKEN_MINUS).type, parser_sign_expression(p) });
+   else return parser_pre_incdec_expression(p);
+}
+
+node_t *parser_pre_incdec_expression(parser_t *p) {
+   if (M_COMPARE(lookahead(0).type, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS))
+      return node_init(NODE_INCDEC_EXPRESSION, .INCDEC_EXPRESSION = { parser_eat(p, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS).type, parser_pre_incdec_expression(p), true });
+   else return parser_subscript_expression(p);
+}
+
+node_t *parser_subscript_expression(parser_t *p) {
+   node_t *expr = parser_call_expression(p);
+
+   while (lookahead(0).type == TOKEN_LEFT_BRACKET) {
+      parser_eat(p, TOKEN_LEFT_BRACKET);
+
+      expr = node_init(NODE_SUBSCRIPT_EXPRESSION, .SUBSCRIPT_EXPRESSION = { expr, parser_expression(p) });
+
+      parser_eat(p, TOKEN_RIGHT_BRACKET);
+   }
+
+   return expr;
+}
+
+node_t *parser_call_expression(parser_t *p) {
+   node_t *expr = parser_post_incdec_expression(p);
+
+   while (lookahead(0).type == TOKEN_LEFT_PARENTHESES) {
+      expr = node_init(NODE_CALL_EXPRESSION, .CALL_EXPRESSION = { expr, dy_init(node_t *) });
+
+      if (lookahead(0).type == TOKEN_BANG) {
+         parser_eat(p, TOKEN_BANG);
+
+         expr->CALL_EXPRESSION.curried = true;
+      }
+
+      parser_eat(p, TOKEN_LEFT_PARENTHESES);
+
+      expr->CALL_EXPRESSION.args = parser_sep_list_func(p, TOKEN_COMMA, TOKEN_RIGHT_PARENTHESES, (node_t *(*)(parser_t *p))parser_expression, NULL);
+
+      parser_eat(p, TOKEN_RIGHT_PARENTHESES);
+   }
+
+   return expr;
+}
+
+node_t *parser_post_incdec_expression(parser_t *p) {
+   node_t *expr = parser_primary_expression(p);
+
+   while (M_COMPARE(lookahead(0).type, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS))
+      expr = node_init(NODE_INCDEC_EXPRESSION, .INCDEC_EXPRESSION = { parser_eat(p, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS).type, expr, false });
 
    return expr;
 }
@@ -277,49 +429,9 @@ node_t *parser_expression(parser_t *p, int precedence) {
 node_t *parser_primary_expression(parser_t *p) {
    node_t *expr = NULL;
 
-   if (lookahead(0).type == TOKEN_LEFT_PARENTHESES) {
-      parser_eat(p, TOKEN_LEFT_PARENTHESES);
-
-      expr = parser_expression(p, 0);
-
-      parser_eat(p, TOKEN_RIGHT_PARENTHESES);
-   } else if (lookahead(0).type == TOKEN_IDENTIFIER) {
-      if (M_COMPARE(lookahead(1).type, TOKEN_BANG, TOKEN_LEFT_PARENTHESES)) expr = parser_call_expression(p);
-      else expr = parser_identifer(p);
-   } else expr = parser_literal(p);
-
-   return expr;
-}
-
-node_t *parser_unary_expression(parser_t *p) {
-   node_t *ident;
-   TOKEN_TYPE op;
-
    if (lookahead(0).type == TOKEN_IDENTIFIER) {
-      ident = parser_identifer(p);
-      op = parser_eat(p, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS).type;
-   } else {
-      op = parser_eat(p, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS).type;
-      ident = parser_identifer(p);
-   }
-
-   return node_init(NODE_UNARY_EXPRESSION, .UNARY_EXPRESSION = {op, ident});
-}
-
-node_t *parser_call_expression(parser_t *p) {
-   node_t *expr = node_init(NODE_CALL_EXPRESSION, .CALL_EXPRESSION = { parser_identifer(p), dy_init(node_t *) });
-
-   if (lookahead(0).type == TOKEN_BANG) {
-      parser_eat(p, TOKEN_BANG);
-
-      expr->CALL_EXPRESSION.curried = true;
-   }
-
-   parser_eat(p, TOKEN_LEFT_PARENTHESES);
-
-   expr->CALL_EXPRESSION.args = parser_sep_list_func(p, TOKEN_COMMA, TOKEN_RIGHT_PARENTHESES, (node_t *(*)(parser_t *p))parser_expression, NULL);
-
-   parser_eat(p, TOKEN_RIGHT_PARENTHESES);
+      expr = parser_identifer(p);
+   } else expr = parser_literal(p);
 
    return expr;
 }
@@ -333,7 +445,7 @@ node_t *parser_if(parser_t *p) {
 
    parser_eat(p, TOKEN_IF);
 
-   ifstmt->IF.cond     = parser_expression(p, 0);
+   ifstmt->IF.cond     = parser_expression(p);
    ifstmt->IF.truecase = parser_arrow_block(p);
 
    parser_skip_newlines(p);
@@ -387,7 +499,7 @@ node_t *parser_for(parser_t *p) {
          parser_eat(p, TOKEN_SEMI_COLON);
          forstmt->FOR.cond = node_init(NODE_NONE);
       } else {
-         forstmt->FOR.cond = parser_statement(p);
+         forstmt->FOR.cond = parser_expression(p);
          parser_eat(p, TOKEN_SEMI_COLON);
       }
 
@@ -556,7 +668,7 @@ node_t *parser_variable_declaration(parser_t *p) {
       if (M_COMPARE(lookahead(0).type, TOKEN_EQUALS, TOKEN_COLON)) {
          eq = parser_eat(p, TOKEN_EQUALS, TOKEN_COLON);
 
-         dec->VARIABLE_DECLARATION.expr = parser_statement(p);
+         dec->VARIABLE_DECLARATION.expr = parser_expression(p);
       } else dec->VARIABLE_DECLARATION.expr = node_init(NODE_NONE);
    } else {
       if (lookahead(0).type == TOKEN_UNDERSCORE) parser_eat(p, TOKEN_UNDERSCORE);
@@ -565,7 +677,7 @@ node_t *parser_variable_declaration(parser_t *p) {
 
       dec->VARIABLE_DECLARATION.type = parser_infer_type(p);
 
-      dec->VARIABLE_DECLARATION.expr = parser_statement(p);
+      dec->VARIABLE_DECLARATION.expr = parser_expression(p);
    }
 
    dec->VARIABLE_DECLARATION.immutable = eq.type == TOKEN_COLON;
@@ -595,7 +707,7 @@ node_t *parser_multi_variable_declaration(parser_t *p) {
    if (M_COMPARE(lookahead(0).type, TOKEN_EQUALS, TOKEN_COLON)) {
       inmutable = parser_eat(p, TOKEN_EQUALS, TOKEN_COLON).type == TOKEN_COLON;
 
-      exprs = parser_sep_list_func(p, TOKEN_COMMA, TOKEN_NONE, parser_statement, parser_identifer);
+      exprs = parser_sep_list_func(p, TOKEN_COMMA, TOKEN_NONE, parser_expression, parser_identifer);
    }
 
    if ((types != NULL && dy_len(types) != dy_len(idents)) || (exprs != NULL && dy_len(exprs) != dy_len(idents)))
@@ -652,7 +764,7 @@ node_t *parser_alias(parser_t *p) {
 node_t *parser_return(parser_t *p) {
    parser_eat(p, TOKEN_RETURN);
 
-   return node_init(NODE_RETURN, .RETURN = { parser_expression(p, 0) });
+   return node_init(NODE_RETURN, .RETURN = { parser_expression(p) });
 }
 
 /* ----- 
@@ -746,7 +858,9 @@ token_t _parser_eat(parser_t *p, size_t n, ...) {
       if (a == lookahead(0).type) {
          token_t ret = lookahead(0);
          lookahead(0) = lookahead(1);
-         lookahead(1) = lexer_get_next_token(p->lexer);
+         lookahead(1) = lookahead(2);
+         lookahead(2) = lookahead(3);
+         lookahead(3) = lexer_get_next_token(p->lexer);
 
          return ret;
       }

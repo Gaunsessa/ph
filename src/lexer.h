@@ -53,6 +53,7 @@
       TOKEN(CARET, "^")                 \
       TOKEN(AND, "&")                   \
       TOKEN(OR, "|")                    \
+      TOKEN(TILDE, "~")                 \
       TOKEN(LEFT_SHIFT, "<<")           \
       TOKEN(RIGHT_SHIFT, ">>")          \
       TOKEN(CARET_EQUALS, "^=")         \
