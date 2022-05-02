@@ -22,6 +22,7 @@ bool checker_check(node_t *AST) {
    };
 
    ckr->cur_scope = &ckr->scope;
+   ckr->file_scope = &ckr->scope;
    ckr->error = false;
 
    checker_check_start(AST, ckr);
@@ -39,6 +40,7 @@ void checker_check_start(node_t *node, checker_t *ckr) {
       switch (node->type) {
          case NODE_FILE: checker_check_file(check, node); return;
          case NODE_BLOCK: checker_check_block(check, node); return;
+         case NODE_DEREF_EXPRESSION: checker_check_deref(check, node); return;
          case NODE_CALL_EXPRESSION: checker_check_callexpr(check, node); return;
          case NODE_IDENTIFIER: checker_check_identifier(check, node); return;
          case NODE_NUMBER_LITERAL:
@@ -71,20 +73,14 @@ bool checker_check_file(checker_t *ckr, node_t *file) {
 
       switch (stmt->type) {
          case NODE_VARIABLE_DECLARATION:
-            ht_set(ckr->cur_scope->decls, stmt->VARIABLE_DECLARATION.ident->IDENTIFIER.value, checker_infer_var_decl(ckr, stmt));
+            if (ht_exists_sv(ckr->cur_scope->decls, stmt->VARIABLE_DECLARATION.ident->IDENTIFIER.value)) error("Redeclaration of Variable!");
+
+            ht_set_sv(ckr->cur_scope->decls, stmt->VARIABLE_DECLARATION.ident->IDENTIFIER.value, checker_infer_var_decl(ckr, stmt));
             break;
          case NODE_EMPTY: continue;
          default: error("Statment Cant be File Scope!");
       }
    }
-
-   // for (int i = 0; i < dy_len(node->stmts); i++) {
-   //    node_t *stmt = dyi(node->stmts)[i];
-
-   //    if (stmt->type == NODE_VARIABLE_DECLARATION) {
-   //       checker_check_var_decl(ckr, stmt);
-   //    }
-   // }
 
    return true;
 }
@@ -114,6 +110,14 @@ bool checker_check_block_end(checker_t *ckr, node_t *block) {
 
 bool checker_check_binexpr(checker_t *ckr, node_t *expr);
 bool checker_check_uryexpr(checker_t *ckr, node_t *expr);
+
+bool checker_check_deref(checker_t *ckr, node_t *expr) {
+   node_def(expr, DEREF_EXPRESSION);
+
+   if (!type_is_ptr(checker_infer_expression(ckr, node->expr))) error("Cannot Derefrence Non Ptr Type!");
+
+   return true;
+}
 
 bool checker_check_callexpr(checker_t *ckr, node_t *expr) {
    node_def(expr, CALL_EXPRESSION);
@@ -152,7 +156,12 @@ bool checker_check_literal(checker_t *ckr, node_t *lit) {
 bool checker_check_data_type(checker_t *ckr, node_t *dtype) {
    node_def(dtype, DATA_TYPE);
 
-   if (checker_reslove_type(ckr, node->type) == NULL) error("Unknown Type!");
+   type_t *type = checker_reslove_base_type(ckr, node->type);
+   if (type == NULL) error("Unknown Type!");
+
+   if (type->type == TYPE_FUNCTION)
+      for (int i = 0; i < dy_len(type->args); i++)
+         if (checker_reslove_base_type(ckr, dyi(type->args)[i].type) == NULL) error("Unknown Type!");
 
    return true;
 }
@@ -164,12 +173,13 @@ bool checker_check_var_decl(checker_t *ckr, node_t *vard) {
    type_t *type  = checker_reslove_type(ckr, node->type->DATA_TYPE.type);
    if (type == NULL) return false;
 
-   if (ht_exists_sv(ckr->cur_scope->decls, name)) error("Redeclaration of Variable!");
+   if (ckr->cur_scope != ckr->file_scope && ht_exists_sv(ckr->cur_scope->decls, name)) error("Redeclaration of Variable!");
 
    if (node->expr->type == NODE_NONE) goto NO_ERROR;
    else {
       type_t *infer = checker_infer_expression(ckr, node->expr);
       if (infer == NULL) return false;
+      if (infer->type == TYPE_UNTYPED) infer = infer->uninfer;
 
       if (type->type == TYPE_INFER) {
          type = infer;

@@ -28,6 +28,7 @@ typedef struct scope_t {
 typedef struct checker_t {
    scope_t scope;
    scope_t *cur_scope;
+   scope_t *file_scope;
 
    bool error;
    size_t errors;
@@ -39,6 +40,7 @@ void checker_check_end(node_t *node, checker_t *ckr);
 
 type_t *checker_get_type(checker_t *ckr, char *ident);
 type_t *checker_reslove_type(checker_t *ckr, type_t *type);
+type_t *checker_reslove_base_type(checker_t *ckr, type_t *type);
 
 // Check
 bool checker_check_check(checker_t *ckr, node_t *node);
@@ -52,7 +54,8 @@ bool checker_check_func_decl(checker_t *ckr, node_t *funcd);
 bool checker_check_func_decl_end(checker_t *ckr, node_t *funcd);
 
 bool checker_check_binexpr(checker_t *ckr, node_t *expr);
-bool checker_check_uryexpr(checker_t *ckr, node_t *expr);
+// bool checker_check_uryexpr(checker_t *ckr, node_t *expr);
+bool checker_check_deref(checker_t *ckr, node_t *expr);
 bool checker_check_callexpr(checker_t *ckr, node_t *expr);
 bool checker_check_identifier(checker_t *ckr, node_t *ident);
 bool checker_check_literal(checker_t *ckr, node_t *lit);
@@ -68,7 +71,8 @@ bool checker_check_return(checker_t *ckr, node_t *retn);
 // Infer
 type_t *checker_infer_expression(checker_t *ckr, node_t *expr);
 type_t *checker_infer_binexpr(checker_t *ckr, node_t *expr);
-type_t *checker_infer_uryexpr(checker_t *ckr, node_t *expr);
+type_t *checker_infer_derefexpr(checker_t *ckr, node_t *expr);
+type_t *checker_infer_castexpr(checker_t *ckr, node_t *expr);
 type_t *checker_infer_callexpr(checker_t *ckr, node_t *expr);
 type_t *checker_infer_callexpr_funct(checker_t *ckr, node_t *expr);
 type_t *checker_infer_literal(checker_t *ckr, node_t *lit);

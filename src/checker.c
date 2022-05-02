@@ -231,6 +231,21 @@ type_t *checker_reslove_type(checker_t *ckr, type_t *type) {
    return type;
 }
 
+type_t *checker_reslove_base_type(checker_t *ckr, type_t *type) {
+   if (type->type == TYPE_ALIAS) {
+      type = checker_reslove_type(ckr, type);
+      if (type == NULL) return NULL;
+   }
+
+   switch (type->type) {
+      case TYPE_PTR: return checker_reslove_base_type(ckr, type->ptr_base);
+      case TYPE_ARRAY: return checker_reslove_base_type(ckr, type->arr_base);
+      case TYPE_UNTYPED: return checker_reslove_base_type(ckr, type->uninfer);
+
+      default: return type;
+   }
+}
+
 type_t *checker_get_type(checker_t *ckr, char *ident) {
    scope_t *cur = ckr->cur_scope;
 

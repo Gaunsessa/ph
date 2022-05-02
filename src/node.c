@@ -8,19 +8,26 @@ void node_walker(node_t *node, void (*start)(node_t *node), void (*end)(node_t *
    start(node);
 
    // Special Case
-   if (node->type == NODE_VARIABLE_DECLARATION) {
-      node_walker(node->VARIABLE_DECLARATION.expr, start, end);
-      node_walker(node->VARIABLE_DECLARATION.type, start, end);
+   switch (node->type) {
+      case NODE_VARIABLE_DECLARATION:
+         node_walker(node->VARIABLE_DECLARATION.expr, start, end);
+         node_walker(node->VARIABLE_DECLARATION.type, start, end);
 
-      end(node);
+         end(node);
 
-      return;
+         return;
+      case NODE_FUNCTION_DECLARATION:
+         node_walker(node->FUNCTION_DECLARATION.stmt, start, end);
+         end(node);
+
+         return;
+      default: break;
    }
 
 #define _NODE(a, b, c, i, ...)                                                                                    \
    ({                                                                                                             \
-      if (__builtin_types_compatible_p(a, struct node_t *)) node_walker((void *)node->c.b, start, end);           \
-      else if(__builtin_types_compatible_p(a, dynarr_t(struct node_t *))) _walk_arr((void ***)node->c.b);        \
+      if (__builtin_types_compatible_p(a, struct node_t *)) node_walker((void *)*(void **)&node->c.b, start, end);           \
+      else if(__builtin_types_compatible_p(a, dynarr_t(struct node_t *))) _walk_arr((void ***)*(void **)&node->c.b);        \
    });                                                                                                            \
 
 #define NODE(ident, ...) case NODE_##ident: { M_MAP2(_NODE, ident, __VA_ARGS__) } break;

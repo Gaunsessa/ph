@@ -63,19 +63,26 @@ token_t lexer_get_next_token(lexer_t *lexer) {
    }
 
    // Numbers
+   if (curtoken(lexer) == '0' && nextoken(lexer) == 'x') {
+      lexer->cursor += 2;
+
+      return (token_t) { TOKEN_HEX, lexer->line, lexer->cursor, { .num = lexer_hex(lexer) } };
+   }
+
+   if (curtoken(lexer) == '0' && nextoken(lexer) == 'b') {
+      lexer->cursor += 2;
+
+      return (token_t) { TOKEN_NUMBER, lexer->line, lexer->cursor, { .num = lexer_bin(lexer) } };
+   }
+
    if (isdigit(curtoken(lexer))) {
-      size_t num = 0;
-      size_t itr = 0;
+      size_t num = lexer_num(lexer);
 
-      do {
-         num *= 10;
-         num += curtoken(lexer) - '0';
-
-         itr++;
+      if (curtoken(lexer) == '.') {
          lexer->cursor++;
-      } while (isdigit(curtoken(lexer)));
 
-      return (token_t) { TOKEN_NUMBER, lexer->line, lexer->cursor, { .num = num } };
+         return (token_t) { TOKEN_FLOAT, lexer->line, lexer->cursor, { .integer = num, .fraction = lexer_num(lexer) } };
+      } else return (token_t) { TOKEN_NUMBER, lexer->line, lexer->cursor, { .num = num } };
    }
 
    // Strings
@@ -90,6 +97,8 @@ token_t lexer_get_next_token(lexer_t *lexer) {
 
       return token;
    }
+
+   if (curtoken(lexer) == '_' && isalnum(nextoken(lexer))) goto IDENT;
 
    TOKEN_TYPE cur = TOKEN_NONE;
    char key[MAX_KEYWORD_LEN];
@@ -113,6 +122,7 @@ token_t lexer_get_next_token(lexer_t *lexer) {
       return (token_t) { cur, lexer->line, lexer->cursor };
    }
 
+IDENT:
    // Identifier
    if (isalnum(curtoken(lexer)) || (curtoken(lexer) == '_' && isalnum(nextoken(lexer)))) {
       int i = 0;
@@ -131,6 +141,48 @@ token_t lexer_get_next_token(lexer_t *lexer) {
 void lexer_free(lexer_t *lexer) {
    free(lexer->buf);
    free(lexer);
+}
+
+size_t lexer_num(lexer_t *lexer) {
+   size_t num = 0;
+
+   do {
+      num *= 10;
+      num += curtoken(lexer) - '0';
+
+      lexer->cursor++;
+   } while (isdigit(curtoken(lexer)));
+
+   return num;
+}
+
+size_t lexer_hex(lexer_t *lexer) {
+   size_t num = 0;
+
+   for (char inp = curtoken(lexer); isdigit(inp) || (inp >= 'a' && inp <= 'f') || (inp >= 'A' && inp <= 'F');) {
+      num *= 16;
+
+      if (isdigit(inp)) num += inp - '0';
+      else num += inp - ((inp <= 'F') ? 'A' : 'a') + 10;
+
+      lexer->cursor++;
+      inp = curtoken(lexer);
+   }
+
+   return num;
+}
+
+size_t lexer_bin(lexer_t *lexer) {
+   size_t num = 0;
+
+   do {
+      num *= 2;
+      num += curtoken(lexer) - '0';
+
+      lexer->cursor++;
+   } while (curtoken(lexer) == '1' || curtoken(lexer) == '0');
+
+   return num;
 }
 
 void print_token(token_t token) {

@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 
 #include <print.h>
 #include <ht.h>
@@ -19,6 +20,8 @@
       TOKEN(END, "")                    \
       TOKEN(STRING, "")                 \
       TOKEN(NUMBER, "")                 \
+      TOKEN(FLOAT, "")                  \
+      TOKEN(HEX, "")                    \
       TOKEN(IDENTIFIER, "")             \
                                         \
       TOKEN(NEWLINE, "\n")              \
@@ -113,6 +116,12 @@ typedef struct token_t {
       struct {
          size_t num;
       };
+
+      // Float
+      struct {
+         size_t integer;
+         size_t fraction;
+      };
    };
 } token_t;
 
@@ -125,6 +134,10 @@ lexer_t *lexer_new(char *str, size_t str_len);
 
 token_t lexer_get_next_token(lexer_t *lexer);
 bool lexer_has_more_tokens(lexer_t *lexer);
+
+size_t lexer_num(lexer_t *lexer);
+size_t lexer_hex(lexer_t *lexer);
+size_t lexer_bin(lexer_t *lexer);
 
 void lexer_free(lexer_t *lexer);
 

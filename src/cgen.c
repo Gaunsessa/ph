@@ -84,10 +84,26 @@ void cgen_expression(buf_t buf, node_t *expr) {
 
          dy_push(buf, ')');
          break;
+      case NODE_DEREF_EXPRESSION:
+         dy_push(buf, '*');
+
+         cgen_expression(buf, expr->DEREF_EXPRESSION.expr);
+
+         break;
+      case NODE_CAST_EXPRESSION:
+         dy_push(buf, '(');
+
+         cgen_type(buf, expr->CAST_EXPRESSION.type);
+
+         dy_push(buf, ')');
+
+         cgen_expression(buf, expr->CAST_EXPRESSION.expr);
+         break;
       case NODE_IDENTIFIER:
          cgen_identifier(buf, expr);
          break;
       case NODE_NUMBER_LITERAL:
+      case NODE_FLOAT_LITERAL:
       case NODE_STRING_LITERAL:
          cgen_literal(buf, expr);
          break;
@@ -205,7 +221,7 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
 
          cgen_statement(buf, node->expr->FUNCTION_DECLARATION.stmt);
 
-         dy_push(buf, '}');
+         dy_push_str(buf, ";}");
       }
    } else if (node->expr->type == NODE_ALIAS) {
       dy_push_str(buf, "typedef ");
@@ -222,10 +238,13 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
 
       cgen_identifier(buf, node->ident);
 
+      dy_push(buf, '=');
+
       if (node->expr->type != NODE_NONE) {
-         dy_push(buf, '=');
 
          cgen_expression(buf, node->expr);
+      } else {
+         dy_push_str(buf, "{0}");
       }
    }
 }
@@ -276,9 +295,15 @@ void cgen_identifier(buf_t buf, node_t *ident) {
 }
 
 void cgen_literal(buf_t buf, node_t *lit) {
-   ASSERT(lit->type, NODE_NUMBER_LITERAL, NODE_STRING_LITERAL);
+   ASSERT(lit->type, NODE_NUMBER_LITERAL, NODE_FLOAT_LITERAL, NODE_STRING_LITERAL);
 
    switch (lit->type) {
+      case NODE_FLOAT_LITERAL: {
+         char str[snprintf(NULL, 0, "%lu.%lu", lit->FLOAT_LITERAL.integer, lit->FLOAT_LITERAL.fraction) + 1];
+         sprintf(str, "%lu.%lu", lit->FLOAT_LITERAL.integer, lit->FLOAT_LITERAL.fraction);
+
+         dy_push_str(buf, str);
+      } break;
       case NODE_NUMBER_LITERAL: {
          char str[snprintf(NULL, 0, "%lu", lit->NUMBER_LITERAL.value) + 1];
          sprintf(str, "%lu", lit->NUMBER_LITERAL.value);

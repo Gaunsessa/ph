@@ -12,6 +12,9 @@ void type_module_init() {
 #define TYPE(ident, str, cstr) ht_set_sv(BASE_TYPE_STR_VALUES, str, _type_init(TYPE_BASE, .base = BASE_##ident, .name = cstr));
    BASE_TYPES
 #undef TYPE
+
+   BASE_UNTYPED_INT = type_init((type_t) { TYPE_UNTYPED, .uninfer = ht_get(BASE_TYPE_ENUM_VALUES, BASE_INT) });
+   BASE_UNTYPED_FLOAT = type_init((type_t) { TYPE_UNTYPED, .uninfer = ht_get(BASE_TYPE_ENUM_VALUES, BASE_F32) });
 }
 
 type_t *type_init(type_t type) {
@@ -33,11 +36,24 @@ bool type_is_base(type_t *t) {
 }
 
 bool type_is_numeric(type_t *t) {
-   return t->type == TYPE_BASE && M_COMPARE(
+   return (t->type == TYPE_BASE && M_COMPARE(
       t->base, BASE_U8,  BASE_U16, BASE_U32, BASE_U64,
                BASE_I8,  BASE_I32, BASE_I32, BASE_U64,
                BASE_F32, BASE_F64, BASE_INT
-   );
+   )) || (t->type == TYPE_UNTYPED && type_is_numeric(t->uninfer));
+}
+
+bool type_is_integer(type_t *t) {
+   return (t->type == TYPE_BASE && M_COMPARE(
+      t->base, BASE_U8,  BASE_U16, BASE_U32, BASE_U64,
+               BASE_I8,  BASE_I32, BASE_I32, BASE_U64,
+               BASE_INT
+   )) || (t->type == TYPE_UNTYPED && type_is_integer(t->uninfer));
+}
+
+bool type_is_float(type_t *t) {
+   return (t->type == TYPE_BASE && M_COMPARE(t->base, BASE_F32, BASE_F64)) || 
+   (t->type == TYPE_UNTYPED && type_is_float(t->uninfer));
 }
 
 bool type_is_ptr(type_t *t) {
@@ -55,6 +71,12 @@ type_t *type_deref_ref(type_t *t) {
 // True = equal, False = not equal
 bool type_cmp(type_t *t1, type_t *t2) {
    if (t1 == NULL || t2 == NULL) return false;
+
+   if (t1->type == TYPE_UNTYPED || t2->type == TYPE_UNTYPED) {
+      if ((type_is_integer(t1) && type_is_integer(t2)) || ((type_is_float(t1) && type_is_float(t2))))
+         return true;
+      else return false;
+   }
 
    if (t1->type == TYPE_TYPE_REF) t1 = type_deref_ref(t1);
    if (t2->type == TYPE_TYPE_REF) t2 = type_deref_ref(t2);

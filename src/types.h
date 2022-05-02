@@ -101,6 +101,9 @@ typedef struct type_t {
    };
 } type_t;
 
+type_t *BASE_UNTYPED_INT;
+type_t *BASE_UNTYPED_FLOAT;
+
 ht_t(BASE_TYPE, type_t *) BASE_TYPE_ENUM_VALUES;
 ht_t(char *, type_t *) BASE_TYPE_STR_VALUES;
 
@@ -115,6 +118,8 @@ void type_free_all();
 
 bool type_is_base(type_t *t);
 bool type_is_numeric(type_t *t);
+bool type_is_integer(type_t *t);
+bool type_is_float(type_t *t);
 bool type_is_ptr(type_t *t);
 bool type_is_indexable(type_t *t);
 

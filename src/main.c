@@ -41,6 +41,14 @@ void comple_file(const char *path, bool compl, bool pretty) {
    fread(buf, 1, len, f);
    fclose(f);
 
+   // lexer_t *lex = lexer_new(buf, strlen(buf));
+
+   // while (lexer_has_more_tokens(lex)) {
+   //    print_token(lexer_get_next_token(lex));
+   // }
+
+   // return;
+
    node_t *AST = parser_parse(buf);
 
    checker_check(AST);
@@ -71,9 +79,15 @@ void comple_file(const char *path, bool compl, bool pretty) {
    type_free_all();
 }
 
+struct a_t {
+   uint64_t x[5000];
+};
+
 int main(int argc, char **argv) {
    type_module_init();
    lexer_module_init();
 
-   comple_file("tests/test.ph", false, false);
+   comple_file("tests/test.ph", true, false);
+   // print(ceil(log10(99)));u
+   // print(9 / pow(10, ceil(log10(9))));
 }

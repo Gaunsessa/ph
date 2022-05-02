@@ -22,11 +22,10 @@
       NODE(FILE, dynarr_t(struct node_t *), stmts)                                                                               \
       NODE(BLOCK, dynarr_t(struct node_t *), stmts)                                                                              \
       NODE(BINARY_EXPRESSION, TOKEN_TYPE, op, struct node_t *, left, struct node_t *, right)                                     \
-      NODE(UNARY_EXPRESSION, TOKEN_TYPE, op, struct node_t *, ident)                                                             \
       NODE(CALL_EXPRESSION, struct node_t *, func, dynarr_t(struct node_t *), args, bool, curried)                               \
       NODE(SUBSCRIPT_EXPRESSION, struct node_t *, ident, struct node_t *, expr)                                                  \
       NODE(SIGN_EXPRESSION, TOKEN_TYPE, op, struct node_t *, expr)                                                               \
-      NODE(INCDEC_EXPRESSION, TOKEN_TYPE, op, struct node_t *, expr, bool, prefix)                                                \
+      NODE(INCDEC_EXPRESSION, TOKEN_TYPE, op, struct node_t *, expr, bool, prefix)                                               \
       NODE(NOT_EXPRESSION, TOKEN_TYPE, op, struct node_t *, expr)                                                                \
       NODE(DEREF_EXPRESSION, struct node_t *, expr)                                                                              \
       NODE(ADDR_EXPRESSION, struct node_t *, expr)                                                                               \
@@ -34,6 +33,7 @@
       NODE(ALIAS, struct node_t *, type)                                                                                         \
       NODE(IDENTIFIER, char *, value)                                                                                            \
       NODE(NUMBER_LITERAL, size_t, value)                                                                                        \
+      NODE(FLOAT_LITERAL, size_t, integer, size_t, fraction)                                                                     \
       NODE(STRING_LITERAL, char *, span)                                                                                         \
       NODE(DATA_TYPE, type_t *, type)                                                                                            \
       NODE(VARIABLE_DECLARATION, struct node_t *, ident, struct node_t *, type, struct node_t *, expr, bool, immutable)          \

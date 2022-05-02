@@ -131,6 +131,7 @@
 
    Literal*
       : NUMBER
+      | NUMBER '.' NUMBER
       | STRING
       ;
 
@@ -223,7 +224,6 @@ SWITCHEND:
 node_t *parser_statement(parser_t *p) {
    switch (lookahead(0).type) {
       case TOKEN_LEFT_PARENTHESES:
-      case TOKEN_STRING:
       case TOKEN_AND:
       case TOKEN_PLUS:
       case TOKEN_MINUS:
@@ -231,6 +231,9 @@ node_t *parser_statement(parser_t *p) {
       case TOKEN_MINUS_MINUS:
       case TOKEN_BANG:
       case TOKEN_TILDE:
+      case TOKEN_STRING:
+      case TOKEN_FLOAT:
+      case TOKEN_HEX:
       case TOKEN_NUMBER: return parser_expression(p);
       case TOKEN_UNDERSCORE:
       case TOKEN_IDENTIFIER:
@@ -254,7 +257,7 @@ node_t *parser_statement(parser_t *p) {
 
 // This is bad...
 node_t *parser_parenthesized_statement(parser_t *p) {
-   int i = 1;
+   int i = 0;
 
    while (p->lexer->buf[p->lexer->cursor + i] != '(') i--;
    while (p->lexer->buf[p->lexer->cursor + i] != ')') i++;
@@ -273,6 +276,8 @@ node_t *parser_expression(parser_t *p) {
    switch (lookahead(0).type) {
       case TOKEN_LEFT_PARENTHESES: return parser_parenthesized_statement(p);
       case TOKEN_STRING:
+      case TOKEN_FLOAT:
+      case TOKEN_HEX:
       case TOKEN_NUMBER:
       case TOKEN_AND:
       case TOKEN_PLUS:
@@ -352,7 +357,7 @@ node_t *parser_cast_expression(parser_t *p) {
    if (lookahead(0).type == TOKEN_LEFT_PARENTHESES && 
        lookahead(1).type == TOKEN_IDENTIFIER && 
        lookahead(2).type == TOKEN_RIGHT_PARENTHESES && 
-       M_COMPARE(lookahead(3).type, TOKEN_IDENTIFIER, TOKEN_STRING, TOKEN_NUMBER, TOKEN_LEFT_PARENTHESES, TOKEN_PLUS, TOKEN_MINUS, TOKEN_BANG, TOKEN_TILDE)) {
+       M_COMPARE(lookahead(3).type, TOKEN_IDENTIFIER, TOKEN_STRING, TOKEN_NUMBER, TOKEN_FLOAT, TOKEN_HEX, TOKEN_LEFT_PARENTHESES, TOKEN_PLUS, TOKEN_MINUS, TOKEN_BANG, TOKEN_TILDE)) {
       parser_eat(p, TOKEN_LEFT_PARENTHESES);
 
       node_t *type = parser_type(p);
@@ -628,11 +633,13 @@ type_t *parser_function_type(parser_t *p) {
    ------- */
 
 node_t *parser_literal(parser_t *p) {
-   token_t token = parser_eat(p, TOKEN_NUMBER, TOKEN_STRING);
+   token_t token = parser_eat(p, TOKEN_NUMBER, TOKEN_FLOAT, TOKEN_HEX, TOKEN_STRING);
 
    switch (token.type) {
+      case TOKEN_HEX:
       case TOKEN_NUMBER: return node_init(NODE_NUMBER_LITERAL, .NUMBER_LITERAL = { token.num });
       case TOKEN_STRING: return node_init(NODE_STRING_LITERAL, .STRING_LITERAL = { token.str });
+      case TOKEN_FLOAT: return node_init(NODE_FLOAT_LITERAL, .FLOAT_LITERAL = { token.integer, token.fraction });
 
       default: eprint("Error: expected literal!");
    }
