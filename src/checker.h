@@ -34,6 +34,7 @@ typedef struct checker_t {
    size_t errors;
 } checker_t;
 
+// 
 bool checker_check(node_t *AST);
 void checker_check_start(node_t *node, checker_t *ckr);
 void checker_check_end(node_t *node, checker_t *ckr);
@@ -45,28 +46,12 @@ type_t *checker_reslove_base_type(checker_t *ckr, type_t *type);
 // Check
 bool checker_check_check(checker_t *ckr, node_t *node);
 
-bool checker_check_file(checker_t *ckr, node_t *file);
+#define NODE(ident, ...) bool checker_check_##ident(checker_t *ckr, node_t *n);
+   NODE_TYPES
+#undef NODE
 
-bool checker_check_block(checker_t *ckr, node_t *block);
-bool checker_check_block_end(checker_t *ckr, node_t *block);
-
-bool checker_check_func_decl(checker_t *ckr, node_t *funcd);
-bool checker_check_func_decl_end(checker_t *ckr, node_t *funcd);
-
-bool checker_check_binexpr(checker_t *ckr, node_t *expr);
-// bool checker_check_uryexpr(checker_t *ckr, node_t *expr);
-bool checker_check_deref(checker_t *ckr, node_t *expr);
-bool checker_check_callexpr(checker_t *ckr, node_t *expr);
-bool checker_check_identifier(checker_t *ckr, node_t *ident);
-bool checker_check_literal(checker_t *ckr, node_t *lit);
-
-bool checker_check_data_type(checker_t *ckr, node_t *dtype);
-bool checker_check_var_decl(checker_t *ckr, node_t *vard);
-bool checker_check_if(checker_t *ckr, node_t *stmt);
-bool checker_check_for(checker_t *ckr, node_t *stmt);
-bool checker_check_break(checker_t *ckr, node_t *brk);
-bool checker_check_continue(checker_t *ckr, node_t *cnt);
-bool checker_check_return(checker_t *ckr, node_t *retn);
+bool checker_check_BLOCK_end(checker_t *ckr, node_t *block);
+bool checker_check_FUNCTION_DECLARATION_end(checker_t *ckr, node_t *n);
 
 // Infer
 type_t *checker_infer_expression(checker_t *ckr, node_t *expr);

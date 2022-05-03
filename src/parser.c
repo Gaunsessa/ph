@@ -22,10 +22,15 @@
       | UnaryExpression
       | Alias
       | FunctionDeclaration
+      | Struct
       ;
 
    Alias
       : 'alias' Type
+      ;
+
+   Struct
+      : 'struct' '{' (Identifier ':' Type)(,) '}'
       ;
 
    If
@@ -223,6 +228,7 @@ SWITCHEND:
 
 node_t *parser_statement(parser_t *p) {
    switch (lookahead(0).type) {
+      case TOKEN_STRUCT:
       case TOKEN_LEFT_PARENTHESES:
       case TOKEN_AND:
       case TOKEN_PLUS:
@@ -289,6 +295,7 @@ node_t *parser_expression(parser_t *p) {
       case TOKEN_UNDERSCORE:
       case TOKEN_IDENTIFIER: return _parser_binary_expression(p, 0);
       case TOKEN_ALIAS: return parser_alias(p);
+      case TOKEN_STRUCT: return parser_struct(p);
       case TOKEN_SEMI_COLON:
       case TOKEN_NEWLINE: return node_init(NODE_EMPTY);
       default: error_token(p->lexer, lookahead(0), "Error: Unexpected Token!");
@@ -566,6 +573,7 @@ type_t *_parser_type(parser_t *p) {
       case TOKEN_CARET: return parser_ptr_type(p);
       case TOKEN_LEFT_BRACKET: return parser_array_type(p);
       case TOKEN_LEFT_PARENTHESES: return parser_function_type(p);
+      case TOKEN_STRUCT: return parser_struct_type(p);
       default: return parser_base_type(p);
    }
 }
@@ -626,6 +634,42 @@ type_t *parser_function_type(parser_t *p) {
       funct->ret = ht_get(BASE_TYPE_ENUM_VALUES, BASE_VOID);
 
    return funct;
+}
+
+type_t *parser_struct_type(parser_t *p) {
+   parser_eat(p, TOKEN_STRUCT);
+   parser_eat(p, TOKEN_LEFT_BRACE);
+
+   type_t *strt = type_init((type_t) { TYPE_STRUCT, .feilds = dy_init(struct { char *name; struct type_t *type; }) });
+
+   while (lookahead(0).type != TOKEN_RIGHT_BRACE) {
+      parser_skip_newlines(p);
+
+      struct { char *name; struct type_t *type; } feild;
+      feild.name = parser_identifer(p)->IDENTIFIER.value;
+
+      parser_eat(p, TOKEN_COLON);
+
+      feild.type = _parser_type(p);
+
+      dy_push_unsafe(strt->feilds, feild);
+
+      if (lookahead(0).type == TOKEN_SEMI_COLON) parser_eat(p, TOKEN_SEMI_COLON);
+
+      parser_skip_newlines(p);
+   }
+
+   parser_eat(p, TOKEN_RIGHT_BRACE);
+
+   return strt;
+}
+
+/* ------ 
+   STRUCT 
+   ------ */
+
+node_t *parser_struct(parser_t *p) {
+   return node_init(NODE_STRUCT, .STRUCT = { parser_type(p) });
 }
 
 /* ------- 

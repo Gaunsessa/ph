@@ -62,6 +62,9 @@ type_t *parser_base_type(parser_t *p);
 type_t *parser_ptr_type(parser_t *p);
 type_t *parser_array_type(parser_t *p);
 type_t *parser_function_type(parser_t *p);
+type_t *parser_struct_type(parser_t *p);
+
+node_t *parser_struct(parser_t *p);
 
 node_t *parser_literal(parser_t *p);
 

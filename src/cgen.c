@@ -231,6 +231,24 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
       dy_push(buf, ' ');
 
       cgen_identifier(buf, node->ident);
+   } else if (node->expr->type == NODE_STRUCT) {
+      dy_push_str(buf, "typedef struct {");
+
+      for (int i = 0; i < dy_len(node->expr->STRUCT.type->DATA_TYPE.type->feilds); i++) {
+         struct { char *name; type_t *type; } *feild = (void *)&dyi(node->expr->STRUCT.type->DATA_TYPE.type->feilds)[i];
+
+         _cgen_type(buf, feild->type);
+
+         dy_push(buf, ' ');
+
+         dy_push_str(buf, feild->name);
+
+         dy_push(buf, ';');
+      }
+
+      dy_push_str(buf, "} ");
+
+      cgen_identifier(buf, node->ident);
    } else {
       cgen_type(buf, node->type);
 
@@ -283,6 +301,9 @@ void _cgen_type(buf_t buf, type_t *type) {
       case TYPE_PTR:
          _cgen_type(buf, type->ptr_base);
          dy_push(buf, '*');
+         break;
+      case TYPE_STRUCT:
+         dy_push_str(buf, "struct ");
          break;
       default: ERROR("Unimplemented Type!", type->type);
    }

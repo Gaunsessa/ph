@@ -1,72 +1,16 @@
 #include "checker.h"
 
-#define error(msg) ({ printf("%s\n", msg); return false; })
+#define error(msg) ({ ckr->errors++; printf("%s\n", msg); return false; })
 
-#define _se_check(base, ckr, node) ({ bool s = base(ckr, node); bool e = base##_end(ckr, node); s || e; }) 
+bool checker_check_NONE(checker_t *ckr, node_t *n)           { return true; }
+bool checker_check_EMPTY(checker_t *ckr, node_t *n)          { return true; }
+bool checker_check_MULTI(checker_t *ckr, node_t *n)          { return true; }
+bool checker_check_NUMBER_LITERAL(checker_t *ckr, node_t *n) { return true; }
+bool checker_check_FLOAT_LITERAL(checker_t *ckr, node_t *n)  { return true; }
+bool checker_check_STRING_LITERAL(checker_t *ckr, node_t *n) { return true; }
 
-void _check_start(node_t *node) {
-   checker_check_start(node, NULL);
-}
-
-void _check_end(node_t *node) {
-   checker_check_end(node, NULL);
-}
-
-bool checker_check(node_t *AST) {
-   checker_t *ckr = malloc(sizeof(checker_t));
-
-   ckr->scope = (scope_t) {
-      ht_init_sv(type_t *),
-      NULL,
-      NULL,
-   };
-
-   ckr->cur_scope = &ckr->scope;
-   ckr->file_scope = &ckr->scope;
-   ckr->error = false;
-
-   checker_check_start(AST, ckr);
-   checker_check_end(AST, ckr);
-
-   node_walker(AST, _check_start, _check_end);
-
-   return ckr->errors == 0;
-}
-
-void checker_check_start(node_t *node, checker_t *ckr) {
-   static checker_t *check = NULL;
-   if (ckr != NULL) check = ckr;
-   else {
-      switch (node->type) {
-         case NODE_FILE: checker_check_file(check, node); return;
-         case NODE_BLOCK: checker_check_block(check, node); return;
-         case NODE_DEREF_EXPRESSION: checker_check_deref(check, node); return;
-         case NODE_CALL_EXPRESSION: checker_check_callexpr(check, node); return;
-         case NODE_IDENTIFIER: checker_check_identifier(check, node); return;
-         case NODE_NUMBER_LITERAL:
-         case NODE_STRING_LITERAL: checker_check_literal(check, node); return;
-         case NODE_DATA_TYPE: checker_check_data_type(check, node); return;
-         case NODE_VARIABLE_DECLARATION: checker_check_var_decl(check, node); return;
-         case NODE_FUNCTION_DECLARATION: checker_check_func_decl(check, node); return;
-         case NODE_RETURN: checker_check_return(check, node); return;
-      }
-   }
-
-}
-
-void checker_check_end(node_t *node, checker_t *ckr) {
-   static checker_t *check = NULL;
-   if (ckr != NULL) check = ckr;
-   else {
-      switch (node->type) {
-         case NODE_BLOCK: checker_check_block_end(check, node); return;
-         case NODE_FUNCTION_DECLARATION: checker_check_func_decl_end(check, node); return;
-      }
-   }
-}
-
-bool checker_check_file(checker_t *ckr, node_t *file) {
-   node_def(file, FILE);
+bool checker_check_FILE(checker_t *ckr, node_t *n) {
+   node_def(n, FILE);
 
    for (int i = 0; i < dy_len(node->stmts); i++) {
       node_t *stmt = dyi(node->stmts)[i];
@@ -85,7 +29,7 @@ bool checker_check_file(checker_t *ckr, node_t *file) {
    return true;
 }
 
-bool checker_check_block(checker_t *ckr, node_t *block) {
+bool checker_check_BLOCK(checker_t *ckr, node_t *n) {
    scope_t *scope = malloc(sizeof(scope_t));
 
    scope->decls = ht_init_sv(type_t *);
@@ -97,7 +41,7 @@ bool checker_check_block(checker_t *ckr, node_t *block) {
    return true;
 }
 
-bool checker_check_block_end(checker_t *ckr, node_t *block) {
+bool checker_check_BLOCK_end(checker_t *ckr, node_t *n) {
    scope_t *scope = ckr->cur_scope;
 
    ht_free(scope->decls);
@@ -108,21 +52,14 @@ bool checker_check_block_end(checker_t *ckr, node_t *block) {
    return true;
 }
 
-bool checker_check_binexpr(checker_t *ckr, node_t *expr);
-bool checker_check_uryexpr(checker_t *ckr, node_t *expr);
-
-bool checker_check_deref(checker_t *ckr, node_t *expr) {
-   node_def(expr, DEREF_EXPRESSION);
-
-   if (!type_is_ptr(checker_infer_expression(ckr, node->expr))) error("Cannot Derefrence Non Ptr Type!");
-
-   return true;
+bool checker_check_BINARY_EXPRESSION(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
 }
 
-bool checker_check_callexpr(checker_t *ckr, node_t *expr) {
-   node_def(expr, CALL_EXPRESSION);
+bool checker_check_CALL_EXPRESSION(checker_t *ckr, node_t *n) {
+   node_def(n, CALL_EXPRESSION);
 
-   type_t *type = checker_infer_callexpr_funct(ckr, expr);
+   type_t *type = checker_infer_callexpr_funct(ckr, n);
    if (type == NULL) return false;
 
    if (dy_len(type->args) != dy_len(node->args)) 
@@ -138,8 +75,62 @@ bool checker_check_callexpr(checker_t *ckr, node_t *expr) {
    return true;
 }
 
-bool checker_check_identifier(checker_t *ckr, node_t *ident) {
-   node_def(ident, IDENTIFIER);
+bool checker_check_SUBSCRIPT_EXPRESSION(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_SIGN_EXPRESSION(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_INCDEC_EXPRESSION(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_NOT_EXPRESSION(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_DEREF_EXPRESSION(checker_t *ckr, node_t *n) {
+   node_def(n, DEREF_EXPRESSION);
+
+   if (!type_is_ptr(checker_infer_expression(ckr, node->expr))) 
+      error("Cannot Derefrence Non Ptr Type!");
+
+   return true;
+}
+
+bool checker_check_ADDR_EXPRESSION(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_CAST_EXPRESSION(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_ALIAS(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_STRUCT(checker_t *ckr, node_t *n) {
+   node_def(n, STRUCT);
+
+   type_t *type = checker_infer_expression(ckr, node->type);
+
+   for (int i = 0; i < dy_len(type->feilds); i++) {
+      for (int j = i - 1; j >= 0; j--)
+         if (!strcmp(dyi(type->feilds)[i].name, dyi(type->feilds)[j].name))
+            error("Duplicate Name in Struct!");
+
+      type_t *fet = checker_reslove_type(ckr, dyi(type->feilds)[i].type);
+      if (fet == NULL) error("Unknown Type!");
+   }
+
+   return true;
+}
+
+bool checker_check_IDENTIFIER(checker_t *ckr, node_t *n) {
+   node_def(n, IDENTIFIER);
 
    if (checker_get_type(ckr, node->value) == NULL) {
       print(node->value);
@@ -149,12 +140,8 @@ bool checker_check_identifier(checker_t *ckr, node_t *ident) {
    return true;
 }
 
-bool checker_check_literal(checker_t *ckr, node_t *lit) {
-   return true;
-}
-
-bool checker_check_data_type(checker_t *ckr, node_t *dtype) {
-   node_def(dtype, DATA_TYPE);
+bool checker_check_DATA_TYPE(checker_t *ckr, node_t *n) {
+   node_def(n, DATA_TYPE);
 
    type_t *type = checker_reslove_base_type(ckr, node->type);
    if (type == NULL) error("Unknown Type!");
@@ -166,8 +153,8 @@ bool checker_check_data_type(checker_t *ckr, node_t *dtype) {
    return true;
 }
 
-bool checker_check_var_decl(checker_t *ckr, node_t *vard) {
-   node_def(vard, VARIABLE_DECLARATION);
+bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, node_t *n) {
+   node_def(n, VARIABLE_DECLARATION);
 
    char *name    = node->ident->IDENTIFIER.value;
    type_t *type  = checker_reslove_type(ckr, node->type->DATA_TYPE.type);
@@ -197,8 +184,8 @@ NO_ERROR:
    return true;
 }
 
-bool checker_check_func_decl(checker_t *ckr, node_t *funcd) {
-   node_def(funcd, FUNCTION_DECLARATION);
+bool checker_check_FUNCTION_DECLARATION(checker_t *ckr, node_t *n) {
+   node_def(n, FUNCTION_DECLARATION);
 
    type_t *type = node->type->DATA_TYPE.type;
 
@@ -219,7 +206,7 @@ bool checker_check_func_decl(checker_t *ckr, node_t *funcd) {
    return true;
 }
 
-bool checker_check_func_decl_end(checker_t *ckr, node_t *funcd) {
+bool checker_check_FUNCTION_DECLARATION_end(checker_t *ckr, node_t *n) {
    scope_t *scope = ckr->cur_scope;
 
    ht_free(scope->decls);
@@ -230,13 +217,24 @@ bool checker_check_func_decl_end(checker_t *ckr, node_t *funcd) {
    return true;
 }
 
-bool checker_check_if(checker_t *ckr, node_t *stmt);
-bool checker_check_for(checker_t *ckr, node_t *stmt);
-bool checker_check_break(checker_t *ckr, node_t *brk);
-bool checker_check_continue(checker_t *ckr, node_t *cnt);
+bool checker_check_IF(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
 
-bool checker_check_return(checker_t *ckr, node_t *retn) {
-   node_def(retn, RETURN);
+bool checker_check_FOR(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_BREAK(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_CONTINUE(checker_t *ckr, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_RETURN(checker_t *ckr, node_t *n) {
+   node_def(n, RETURN);
 
    if (!type_cmp(ckr->cur_scope->ret, checker_infer_expression(ckr, node->value)))
       error("Invalid Return Type!");

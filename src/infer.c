@@ -11,6 +11,8 @@ type_t *checker_infer_expression(checker_t *ckr, node_t *expr) {
       case NODE_STRING_LITERAL: return checker_infer_literal(ckr, expr);
       case NODE_IDENTIFIER: return checker_infer_identifier(ckr, expr);
       case NODE_FUNCTION_DECLARATION: return expr->FUNCTION_DECLARATION.type->DATA_TYPE.type;
+      case NODE_STRUCT: return checker_infer_expression(ckr, expr->STRUCT.type);
+      case NODE_DATA_TYPE: return expr->DATA_TYPE.type;
       case NODE_ALIAS: return checker_infer_alias(ckr, expr);
 
       default: eprint("Invalid Expression!", expr->type);

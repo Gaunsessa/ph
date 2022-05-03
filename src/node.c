@@ -21,6 +21,10 @@ void node_walker(node_t *node, void (*start)(node_t *node), void (*end)(node_t *
          end(node);
 
          return;
+      case NODE_STRUCT:
+         end(node);
+
+         return;
       default: break;
    }
 

@@ -17,6 +17,8 @@
 #include "print.h"
 #include "util.h"
 
+// TODO: Sometimes im not freeing parser_identifier maybe others aswell
+
 // Todo: 1) Checker & Types
 //          Resolve all types
 //          Errors
@@ -82,6 +84,8 @@ void comple_file(const char *path, bool compl, bool pretty) {
 struct a_t {
    uint64_t x[5000];
 };
+
+#define M_LOWER(name)
 
 int main(int argc, char **argv) {
    type_module_init();

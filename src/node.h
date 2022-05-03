@@ -31,6 +31,7 @@
       NODE(ADDR_EXPRESSION, struct node_t *, expr)                                                                               \
       NODE(CAST_EXPRESSION, struct node_t *, type, struct node_t *, expr)                                                        \
       NODE(ALIAS, struct node_t *, type)                                                                                         \
+      NODE(STRUCT, struct node_t *, type)                                                                                        \
       NODE(IDENTIFIER, char *, value)                                                                                            \
       NODE(NUMBER_LITERAL, size_t, value)                                                                                        \
       NODE(FLOAT_LITERAL, size_t, integer, size_t, fraction)                                                                     \

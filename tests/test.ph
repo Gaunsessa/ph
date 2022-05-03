@@ -1,8 +1,13 @@
 // Hello World
 
-main :: (): int = {
-   y := 3.32
-   x := (int)2 + y
+test :: struct {
+   x: u8
+   y: u32
+}
 
-   return 2
+main :: (): int = {
+   y := 3
+//   x := (int)2 + y
+
+   return y
 }
