@@ -228,6 +228,7 @@ SWITCHEND:
 
 node_t *parser_statement(parser_t *p) {
    switch (lookahead(0).type) {
+      case TOKEN_UNINIT:
       case TOKEN_STRUCT:
       case TOKEN_LEFT_PARENTHESES:
       case TOKEN_AND:
@@ -296,6 +297,7 @@ node_t *parser_expression(parser_t *p) {
       case TOKEN_IDENTIFIER: return _parser_binary_expression(p, 0);
       case TOKEN_ALIAS: return parser_alias(p);
       case TOKEN_STRUCT: return parser_struct(p);
+      case TOKEN_UNINIT: return parser_uninit(p);
       case TOKEN_SEMI_COLON:
       case TOKEN_NEWLINE: return node_init(NODE_EMPTY);
       default: error_token(p->lexer, lookahead(0), "Error: Unexpected Token!");
@@ -362,9 +364,10 @@ node_t *parser_deref_expression(parser_t *p) {
 
 node_t *parser_cast_expression(parser_t *p) {
    if (lookahead(0).type == TOKEN_LEFT_PARENTHESES && 
-       lookahead(1).type == TOKEN_IDENTIFIER && 
+       (lookahead(1).type == TOKEN_CARET ||
+       (lookahead(1).type == TOKEN_IDENTIFIER && 
        lookahead(2).type == TOKEN_RIGHT_PARENTHESES && 
-       M_COMPARE(lookahead(3).type, TOKEN_IDENTIFIER, TOKEN_STRING, TOKEN_NUMBER, TOKEN_FLOAT, TOKEN_HEX, TOKEN_LEFT_PARENTHESES, TOKEN_PLUS, TOKEN_MINUS, TOKEN_BANG, TOKEN_TILDE)) {
+       M_COMPARE(lookahead(3).type, TOKEN_IDENTIFIER, TOKEN_STRING, TOKEN_NUMBER, TOKEN_FLOAT, TOKEN_HEX, TOKEN_LEFT_PARENTHESES, TOKEN_PLUS, TOKEN_MINUS, TOKEN_BANG, TOKEN_TILDE, TOKEN_CARET)))) {
       parser_eat(p, TOKEN_LEFT_PARENTHESES);
 
       node_t *type = parser_type(p);
@@ -390,7 +393,23 @@ node_t *parser_sign_expression(parser_t *p) {
 node_t *parser_pre_incdec_expression(parser_t *p) {
    if (M_COMPARE(lookahead(0).type, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS))
       return node_init(NODE_INCDEC_EXPRESSION, .INCDEC_EXPRESSION = { parser_eat(p, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS).type, parser_pre_incdec_expression(p), true });
-   else return parser_subscript_expression(p);
+   else return parser_access_expression(p);
+}
+
+node_t *parser_access_expression(parser_t *p) {
+   node_t *expr = parser_subscript_expression(p);
+
+   while (lookahead(0).type == TOKEN_DOT) {
+      parser_eat(p, TOKEN_DOT);
+
+      expr = node_init(NODE_ACCESS_EXPRESSION, .ACCESS_EXPRESSION = {
+         expr,
+         parser_identifer(p)->IDENTIFIER.value,
+         false
+      });
+   }
+
+   return expr;
 }
 
 node_t *parser_subscript_expression(parser_t *p) {
@@ -441,7 +460,13 @@ node_t *parser_post_incdec_expression(parser_t *p) {
 node_t *parser_primary_expression(parser_t *p) {
    node_t *expr = NULL;
 
-   if (lookahead(0).type == TOKEN_IDENTIFIER) {
+   if (lookahead(0).type == TOKEN_LEFT_PARENTHESES) {
+      parser_eat(p, TOKEN_LEFT_PARENTHESES);
+
+      expr = parser_expression(p);
+
+      parser_eat(p, TOKEN_RIGHT_PARENTHESES);
+   } else if (lookahead(0).type == TOKEN_IDENTIFIER) {
       expr = parser_identifer(p);
    } else expr = parser_literal(p);
 
@@ -670,6 +695,16 @@ type_t *parser_struct_type(parser_t *p) {
 
 node_t *parser_struct(parser_t *p) {
    return node_init(NODE_STRUCT, .STRUCT = { parser_type(p) });
+}
+
+/* ------ 
+   UNINIT 
+   ------ */
+
+node_t *parser_uninit(parser_t *p) {
+   parser_eat(p, TOKEN_UNINIT);
+
+   return node_init(NODE_UNINIT);
 }
 
 /* ------- 

@@ -8,6 +8,8 @@ bool checker_check_MULTI(checker_t *ckr, node_t *n)          { return true; }
 bool checker_check_NUMBER_LITERAL(checker_t *ckr, node_t *n) { return true; }
 bool checker_check_FLOAT_LITERAL(checker_t *ckr, node_t *n)  { return true; }
 bool checker_check_STRING_LITERAL(checker_t *ckr, node_t *n) { return true; }
+bool checker_check_ALIAS(checker_t *ckr, node_t *n)          { return true; }
+bool checker_check_UNINIT(checker_t *ckr, node_t *n)         { return true; }
 
 bool checker_check_FILE(checker_t *ckr, node_t *n) {
    node_def(n, FILE);
@@ -53,7 +55,23 @@ bool checker_check_BLOCK_end(checker_t *ckr, node_t *n) {
 }
 
 bool checker_check_BINARY_EXPRESSION(checker_t *ckr, node_t *n) {
-   ERROR("UNIMPLEMENTED!");
+   node_def(n, BINARY_EXPRESSION);
+
+   type_t *left  = checker_infer_expression(ckr, node->left);
+   type_t *right = checker_infer_expression(ckr, node->right);
+
+   switch (node->op) {
+      case TOKEN_EQUALS_EQUALS:
+      case TOKEN_NOT_EQUALS:
+      case TOKEN_AND_AND:
+      case TOKEN_OR_OR:
+      case TOKEN_GREATER_THAN:
+      case TOKEN_LESS_THAN:
+         return true;
+      default: return true;
+   }
+
+   return true;
 }
 
 bool checker_check_CALL_EXPRESSION(checker_t *ckr, node_t *n) {
@@ -69,7 +87,7 @@ bool checker_check_CALL_EXPRESSION(checker_t *ckr, node_t *n) {
       type_t *argt = checker_infer_expression(ckr, dyi(node->args)[i]);
       type_t *typt = checker_reslove_type(ckr, dyi(type->args)[i].type);
 
-      if (!type_cmp(typt, argt)) error("Invalid Argument Type!");
+      if (!type_cmp(ckr, typt, argt)) error("Invalid Argument Type!");
    }
 
    return true;
@@ -101,15 +119,23 @@ bool checker_check_DEREF_EXPRESSION(checker_t *ckr, node_t *n) {
 }
 
 bool checker_check_ADDR_EXPRESSION(checker_t *ckr, node_t *n) {
-   ERROR("UNIMPLEMENTED!");
+   // ERROR("UNIMPLEMENTED!");
+   // TODO:
+
+   return true;
 }
 
 bool checker_check_CAST_EXPRESSION(checker_t *ckr, node_t *n) {
-   ERROR("UNIMPLEMENTED!");
+   // ERROR("UNIMPLEMENTED!");
 }
 
-bool checker_check_ALIAS(checker_t *ckr, node_t *n) {
-   ERROR("UNIMPLEMENTED!");
+bool checker_check_ACCESS_EXPRESSION(checker_t *ckr, node_t *n) {
+   node_def(n, ACCESS_EXPRESSION);
+
+   if (checker_infer_expression(ckr, node->expr)->type == TYPE_PTR) 
+      n->ACCESS_EXPRESSION.ptr = true;
+
+   return true;
 }
 
 bool checker_check_STRUCT(checker_t *ckr, node_t *n) {
@@ -162,7 +188,7 @@ bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, node_t *n) {
 
    if (ckr->cur_scope != ckr->file_scope && ht_exists_sv(ckr->cur_scope->decls, name)) error("Redeclaration of Variable!");
 
-   if (node->expr->type == NODE_NONE) goto NO_ERROR;
+   if (node->expr->type == NODE_NONE || node->expr->type == NODE_UNINIT) goto NO_ERROR;
    else {
       type_t *infer = checker_infer_expression(ckr, node->expr);
       if (infer == NULL) return false;
@@ -175,7 +201,7 @@ bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, node_t *n) {
          goto NO_ERROR;
       }
 
-      if (!type_cmp(type, infer)) error("Variable Declaration Types do Not Match!");
+      if (!type_cmp(ckr, type, infer)) error("Variable Declaration Types do Not Match!");
    }
 
 NO_ERROR:
@@ -218,7 +244,13 @@ bool checker_check_FUNCTION_DECLARATION_end(checker_t *ckr, node_t *n) {
 }
 
 bool checker_check_IF(checker_t *ckr, node_t *n) {
-   ERROR("UNIMPLEMENTED!");
+   node_def(n, IF);
+
+   type_t *type = checker_infer_expression(ckr, node->cond);
+
+   if (type->type == TYPE_BASE && type->base == BASE_BOOL)
+      return true;
+   else error("If condition must be bool!");
 }
 
 bool checker_check_FOR(checker_t *ckr, node_t *n) {
@@ -236,7 +268,7 @@ bool checker_check_CONTINUE(checker_t *ckr, node_t *n) {
 bool checker_check_RETURN(checker_t *ckr, node_t *n) {
    node_def(n, RETURN);
 
-   if (!type_cmp(ckr->cur_scope->ret, checker_infer_expression(ckr, node->value)))
+   if (!type_cmp(ckr, ckr->cur_scope->ret, checker_infer_expression(ckr, node->value)))
       error("Invalid Return Type!");
 
    return true;

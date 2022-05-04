@@ -1,13 +1,21 @@
 // Hello World
 
-test :: struct {
-   x: u8
-   y: u32
+puts :: (str: ^u8): int = ---
+
+vec2 :: struct {
+   x: f32
+   y: f32
 }
 
 main :: (): int = {
-   y := 3
-//   x := (int)2 + y
+   puts((^u8)"ham")
 
-   return y
+   inner: vec2
+   a: ^vec2 = &inner
+   a.x = 32.0
+   a.y = 32.0
+
+   x := a.x + 32
+
+   return (int)x
 }

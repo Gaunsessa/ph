@@ -56,6 +56,8 @@ bool checker_check_FUNCTION_DECLARATION_end(checker_t *ckr, node_t *n);
 // Infer
 type_t *checker_infer_expression(checker_t *ckr, node_t *expr);
 type_t *checker_infer_binexpr(checker_t *ckr, node_t *expr);
+type_t *checker_infer_accessexpr(checker_t *ckr, node_t *expr);
+type_t *checker_infer_addrexpr(checker_t *ckr, node_t *expr);
 type_t *checker_infer_derefexpr(checker_t *ckr, node_t *expr);
 type_t *checker_infer_castexpr(checker_t *ckr, node_t *expr);
 type_t *checker_infer_callexpr(checker_t *ckr, node_t *expr);

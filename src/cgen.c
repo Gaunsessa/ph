@@ -16,8 +16,9 @@ char *cgen_generate(node_t *AST) {
 }
 
 void cgen_file(buf_t buf, node_t *file) {
-   dy_push_str(buf, "#include <stdio.h>\n");
-   dy_push_str(buf, "#include <stdlib.h>\n");
+   // dy_push_str(buf, "#include <stdio.h>\n");
+   // dy_push_str(buf, "#include <stdlib.h>\n");
+   dy_push_str(buf, "#include <stdint.h>\n");
 
    for (int i = 0; i < dy_len(file->FILE.stmts); i++) {
       node_t *stmt = dyi(file->FILE.stmts)[i];
@@ -84,6 +85,12 @@ void cgen_expression(buf_t buf, node_t *expr) {
 
          dy_push(buf, ')');
          break;
+      case NODE_ADDR_EXPRESSION:
+         dy_push(buf, '&');
+
+         cgen_expression(buf, expr->ADDR_EXPRESSION.expr);
+
+         break;
       case NODE_DEREF_EXPRESSION:
          dy_push(buf, '*');
 
@@ -98,6 +105,9 @@ void cgen_expression(buf_t buf, node_t *expr) {
          dy_push(buf, ')');
 
          cgen_expression(buf, expr->CAST_EXPRESSION.expr);
+         break;
+      case NODE_ACCESS_EXPRESSION:
+         cgen_access(buf, expr);
          break;
       case NODE_IDENTIFIER:
          cgen_identifier(buf, expr);
@@ -188,6 +198,16 @@ void cgen_return(buf_t buf, node_t *ret) {
    cgen_expression(buf, node->value);
 }
 
+void cgen_access(buf_t buf, node_t *acc) {
+   node_def(acc, ACCESS_EXPRESSION);
+
+   cgen_expression(buf, node->expr);
+
+   dy_push_str(buf, node->ptr ? "->" : ".");
+
+   dy_push_str(buf, node->member);
+}
+
 void cgen_variable_declaration(buf_t buf, node_t *vard) {
    node_def(vard, VARIABLE_DECLARATION);
 
@@ -214,14 +234,16 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
 
       dy_push(buf, ')');
 
-      if (node->expr->FUNCTION_DECLARATION.stmt->type == NODE_BLOCK)
-         cgen_block(buf, node->expr->FUNCTION_DECLARATION.stmt);
-      else {
-         dy_push(buf, '{');
+      if (node->expr->FUNCTION_DECLARATION.stmt->type != NODE_UNINIT) {
+         if (node->expr->FUNCTION_DECLARATION.stmt->type == NODE_BLOCK)
+            cgen_block(buf, node->expr->FUNCTION_DECLARATION.stmt);
+         else {
+            dy_push(buf, '{');
 
-         cgen_statement(buf, node->expr->FUNCTION_DECLARATION.stmt);
+            cgen_statement(buf, node->expr->FUNCTION_DECLARATION.stmt);
 
-         dy_push_str(buf, ";}");
+            dy_push_str(buf, ";}");
+         }
       }
    } else if (node->expr->type == NODE_ALIAS) {
       dy_push_str(buf, "typedef ");
@@ -256,13 +278,14 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
 
       cgen_identifier(buf, node->ident);
 
-      dy_push(buf, '=');
+      if (node->expr->type != NODE_UNINIT) {
+         dy_push(buf, '=');
 
-      if (node->expr->type != NODE_NONE) {
-
-         cgen_expression(buf, node->expr);
-      } else {
-         dy_push_str(buf, "{0}");
+         if (node->expr->type != NODE_NONE) {
+            cgen_expression(buf, node->expr);
+         } else {
+            dy_push_str(buf, "{0}");
+         }
       }
    }
 }

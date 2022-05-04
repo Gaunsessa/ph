@@ -30,6 +30,7 @@
       NODE(DEREF_EXPRESSION, struct node_t *, expr)                                                                              \
       NODE(ADDR_EXPRESSION, struct node_t *, expr)                                                                               \
       NODE(CAST_EXPRESSION, struct node_t *, type, struct node_t *, expr)                                                        \
+      NODE(ACCESS_EXPRESSION, struct node_t *, expr, char *, member, bool, ptr)                                                  \
       NODE(ALIAS, struct node_t *, type)                                                                                         \
       NODE(STRUCT, struct node_t *, type)                                                                                        \
       NODE(IDENTIFIER, char *, value)                                                                                            \
@@ -39,6 +40,7 @@
       NODE(DATA_TYPE, type_t *, type)                                                                                            \
       NODE(VARIABLE_DECLARATION, struct node_t *, ident, struct node_t *, type, struct node_t *, expr, bool, immutable)          \
       NODE(FUNCTION_DECLARATION, struct node_t *, type, struct node_t *, stmt)                                                   \
+      NODE(UNINIT)                                                                                                               \
       NODE(IF, struct node_t *, cond, struct node_t *, truecase, struct node_t *, falsecase)                                     \
       NODE(FOR, struct node_t *, init, struct node_t *, cond, struct node_t *, post, struct node_t *, stmt)                      \
       NODE(BREAK)                                                                                                                \

@@ -74,6 +74,8 @@
       TOKEN(COLON, ":")                 \
       TOKEN(EQUALS, "=")                \
       TOKEN(ARROW, "->")                \
+      TOKEN(DOT, ".")                   \
+      TOKEN(UNINIT, "---")              \
                                         \
       TOKEN(IF, "if")                   \
       TOKEN(ELSE, "else")               \
