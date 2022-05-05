@@ -65,7 +65,8 @@ typedef struct ht_const_t {
 #define ht_exists_vs(ht, k) (_ht_get((ht_inner_t *)(ht), (__typeof__(k)[1]) { (k) }) != NULL)
 #define ht_exists_vv(ht, k) (_ht_get((ht_inner_t *)(ht), (__typeof__(k)[1]) { (k) }) != NULL)
 
-#define ht_free(ht) _ht_free((void *)ht)
+#define ht_free(ht) _ht_free((void *)ht, NULL)
+#define ht_free_func(ht, func) _ht_free((void *)ht, func)
 
 static inline int ht_hash(ht_inner_t *ht, void *key) {
    uint8_t *d = key;
@@ -163,20 +164,21 @@ static inline void *_ht_init(size_t key_size, size_t value_size, ht_const_t *cda
    return inner;
 }
 
-static inline void _ht_free_bucket(ht_entry_t *bucket) {
+static inline void _ht_free_bucket(ht_inner_t *ht, ht_entry_t *bucket, void (*func)(void *)) {
    if (bucket == NULL) return;
 
    ht_entry_t *next = bucket->next;
 
+   if (func != NULL) func(bucket->data + _ht_size(ht->key_size, bucket->data));
    free(bucket->data);
    free(bucket);
 
-   _ht_free_bucket(next);
+   _ht_free_bucket(ht, next, func);
 }
 
-static inline void _ht_free(ht_inner_t *ht) {
+static inline void _ht_free(ht_inner_t *ht, void (*func)(void *)) {
    for (int i = 0; i < _ht_bucket_amt(); i++)
-      _ht_free_bucket(ht->buckets[i]);
+      _ht_free_bucket(ht, ht->buckets[i], func);
 
    free(ht->buckets);
    free(ht);

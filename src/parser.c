@@ -606,7 +606,7 @@ type_t *_parser_type(parser_t *p) {
 type_t *parser_base_type(parser_t *p) {
    char *name = parser_identifer(p)->IDENTIFIER.value;
 
-   return ht_exists_sv(BASE_TYPE_STR_VALUES, name) ? ht_get_sv(BASE_TYPE_STR_VALUES, name) : type_init((type_t) { TYPE_ALIAS, name });
+   return ht_exists_sv(BASE_TYPE_STR_VALUES, name) ? ht_get_sv(BASE_TYPE_STR_VALUES, name) : type_init((type_t) { TYPE_ALIAS, .name = name });
 }
 
 type_t *parser_ptr_type(parser_t *p) {

@@ -12,7 +12,7 @@ bool checker_check(node_t *AST) {
    checker_t *ckr = malloc(sizeof(checker_t));
 
    ckr->scope = (scope_t) {
-      ht_init_sv(type_t *),
+      ht_init_sv(decl_t *),
       NULL,
       NULL,
    };
@@ -59,16 +59,18 @@ type_t *checker_reslove_type(checker_t *ckr, type_t *type) {
    if (type == NULL) return NULL;
 
    if (type->type == TYPE_ALIAS) {
-      type_t *res = checker_get_type(ckr, type->name);
+      decl_t *dec = checker_get_decl(ckr, type->name);
 
-      if (res == NULL) return NULL;
-      else return checker_reslove_type(ckr, res);
+      if (dec == NULL || dec->type == NULL) return NULL;
+      else return checker_reslove_type(ckr, dec->type);
    }
 
    return type;
 }
 
 type_t *checker_reslove_base_type(checker_t *ckr, type_t *type) {
+   if (type == NULL) return NULL;
+
    if (type->type == TYPE_ALIAS) {
       type = checker_reslove_type(ckr, type);
       if (type == NULL) return NULL;
@@ -83,7 +85,7 @@ type_t *checker_reslove_base_type(checker_t *ckr, type_t *type) {
    }
 }
 
-type_t *checker_get_type(checker_t *ckr, char *ident) {
+decl_t *checker_get_decl(checker_t *ckr, char *ident) {
    scope_t *cur = ckr->cur_scope;
 
    while (cur != NULL) {
@@ -94,4 +96,19 @@ type_t *checker_get_type(checker_t *ckr, char *ident) {
    }
 
    return NULL;
+}
+
+void checker_set_decl(checker_t *ckr, char *ident, decl_t decl) {
+   decl_t *dec = malloc(sizeof(decl_t));
+   memcpy(dec, &decl, sizeof(decl_t));
+
+   ht_set_sv(ckr->cur_scope->decls, ident, dec);
+}
+
+bool checker_decl_exists_cur(checker_t *ckr, char *ident) {
+   return ht_exists_sv(ckr->cur_scope->decls, ident);
+}
+
+void free_decl(void *decl) {
+   free(*(decl_t **)decl);
 }

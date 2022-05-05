@@ -20,9 +20,9 @@
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
 
 // Todo: 1) Checker & Types
+//          Type Handler
 //          Resolve all types
 //          Errors
-//       2) Unary Expressions
 //       3) Structs
 //       4) Modules
 //       5) Strings
@@ -87,11 +87,18 @@ struct a_t {
 
 #define M_LOWER(name)
 
+void 😳() {
+   printf("hello\n");
+}
+
 int main(int argc, char **argv) {
    type_module_init();
    lexer_module_init();
 
-   comple_file("tests/test.ph", true, false);
+   😳();
+
+   // comple_file("tests/test.ph", true, false);
+
    // print(ceil(log10(99)));u
    // print(9 / pow(10, ceil(log10(9))));
 }

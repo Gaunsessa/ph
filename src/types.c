@@ -6,11 +6,11 @@ void type_module_init() {
    BASE_TYPE_ENUM_VALUES = ht_init(BASE_TYPE, type_t *);
    BASE_TYPE_STR_VALUES  = ht_init_sv(type_t *);
 
-#define TYPE(ident, str, cstr) ht_set(BASE_TYPE_ENUM_VALUES, BASE_##ident, _type_init(TYPE_BASE, .base = BASE_##ident, .name = cstr));
+#define TYPE(ident, str, cstr) ht_set(BASE_TYPE_ENUM_VALUES, BASE_##ident, _type_init(TYPE_BASE, .base = BASE_##ident));
    BASE_TYPES
 #undef TYPE
 
-#define TYPE(ident, str, cstr) ht_set_sv(BASE_TYPE_STR_VALUES, str, _type_init(TYPE_BASE, .base = BASE_##ident, .name = cstr));
+#define TYPE(ident, str, cstr) ht_set_sv(BASE_TYPE_STR_VALUES, str, _type_init(TYPE_BASE, .base = BASE_##ident));
    BASE_TYPES
 #undef TYPE
 
@@ -65,9 +65,9 @@ bool type_is_indexable(type_t *t) {
    return t->type == TYPE_ARRAY;
 }
 
-type_t *type_deref_ref(type_t *t) {
-   return t != NULL && t->type == TYPE_TYPE_REF ? type_deref_ref(t->ref) : t;
-}
+// type_t *type_deref_ref(type_t *t) {
+//    return t != NULL && t->type == TYPE_TYPE_REF ? type_deref_ref(t->ref) : t;
+// }
 
 // True = equal, False = not equal
 bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
@@ -76,14 +76,16 @@ bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
    if (t1->type == TYPE_ALIAS) t1 = checker_reslove_type(ckr, t1);
    if (t2->type == TYPE_ALIAS) t2 = checker_reslove_type(ckr, t2);
 
+   if (t1 == NULL || t2 == NULL) return false;
+
    if (t1->type == TYPE_UNTYPED || t2->type == TYPE_UNTYPED) {
       if ((type_is_integer(t1) && type_is_integer(t2)) || ((type_is_float(t1) && type_is_float(t2))))
          return true;
       else return false;
    }
 
-   if (t1->type == TYPE_TYPE_REF) t1 = type_deref_ref(t1);
-   if (t2->type == TYPE_TYPE_REF) t2 = type_deref_ref(t2);
+   // if (t1->type == TYPE_TYPE_REF) t1 = type_deref_ref(t1);
+   // if (t2->type == TYPE_TYPE_REF) t2 = type_deref_ref(t2);
 
    if (!(t1->type == TYPE_ALIAS || t2->type == TYPE_ALIAS) && t1->type != t2->type) 
       return false;
@@ -127,6 +129,14 @@ bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
 
          return true;
       default: eprint("Unreachable Statement!", t1->type);
+   }
+}
+
+const char *type_base_cname(type_t *t) {
+   switch (t->base) {
+#define TYPE(ident, str, cstr) case BASE_##ident: return cstr;
+      BASE_TYPES
+#undef TYPE
    }
 }
 

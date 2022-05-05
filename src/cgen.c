@@ -19,6 +19,7 @@ void cgen_file(buf_t buf, node_t *file) {
    // dy_push_str(buf, "#include <stdio.h>\n");
    // dy_push_str(buf, "#include <stdlib.h>\n");
    dy_push_str(buf, "#include <stdint.h>\n");
+   dy_push_str(buf, "#include <stddef.h>\n");
 
    for (int i = 0; i < dy_len(file->FILE.stmts); i++) {
       node_t *stmt = dyi(file->FILE.stmts)[i];
@@ -316,7 +317,7 @@ void _cgen_type(buf_t buf, type_t *type) {
          ERROR("Tried to Generate None Type!");
          break;
       case TYPE_BASE:
-         dy_push_str(buf, type->name);
+         dy_push_str(buf, type_base_cname(type));
          break;
       case TYPE_ALIAS:
          dy_push_str(buf, type->name);
