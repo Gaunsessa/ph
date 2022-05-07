@@ -25,7 +25,7 @@ typedef struct parser_t {
    bool req_semi;
 } parser_t;
 
-node_t *parser_parse(char *str);
+node_t *parser_parse(FILE *f);
 
 node_t *parser_file(parser_t *p);
 

@@ -4,7 +4,7 @@
 void type_module_init() {
    ALLOCATED_TYPES       = dy_init(type_t *);
    BASE_TYPE_ENUM_VALUES = ht_init(BASE_TYPE, type_t *);
-   BASE_TYPE_STR_VALUES  = ht_init_sv(type_t *);
+   BASE_TYPE_STR_VALUES  = ht_init_sv(wchar_t, type_t *);
 
 #define TYPE(ident, str, cstr) ht_set(BASE_TYPE_ENUM_VALUES, BASE_##ident, _type_init(TYPE_BASE, .base = BASE_##ident));
    BASE_TYPES
@@ -94,7 +94,7 @@ bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
       if (t1->name == NULL || t2->name == NULL) 
          return false;
 
-      return !strcmp(t1->name, t2->name);
+      return !wcscmp(t1->name, t2->name);
    }
 
    switch (t1->type) {
@@ -111,7 +111,7 @@ bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
             if (!type_cmp(ckr, dyi(t1->args)[i].type, dyi(t2->args)[i].type))
                return false;
 
-            if (strcmp(dyi(t1->args)[i].name, dyi(t2->args)[i].name) != 0)
+            if (wcscmp(dyi(t1->args)[i].name, dyi(t2->args)[i].name) != 0)
                return false;
          }
 
@@ -123,7 +123,7 @@ bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
             if (!type_cmp(ckr, dyi(t1->feilds)[i].type, dyi(t2->feilds)[i].type))
                return false;
 
-            if (strcmp(dyi(t1->feilds)[i].name, dyi(t2->feilds)[i].name) != 0)
+            if (wcscmp(dyi(t1->feilds)[i].name, dyi(t2->feilds)[i].name) != 0)
                return false;
          }
 
@@ -132,7 +132,7 @@ bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
    }
 }
 
-const char *type_base_cname(type_t *t) {
+const wchar_t *type_base_cname(type_t *t) {
    switch (t->base) {
 #define TYPE(ident, str, cstr) case BASE_##ident: return cstr;
       BASE_TYPES
@@ -143,10 +143,10 @@ const char *type_base_cname(type_t *t) {
 void print_type(type_t *type) {
    switch (type->type) {
       case TYPE_NONE:
-         printf("Type: None | %s\n", type->name);
+         printf("Type: None | %ls\n", type->name);
          break;
       case TYPE_BASE:
-         printf("Type: Base | %s\n", type->name);
+         printf("Type: Base | %ls\n", type_base_cname(type));
          break;
       case TYPE_PTR:
          printf("Type: Ptr | ");
@@ -155,7 +155,7 @@ void print_type(type_t *type) {
       case TYPE_FUNCTION:
          printf("Type: Function | ");
          for (int i = 0; i < dy_len(type->args); i++) {
-            printf("%s: ", dyi(type->args)[i].name);
+            printf("%ls: ", dyi(type->args)[i].name);
 
             print_type(dyi(type->args)[i].type);
 

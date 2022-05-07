@@ -8,18 +8,18 @@ __attribute__((noreturn)) static inline void error_token(lexer_t *lexer, token_t
    print_token(token);
    printf(": %s\n", msg);
 
-   char *pos = lexer->buf + token.pos;
+   // char *pos = lexer->buf + token.pos;
 
-   while (pos != lexer->buf && *pos != '\n') pos--;
+   // while (pos != lexer->buf && *pos != '\n') pos--;
 
-   pos++;
+   // pos++;
 
-   while (pos - lexer->buf < lexer->buf_len && *pos != '\n') {
-      printf("%c", *pos);
-      pos++;
-   }
+   // while (pos - lexer->buf < lexer->buf_len && *pos != '\n') {
+   //    printf("%c", *pos);
+   //    pos++;
+   // }
 
-   printf("\n");
+   // printf("\n");
 
    exit(-1);
 }

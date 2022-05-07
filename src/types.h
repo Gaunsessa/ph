@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <wchar.h>
 
 #include <ht.h>
 #include <dynarr.h>
@@ -46,24 +47,24 @@
 
 */
 
-#define BASE_TYPES                  \
-      TYPE(NONE, "", "")            \
-      TYPE(U8, "u8", "uint8_t")     \
-      TYPE(U16, "u16", "uint16_t")  \
-      TYPE(U32, "u32", "uint32_t")  \
-      TYPE(U64, "u64", "uint64_t")  \
-      TYPE(I8, "i8", "int8_t")      \
-      TYPE(I16, "i16", "int16_t")   \
-      TYPE(I32, "i32", "int32_t")   \
-      TYPE(I64, "i64", "int64_t")   \
-      TYPE(F32, "f32", "float")     \
-      TYPE(F64, "f64", "double")    \
-      TYPE(BOOL, "bool", "bool")    \
-      TYPE(INT, "int", "int")       \
-      TYPE(VOID, "void", "void")    \
-      TYPE(STRING, "str", "str_t") \
-      // TYPE(FUNCTION, "", "")        \
-      // TYPE(TYPE_, "Type", "type")   
+#define BASE_TYPES                    \
+      TYPE(NONE, L"", L"")            \
+      TYPE(U8, L"u8", L"uint8_t")     \
+      TYPE(U16, L"u16", L"uint16_t")  \
+      TYPE(U32, L"u32", L"uint32_t")  \
+      TYPE(U64, L"u64", L"uint64_t")  \
+      TYPE(I8, L"i8", L"int8_t")      \
+      TYPE(I16, L"i16", L"int16_t")   \
+      TYPE(I32, L"i32", L"int32_t")   \
+      TYPE(I64, L"i64", L"int64_t")   \
+      TYPE(F32, L"f32", L"float")     \
+      TYPE(F64, L"f64", L"double")    \
+      TYPE(BOOL, L"bool", L"bool")    \
+      TYPE(INT, L"int", L"int")       \
+      TYPE(VOID, L"void", L"void")    \
+      TYPE(STRING, L"str", L"str_t")  \
+      // TYPE(FUNCTION, L"", L"")        \
+      // TYPE(TYPE_, L"Type", L"type")   
 
 typedef enum BASE_TYPE {
 #define TYPE(ident, ...) BASE_##ident,
@@ -95,7 +96,7 @@ typedef struct type_t {
 
       // Alias
       struct {
-         char *name;
+         wchar_t *name;
       };
 
       // Untyped
@@ -105,13 +106,13 @@ typedef struct type_t {
 
       // Function
       struct {
-         dynarr_t(struct { char *name; struct type_t *type; }) args;
+         dynarr_t(struct { wchar_t *name; struct type_t *type; }) args;
          struct type_t *ret;
       };
 
       // Struct
       struct {
-         dynarr_t(struct { char *name; struct type_t *type; }) feilds;
+         dynarr_t(struct { wchar_t *name; struct type_t *type; }) feilds;
          ht_t(TOKEN_TYPE, struct type_t *) funcs;
       };
 
@@ -143,7 +144,7 @@ type_t *BASE_UNTYPED_INT;
 type_t *BASE_UNTYPED_FLOAT;
 
 ht_t(BASE_TYPE, type_t *) BASE_TYPE_ENUM_VALUES;
-ht_t(char *, type_t *) BASE_TYPE_STR_VALUES;
+ht_t(wchar_t *, type_t *) BASE_TYPE_STR_VALUES;
 
 dynarr_t(type_t *) ALLOCATED_TYPES;
 
@@ -166,7 +167,7 @@ type_t *type_deref_ref(type_t *t);
 struct checker_t;
 bool type_cmp(struct checker_t *ckr, type_t *t1, type_t *t2);
 
-const char *type_base_cname(type_t *t);
+const wchar_t *type_base_cname(type_t *t);
 
 void print_type(type_t *type);
 

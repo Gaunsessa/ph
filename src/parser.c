@@ -156,10 +156,10 @@
    MAIN 
    ---- */
 
-node_t *parser_parse(char *str) {
+node_t *parser_parse(FILE *f) {
    parser_t *inner = calloc(1, sizeof(parser_t));
 
-   inner->lexer = lexer_new(str, strlen(str));
+   inner->lexer = lexer_new(f);
    inner->lookaheads[0] = lexer_get_next_token(inner->lexer);
    inner->lookaheads[1] = lexer_get_next_token(inner->lexer);
    inner->lookaheads[2] = lexer_get_next_token(inner->lexer);
@@ -264,15 +264,19 @@ node_t *parser_statement(parser_t *p) {
 
 // This is bad...
 node_t *parser_parenthesized_statement(parser_t *p) {
-   int i = 0;
+   if (lookahead(1).type == TOKEN_RIGHT_PARENTHESES || lookahead(2).type == TOKEN_COLON) return parser_function_declaration(p);
+   else return _parser_binary_expression(p, 0);
+   // return parser_function_declaration(p);
 
-   while (p->lexer->buf[p->lexer->cursor + i] != '(') i--;
-   while (p->lexer->buf[p->lexer->cursor + i] != ')') i++;
+   // int i = 0;
 
-   switch (p->lexer->buf[p->lexer->cursor + i + 1]) {
-      case ':': return parser_function_declaration(p);
-      default: return _parser_binary_expression(p, 0);
-   }
+   // while (p->lexer->buf[p->lexer->cursor + i] != '(') i--;
+   // while (p->lexer->buf[p->lexer->cursor + i] != ')') i++;
+
+   // switch (p->lexer->buf[p->lexer->cursor + i + 1]) {
+   //    case ':': return parser_function_declaration(p);
+   //    default: return _parser_binary_expression(p, 0);
+   // }
 }
 
 /* ---------- 
@@ -604,7 +608,7 @@ type_t *_parser_type(parser_t *p) {
 }
 
 type_t *parser_base_type(parser_t *p) {
-   char *name = parser_identifer(p)->IDENTIFIER.value;
+   wchar_t *name = parser_identifer(p)->IDENTIFIER.value;
 
    return ht_exists_sv(BASE_TYPE_STR_VALUES, name) ? ht_get_sv(BASE_TYPE_STR_VALUES, name) : type_init((type_t) { TYPE_ALIAS, .name = name });
 }
@@ -632,12 +636,12 @@ type_t *parser_array_type(parser_t *p) {
 type_t *parser_function_type(parser_t *p) {
    type_t *funct = type_init((type_t) { TYPE_FUNCTION });
 
-   funct->args = dy_init(struct { char *name; struct type_t *type; });
+   funct->args = dy_init(struct { wchar_t *name; struct type_t *type; });
 
    parser_eat(p, TOKEN_LEFT_PARENTHESES);
 
    while (lookahead(0).type != TOKEN_RIGHT_PARENTHESES) {
-      struct { char *name; struct type_t *type; } arg;
+      struct { wchar_t *name; struct type_t *type; } arg;
 
       arg.name = parser_identifer(p)->IDENTIFIER.value;
 
@@ -665,12 +669,12 @@ type_t *parser_struct_type(parser_t *p) {
    parser_eat(p, TOKEN_STRUCT);
    parser_eat(p, TOKEN_LEFT_BRACE);
 
-   type_t *strt = type_init((type_t) { TYPE_STRUCT, .feilds = dy_init(struct { char *name; struct type_t *type; }) });
+   type_t *strt = type_init((type_t) { TYPE_STRUCT, .feilds = dy_init(struct { wchar_t *name; struct type_t *type; }) });
 
    while (lookahead(0).type != TOKEN_RIGHT_BRACE) {
       parser_skip_newlines(p);
 
-      struct { char *name; struct type_t *type; } feild;
+      struct { wchar_t *name; struct type_t *type; } feild;
       feild.name = parser_identifer(p)->IDENTIFIER.value;
 
       parser_eat(p, TOKEN_COLON);

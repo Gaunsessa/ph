@@ -16,9 +16,9 @@
 #include "node.h"
 #include "lexer.h"
 
-typedef dynarr_t(char) buf_t;
+typedef dynarr_t(wchar_t) buf_t;
 
-char *cgen_generate(node_t *AST);
+wchar_t *cgen_generate(node_t *AST);
 
 void cgen_file(buf_t buf, node_t *file);
 

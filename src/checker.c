@@ -12,7 +12,7 @@ bool checker_check(node_t *AST) {
    checker_t *ckr = malloc(sizeof(checker_t));
 
    ckr->scope = (scope_t) {
-      ht_init_sv(decl_t *),
+      ht_init_sv(wchar_t, decl_t *),
       NULL,
       NULL,
    };
@@ -85,7 +85,7 @@ type_t *checker_reslove_base_type(checker_t *ckr, type_t *type) {
    }
 }
 
-decl_t *checker_get_decl(checker_t *ckr, char *ident) {
+decl_t *checker_get_decl(checker_t *ckr, wchar_t *ident) {
    scope_t *cur = ckr->cur_scope;
 
    while (cur != NULL) {
@@ -98,14 +98,14 @@ decl_t *checker_get_decl(checker_t *ckr, char *ident) {
    return NULL;
 }
 
-void checker_set_decl(checker_t *ckr, char *ident, decl_t decl) {
+void checker_set_decl(checker_t *ckr, wchar_t *ident, decl_t decl) {
    decl_t *dec = malloc(sizeof(decl_t));
    memcpy(dec, &decl, sizeof(decl_t));
 
    ht_set_sv(ckr->cur_scope->decls, ident, dec);
 }
 
-bool checker_decl_exists_cur(checker_t *ckr, char *ident) {
+bool checker_decl_exists_cur(checker_t *ckr, wchar_t *ident) {
    return ht_exists_sv(ckr->cur_scope->decls, ident);
 }
 

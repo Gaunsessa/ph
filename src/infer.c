@@ -55,7 +55,7 @@ type_t *checker_infer_accessexpr(checker_t *ckr, node_t *expr) {
    if (type == NULL) return NULL;
 
    for (int i = 0; i < dy_len(type->feilds); i++)
-      if (!strcmp(dyi(type->feilds)[i].name, node->member)) 
+      if (!wcscmp(dyi(type->feilds)[i].name, node->member)) 
          return dyi(type->feilds)[i].type;
 
    return NULL;

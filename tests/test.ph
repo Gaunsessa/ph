@@ -1,6 +1,12 @@
-puts :: (str: ^u8): int = ---
-malloc :: (size: u64): ^void = ---
+🍆 :: alias int
 
-main :: (): = {
+😳 :: struct {
+   😳: 🍆
+}
 
+main :: (): 🍆 = {
+   x: 😳
+   x.😳 = 32
+
+   return x.😳
 }

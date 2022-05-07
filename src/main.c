@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <locale.h>
+#include <unistd.h>
 
 #include "cgen.h"
 #include "dynarr.h"
@@ -31,46 +33,59 @@
 //       8) Curried Functions
 
 void comple_file(const char *path, bool compl, bool pretty) {
-   FILE *f = fopen(path, "r");
+   // FILE *f = fopen(path, "r");
 
-   fseek(f, 0, SEEK_END);
-   size_t len = ftell(f);
-   fseek(f, 0, SEEK_SET);
+   // fseek(f, 0, SEEK_END);
+   // size_t len = ftell(f);
+   // fseek(f, 0, SEEK_SET);
 
-   char buf[len + 1];
-   buf[len] = '\0';
+   // char cbuf[len + 4];
+   // wchar_t *buf = (wchar_t *)cbuf;
 
-   fread(buf, 1, len, f);
-   fclose(f);
+   // for (int i = 0; true; i++) {
+   //    buf[i] = fgetwc(f);
 
-   // lexer_t *lex = lexer_new(buf, strlen(buf));
+   //    if (buf[i] == WEOF) {
+   //       buf[i] = 0;
+   //       break;
+   //    }
+   // }
+
+   // for (int i = 0; i < wcslen(buf); i++) {
+   //    printf("%lc\n", buf[i]);
+   // }
+
+   // fclose(f);
+
+   // lexer_t *lex = lexer_new(fopen(path, "r"));
 
    // while (lexer_has_more_tokens(lex)) {
    //    print_token(lexer_get_next_token(lex));
+   //    // sleep(1);
    // }
 
    // return;
 
-   node_t *AST = parser_parse(buf);
+   node_t *AST = parser_parse(fopen(path, "r"));
 
    checker_check(AST);
 
    // printf("%s\n", cgen_generate(AST));
 
    if (compl) {
-      char *code = cgen_generate(AST);
+      wchar_t *code = cgen_generate(AST);
 
       if (pretty) {
          // TODO: pretty print kills quotes
-         char sysbuf[strlen("echo \"\"") + strlen(code) + strlen(" | clang-format") + 1];
+         // wchar_t sysbuf[strlen("echo \"\"") + wcslen(code) + strlen(" | clang-format") + 1];
 
-         strcpy(sysbuf, "echo \'");
-         strcpy(sysbuf + strlen(sysbuf), code);
-         strcpy(sysbuf + strlen(sysbuf), "\' | clang-format");
+         // strcpy(sysbuf, "echo \'");
+         // strcpy(sysbuf + wcslen(sysbuf), code);
+         // strcpy(sysbuf + strlen(sysbuf), "\' | clang-format");
 
-         system(sysbuf);
+         // system(sysbuf);
       } else {
-         printf("%s\n", code);
+         printf("%ls\n", code);
       }
    } else {
       print_node(AST);
@@ -81,23 +96,15 @@ void comple_file(const char *path, bool compl, bool pretty) {
    type_free_all();
 }
 
-struct a_t {
-   uint64_t x[5000];
-};
-
-#define M_LOWER(name)
-
-void 😳() {
-   printf("hello\n");
-}
-
 int main(int argc, char **argv) {
+   setlocale(LC_ALL, "");
+
+   // printf("%ls\n", L"😳");
+
    type_module_init();
    lexer_module_init();
 
-   😳();
-
-   // comple_file("tests/test.ph", true, false);
+   comple_file("tests/test.ph", true, false);
 
    // print(ceil(log10(99)));u
    // print(9 / pow(10, ceil(log10(9))));

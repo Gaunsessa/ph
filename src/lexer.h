@@ -9,88 +9,92 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <wchar.h>
 
 #include <print.h>
 #include <ht.h>
+#include <dynarr.h>
+#include <utf8proc/utf8proc.h>
 
 #include "util.h"
 
-#define TOKEN_TYPES                     \
-      TOKEN(NONE, "")                   \
-      TOKEN(END, "")                    \
-      TOKEN(STRING, "")                 \
-      TOKEN(NUMBER, "")                 \
-      TOKEN(FLOAT, "")                  \
-      TOKEN(HEX, "")                    \
-      TOKEN(IDENTIFIER, "")             \
-                                        \
-      TOKEN(NEWLINE, "\n")              \
-      TOKEN(SEMI_COLON, ";")            \
-      TOKEN(COMMA, ",")                 \
-      TOKEN(BACK_SLASH, "\\")           \
-      TOKEN(UNDERSCORE, "_")            \
-                                        \
-      TOKEN(PLUS, "+")                  \
-      TOKEN(MINUS, "-")                 \
-      TOKEN(ASTERISK, "*")              \
-      TOKEN(FORWARD_SLASH, "/")         \
-      TOKEN(MOD, "%")                   \
-      TOKEN(PLUS_PLUS, "++")            \
-      TOKEN(MINUS_MINUS, "--")          \
-      TOKEN(PLUS_EQUALS, "+=")          \
-      TOKEN(MINUS_EQUALS, "-=")         \
-      TOKEN(ASTERISK_EQUALS, "*=")      \
-      TOKEN(FORWARD_SLASH_EQUALS, "/=") \
-      TOKEN(MOD_EQUALS, "%=")           \
-                                        \
-      TOKEN(BANG, "!")                  \
-      TOKEN(GREATER_THAN, ">")          \
-      TOKEN(LESS_THAN, "<")             \
-      TOKEN(GREATER_THAN_EQUALS, ">=")  \
-      TOKEN(LESS_THAN_EQUALS, "<=")     \
-      TOKEN(EQUALS_EQUALS, "==")        \
-      TOKEN(NOT_EQUALS, "!=")           \
-      TOKEN(OR_OR, "||")                \
-      TOKEN(AND_AND, "&&")              \
-                                        \
-      TOKEN(CARET, "^")                 \
-      TOKEN(AND, "&")                   \
-      TOKEN(OR, "|")                    \
-      TOKEN(TILDE, "~")                 \
-      TOKEN(LEFT_SHIFT, "<<")           \
-      TOKEN(RIGHT_SHIFT, ">>")          \
-      TOKEN(CARET_EQUALS, "^=")         \
-      TOKEN(AND_EQUALS, "&=")           \
-      TOKEN(OR_EQUALS, "|=")            \
-      TOKEN(LEFT_SHIFT_EQUALS, "<<=")   \
-      TOKEN(RIGHT_SHIFT_EQUALS, ">>=")  \
-                                        \
-      TOKEN(LEFT_PARENTHESES, "(")      \
-      TOKEN(RIGHT_PARENTHESES, ")")     \
-      TOKEN(LEFT_BRACE, "{")            \
-      TOKEN(RIGHT_BRACE, "}")           \
-      TOKEN(LEFT_BRACKET, "[")          \
-      TOKEN(RIGHT_BRACKET, "]")         \
-      TOKEN(COLON, ":")                 \
-      TOKEN(EQUALS, "=")                \
-      TOKEN(ARROW, "->")                \
-      TOKEN(DOT, ".")                   \
-      TOKEN(UNINIT, "---")              \
-                                        \
-      TOKEN(IF, "if")                   \
-      TOKEN(ELSE, "else")               \
-      TOKEN(FOR, "for")                 \
-      TOKEN(BREAK, "break")             \
-      TOKEN(CONTINUE, "continue")       \
-      TOKEN(RETURN, "return")           \
-      TOKEN(ALIAS, "alias")             \
-      TOKEN(STRUCT, "struct")           \
+#define TOKEN_TYPES                      \
+      TOKEN(NONE, L"")                   \
+      TOKEN(END, L"")                    \
+      TOKEN(STRING, L"")                 \
+      TOKEN(NUMBER, L"")                 \
+      TOKEN(FLOAT, L"")                  \
+      TOKEN(HEX, L"")                    \
+      TOKEN(IDENTIFIER, L"")             \
+                                         \
+      TOKEN(NEWLINE, L"\n")              \
+      TOKEN(SEMI_COLON, L";")            \
+      TOKEN(COMMA, L",")                 \
+      TOKEN(BACK_SLASH, L"\\")           \
+      TOKEN(UNDERSCORE, L"_")            \
+                                         \
+      TOKEN(PLUS, L"+")                  \
+      TOKEN(MINUS, L"-")                 \
+      TOKEN(ASTERISK, L"*")              \
+      TOKEN(FORWARD_SLASH, L"/")         \
+      TOKEN(MOD, L"%")                   \
+      TOKEN(PLUS_PLUS, L"++")            \
+      TOKEN(MINUS_MINUS, L"--")          \
+      TOKEN(PLUS_EQUALS, L"+=")          \
+      TOKEN(MINUS_EQUALS, L"-=")         \
+      TOKEN(ASTERISK_EQUALS, L"*=")      \
+      TOKEN(FORWARD_SLASH_EQUALS, L"/=") \
+      TOKEN(MOD_EQUALS, L"%=")           \
+                                         \
+      TOKEN(BANG, L"!")                  \
+      TOKEN(GREATER_THAN, L">")          \
+      TOKEN(LESS_THAN, L"<")             \
+      TOKEN(GREATER_THAN_EQUALS, L">=")  \
+      TOKEN(LESS_THAN_EQUALS, L"<=")     \
+      TOKEN(EQUALS_EQUALS, L"==")        \
+      TOKEN(NOT_EQUALS, L"!=")           \
+      TOKEN(OR_OR, L"||")                \
+      TOKEN(AND_AND, L"&&")              \
+                                         \
+      TOKEN(CARET, L"^")                 \
+      TOKEN(AND, L"&")                   \
+      TOKEN(OR, L"|")                    \
+      TOKEN(TILDE, L"~")                 \
+      TOKEN(LEFT_SHIFT, L"<<")           \
+      TOKEN(RIGHT_SHIFT, L">>")          \
+      TOKEN(CARET_EQUALS, L"^=")         \
+      TOKEN(AND_EQUALS, L"&=")           \
+      TOKEN(OR_EQUALS, L"|=")            \
+      TOKEN(LEFT_SHIFT_EQUALS, L"<<=")   \
+      TOKEN(RIGHT_SHIFT_EQUALS, L">>=")  \
+                                         \
+      TOKEN(LEFT_PARENTHESES, L"(")      \
+      TOKEN(RIGHT_PARENTHESES, L")")     \
+      TOKEN(LEFT_BRACE, L"{")            \
+      TOKEN(RIGHT_BRACE, L"}")           \
+      TOKEN(LEFT_BRACKET, L"[")          \
+      TOKEN(RIGHT_BRACKET, L"]")         \
+      TOKEN(COLON, L":")                 \
+      TOKEN(EQUALS, L"=")                \
+      TOKEN(ARROW, L"->")                \
+      TOKEN(DOT, L".")                   \
+      TOKEN(UNINIT, L"---")              \
+                                         \
+      TOKEN(IF, L"if")                   \
+      TOKEN(ELSE, L"else")               \
+      TOKEN(FOR, L"for")                 \
+      TOKEN(BREAK, L"break")             \
+      TOKEN(CONTINUE, L"continue")       \
+      TOKEN(RETURN, L"return")           \
+      TOKEN(ALIAS, L"alias")             \
+      TOKEN(STRUCT, L"struct")           \
 
 const static size_t MAX_KEYWORD_LEN = 32;
 
 typedef struct lexer_t {
-   size_t buf_len;
-   char *buf;
+   FILE *file;
+   wchar_t buf[MAX_KEYWORD_LEN];
+   bool end;
 
    size_t line;
 
@@ -112,7 +116,7 @@ typedef struct token_t {
 
    union {
       // String | Identifier
-      char *str;
+      wchar_t *str;
 
       // Number
       struct {
@@ -127,12 +131,12 @@ typedef struct token_t {
    };
 } token_t;
 
-ht_t(char *, TOKEN_TYPE) TOKEN_IDENTS;
-ht_t(TOKEN_TYPE, char *) TOKEN_STRS;
+ht_t(wchar_t *, TOKEN_TYPE) TOKEN_IDENTS;
+ht_t(TOKEN_TYPE, wchar_t *) TOKEN_STRS;
 
 void lexer_module_init();
 
-lexer_t *lexer_new(char *str, size_t str_len);
+lexer_t *lexer_new(FILE *file);
 
 token_t lexer_get_next_token(lexer_t *lexer);
 bool lexer_has_more_tokens(lexer_t *lexer);

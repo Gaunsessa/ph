@@ -58,7 +58,9 @@
 
 #define unreachable() __builtin_unreachable()
 
-#define dup_str(s, l) ({ char *str = malloc(l + 1); str[l] = '\0'; memcpy(str, s, l); str; })
+// #define dup_str(s, l) ({ wchar_t *_str = malloc(sizeof(wchar_t) * (l + 1)); _str[l] = 0; memcpy(_str, s, l); _str; })
+
+#define dup_mem(p, s) ({ void *_mem_ = malloc(s); memcpy(_mem_, p, s); _mem_; })
 
 #define node_def(n, t) ASSERT(n->type, NODE_##t); __typeof__(n->t) *node = &n->t
 

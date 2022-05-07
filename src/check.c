@@ -42,7 +42,7 @@ bool checker_check_FILE(checker_t *ckr, node_t *n) {
 bool checker_check_BLOCK(checker_t *ckr, node_t *n) {
    scope_t *scope = malloc(sizeof(scope_t));
 
-   scope->decls = ht_init_sv(decl_t *);
+   scope->decls = ht_init_sv(wchar_t, decl_t *);
    scope->parent = ckr->cur_scope;
    scope->ret = ckr->cur_scope->ret;
 
@@ -135,6 +135,7 @@ bool checker_check_ADDR_EXPRESSION(checker_t *ckr, node_t *n) {
 
 bool checker_check_CAST_EXPRESSION(checker_t *ckr, node_t *n) {
    // ERROR("UNIMPLEMENTED!");
+   return true;
 }
 
 bool checker_check_ACCESS_EXPRESSION(checker_t *ckr, node_t *n) {
@@ -156,7 +157,7 @@ bool checker_check_STRUCT(checker_t *ckr, node_t *n) {
 
    for (int i = 0; i < dy_len(type->feilds); i++) {
       for (int j = i - 1; j >= 0; j--)
-         if (!strcmp(dyi(type->feilds)[i].name, dyi(type->feilds)[j].name))
+         if (!wcscmp(dyi(type->feilds)[i].name, dyi(type->feilds)[j].name))
             error("Duplicate Name in Struct!");
 
       type_t *fet = checker_reslove_type(ckr, dyi(type->feilds)[i].type);
@@ -193,8 +194,7 @@ bool checker_check_DATA_TYPE(checker_t *ckr, node_t *n) {
 bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, node_t *n) {
    node_def(n, VARIABLE_DECLARATION);
 
-
-   char *name    = node->ident->IDENTIFIER.value;
+   wchar_t *name    = node->ident->IDENTIFIER.value;
    type_t *type  = checker_reslove_type(ckr, node->type->DATA_TYPE.type);
    if (type == NULL) return false;
 
@@ -224,7 +224,7 @@ bool checker_check_FUNCTION_DECLARATION(checker_t *ckr, node_t *n) {
 
    scope_t *scope = malloc(sizeof(scope_t));
 
-   scope->decls = ht_init_sv(decl_t *);
+   scope->decls = ht_init_sv(wchar_t, decl_t *);
    scope->parent = ckr->cur_scope;
    scope->ret = type->ret;
 

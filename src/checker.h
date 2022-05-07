@@ -26,7 +26,7 @@ typedef struct decl_t {
 } decl_t;
 
 typedef struct scope_t {
-   ht_t(char *, decl_t *) decls;
+   ht_t(wchar_t *, decl_t *) decls;
    type_t *ret;
 
    struct scope_t *parent;
@@ -46,12 +46,12 @@ bool checker_check(node_t *AST);
 void checker_check_start(node_t *node, checker_t *ckr);
 void checker_check_end(node_t *node, checker_t *ckr);
 
-decl_t *checker_get_decl(checker_t *ckr, char *ident);
+decl_t *checker_get_decl(checker_t *ckr, wchar_t *ident);
 type_t *checker_reslove_type(checker_t *ckr, type_t *type);
 type_t *checker_reslove_base_type(checker_t *ckr, type_t *type);
 
-void checker_set_decl(checker_t *ckr, char *ident, decl_t decl);
-bool checker_decl_exists_cur(checker_t *ckr, char *ident);
+void checker_set_decl(checker_t *ckr, wchar_t *ident, decl_t decl);
+bool checker_decl_exists_cur(checker_t *ckr, wchar_t *ident);
 void free_decl(void *decl);
 
 // Check
