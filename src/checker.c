@@ -48,11 +48,39 @@ void checker_check_end(node_t *node, checker_t *ckr) {
    if (ckr != NULL) check = ckr;
    else {
       switch (node->type) {
-         case NODE_BLOCK: checker_check_BLOCK_end(check, node); return;
-         case NODE_FUNCTION_DECLARATION: checker_check_FUNCTION_DECLARATION_end(check, node); return;
+         case NODE_BLOCK:
+         case NODE_FUNCTION_DECLARATION: checker_pop_scope(check);
          default: return;
       }
    }
+}
+
+bool checker_check_node(checker_t *ckr, node_t *node) {
+   switch (node->type) {
+#define NODE(ident, ...) case NODE_##ident: return checker_check_##ident(ckr, node);
+      NODE_TYPES
+#undef NODE
+      default: return true;
+   }
+}
+
+void checker_push_scope(checker_t *ckr) {
+   scope_t *scope = malloc(sizeof(scope_t));
+
+   scope->decls = ht_init_sv(wchar_t, decl_t *);
+   scope->parent = ckr->cur_scope;
+   scope->ret = ckr->cur_scope->ret;
+
+   ckr->cur_scope = scope;
+}
+
+void checker_pop_scope(checker_t *ckr) {
+   scope_t *scope = ckr->cur_scope;
+
+   ht_free_func(scope->decls, free_decl);
+   ckr->cur_scope = scope->parent;
+
+   free(scope);
 }
 
 type_t *checker_reslove_type(checker_t *ckr, type_t *type) {

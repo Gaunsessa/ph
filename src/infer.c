@@ -20,6 +20,7 @@ type_t *checker_infer_expression_no_res(checker_t *ckr, node_t *expr) {
       case NODE_DATA_TYPE: return expr->DATA_TYPE.type;
       case NODE_ADDR_EXPRESSION: return checker_infer_addrexpr(ckr, expr);
       case NODE_ALIAS: return checker_infer_alias(ckr, expr);
+      case NODE_SIGN_EXPRESSION: return checker_infer_expression_no_res(ckr, expr->SIGN_EXPRESSION.expr);
 
       default: eprint("Invalid Expression!", expr->type);
    }
@@ -38,6 +39,8 @@ type_t *checker_infer_binexpr(checker_t *ckr, node_t *expr) {
       case TOKEN_OR_OR:
       case TOKEN_GREATER_THAN:
       case TOKEN_LESS_THAN:
+      case TOKEN_GREATER_THAN_EQUALS:
+      case TOKEN_LESS_THAN_EQUALS:
          return ht_get(BASE_TYPE_ENUM_VALUES, BASE_BOOL);
       default:
          if (left->type == TYPE_UNTYPED) {

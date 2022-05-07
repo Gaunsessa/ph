@@ -854,7 +854,9 @@ node_t *parser_alias(parser_t *p) {
 node_t *parser_return(parser_t *p) {
    parser_eat(p, TOKEN_RETURN);
 
-   return node_init(NODE_RETURN, .RETURN = { parser_expression(p) });
+   return node_init(NODE_RETURN, .RETURN = { 
+      M_COMPARE(lookahead(0).type, TOKEN_NEWLINE, TOKEN_SEMI_COLON) ? node_init(NODE_NONE) : parser_expression(p) 
+   });
 }
 
 /* ----- 

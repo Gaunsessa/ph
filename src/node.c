@@ -12,12 +12,17 @@ void node_walker(node_t *node, void (*start)(node_t *node), void (*end)(node_t *
       case NODE_VARIABLE_DECLARATION:
          node_walker(node->VARIABLE_DECLARATION.expr, start, end);
          node_walker(node->VARIABLE_DECLARATION.type, start, end);
-
          end(node);
 
          return;
       case NODE_FUNCTION_DECLARATION:
          node_walker(node->FUNCTION_DECLARATION.stmt, start, end);
+         end(node);
+
+         return;
+      case NODE_FOR:
+         node_walker(node->FOR.stmt, start, end);
+         node_walker(node->FOR.post, start, end);
          end(node);
 
          return;

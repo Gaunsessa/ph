@@ -115,6 +115,10 @@ void cgen_expression(buf_t buf, node_t *expr) {
       case NODE_IDENTIFIER:
          cgen_identifier(buf, expr);
          break;
+      case NODE_SIGN_EXPRESSION:
+         dy_push_str(buf, ht_get_vs(TOKEN_STRS, expr->SIGN_EXPRESSION.op));
+         cgen_expression(buf, expr->SIGN_EXPRESSION.expr);
+         break;
       case NODE_NUMBER_LITERAL:
       case NODE_FLOAT_LITERAL:
       case NODE_STRING_LITERAL:
@@ -198,7 +202,7 @@ void cgen_return(buf_t buf, node_t *ret) {
 
    dy_push_str(buf, L"return ");
 
-   cgen_expression(buf, node->value);
+   if (node->value->type != NODE_NONE) cgen_expression(buf, node->value);
 }
 
 void cgen_access(buf_t buf, node_t *acc) {

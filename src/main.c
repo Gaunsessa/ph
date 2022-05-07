@@ -106,6 +106,12 @@ int main(int argc, char **argv) {
 
    comple_file("tests/test.ph", true, false);
 
+   // float num = 1;
+
+   // printf("%f\n", ceil(log10(num)));
+   // printf("%f\n", floor(num / pow(10, ceil(log10(num)) - 1)));
+   // printf("%f\n", num - pow(10, ceil(log10(num)) - 1) * floor(num / pow(10, ceil(log10(num)) - 1)));
+
    // print(ceil(log10(99)));u
    // print(9 / pow(10, ceil(log10(9))));
 }

@@ -46,6 +46,11 @@ bool checker_check(node_t *AST);
 void checker_check_start(node_t *node, checker_t *ckr);
 void checker_check_end(node_t *node, checker_t *ckr);
 
+bool checker_check_node(checker_t *ckr, node_t *node);
+
+void checker_push_scope(checker_t *ckr);
+void checker_pop_scope(checker_t *ckr);
+
 decl_t *checker_get_decl(checker_t *ckr, wchar_t *ident);
 type_t *checker_reslove_type(checker_t *ckr, type_t *type);
 type_t *checker_reslove_base_type(checker_t *ckr, type_t *type);
@@ -60,9 +65,6 @@ bool checker_check_check(checker_t *ckr, node_t *node);
 #define NODE(ident, ...) bool checker_check_##ident(checker_t *ckr, node_t *n);
    NODE_TYPES
 #undef NODE
-
-bool checker_check_BLOCK_end(checker_t *ckr, node_t *block);
-bool checker_check_FUNCTION_DECLARATION_end(checker_t *ckr, node_t *n);
 
 // Infer
 type_t *checker_infer_expression(checker_t *ckr, node_t *expr);

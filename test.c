@@ -1,6 +1,3 @@
-//1234567891234567891e3243423432
-x: i32 = 10        // x == i32 && 10
-x := 10        // x == i32 && 10
-x: i32             // x == i32 && 0
-x, y: _, i32 = 10, _ // x == i32 && 10, y == i32 && 0
-x, y := 10, 23    // x == i32 && 10, y == i32 && 23
+#include <stdint.h>
+#include <stddef.h>
+double log10(double x);double ceil(double x);double floor(double x);double pow(double x,double y);int puts(uint8_t* str);int putchar(int char);void putnum(int num){if(((num)>=(0))){(putchar((((int)(floor((((double)(num))/(pow((10.0),((ceil((log10(((double)(num))))))-(1))))))))+(48))));if(((ceil((log10(((double)(num))))))!=(0.0))){(putnum(((int)(((double)(num))-((pow((10.0),((ceil((log10(((double)(num))))))-(1))))*(floor((((double)(num))/(pow((10.0),((ceil((log10(((double)(num))))))-(1))))))))))));};};};int main(){(putnum((32)));(puts(((uint8_t*)("\n"))));return (0);};

@@ -40,24 +40,7 @@ bool checker_check_FILE(checker_t *ckr, node_t *n) {
 }
 
 bool checker_check_BLOCK(checker_t *ckr, node_t *n) {
-   scope_t *scope = malloc(sizeof(scope_t));
-
-   scope->decls = ht_init_sv(wchar_t, decl_t *);
-   scope->parent = ckr->cur_scope;
-   scope->ret = ckr->cur_scope->ret;
-
-   ckr->cur_scope = scope;
-
-   return true;
-}
-
-bool checker_check_BLOCK_end(checker_t *ckr, node_t *n) {
-   scope_t *scope = ckr->cur_scope;
-
-   ht_free_func(scope->decls, free_decl);
-   ckr->cur_scope = scope->parent;
-
-   free(scope);
+   checker_push_scope(ckr);
 
    return true;
 }
@@ -106,7 +89,7 @@ bool checker_check_SUBSCRIPT_EXPRESSION(checker_t *ckr, node_t *n) {
 }
 
 bool checker_check_SIGN_EXPRESSION(checker_t *ckr, node_t *n) {
-   ERROR("UNIMPLEMENTED!");
+   // ERROR("UNIMPLEMENTED!");
 }
 
 bool checker_check_INCDEC_EXPRESSION(checker_t *ckr, node_t *n) {
@@ -171,7 +154,7 @@ bool checker_check_IDENTIFIER(checker_t *ckr, node_t *n) {
    node_def(n, IDENTIFIER);
 
    if (checker_get_decl(ckr, node->value) == NULL) {
-      print(node->value);
+      printf("%ls\n", node->value);
       error("Unknown Identifier!");
    }
 
@@ -195,7 +178,7 @@ bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, node_t *n) {
    node_def(n, VARIABLE_DECLARATION);
 
    wchar_t *name    = node->ident->IDENTIFIER.value;
-   type_t *type  = checker_reslove_type(ckr, node->type->DATA_TYPE.type);
+   type_t *type     = checker_reslove_type(ckr, node->type->DATA_TYPE.type);
    if (type == NULL) return false;
 
    if (ckr->cur_scope != ckr->file_scope && checker_decl_exists_cur(ckr, name)) error("Redeclaration of Variable!");
@@ -222,30 +205,15 @@ bool checker_check_FUNCTION_DECLARATION(checker_t *ckr, node_t *n) {
 
    type_t *type = node->type->DATA_TYPE.type;
 
-   scope_t *scope = malloc(sizeof(scope_t));
+   checker_push_scope(ckr);
 
-   scope->decls = ht_init_sv(wchar_t, decl_t *);
-   scope->parent = ckr->cur_scope;
-   scope->ret = type->ret;
-
-   ckr->cur_scope = scope;
+   ckr->cur_scope->ret = type->ret;
 
    for (int i = 0; i < dy_len(type->args); i++) {
       if (checker_decl_exists_cur(ckr, dyi(type->args)[i].name)) error("Redefiation of Variable!");
 
       checker_set_decl(ckr, dyi(type->args)[i].name, (decl_t) { .type = dyi(type->args)[i].type });
    }
-
-   return true;
-}
-
-bool checker_check_FUNCTION_DECLARATION_end(checker_t *ckr, node_t *n) {
-   scope_t *scope = ckr->cur_scope;
-
-   ht_free_func(scope->decls, free_decl);
-   ckr->cur_scope = scope->parent;
-
-   free(scope);
 
    return true;
 }
@@ -263,7 +231,14 @@ bool checker_check_IF(checker_t *ckr, node_t *n) {
 bool checker_check_FOR(checker_t *ckr, node_t *n) {
    node_def(n, FOR);
 
+   checker_push_scope(ckr);
+
+   // This needs to be checked before
+   checker_check_node(ckr, node->init);
+
    type_t *type = checker_infer_expression(ckr, node->cond);
+
+   // TODO: for needs to make scope
 
    if (type->type == TYPE_BASE && type->base == BASE_BOOL)
       return true;
@@ -281,7 +256,11 @@ bool checker_check_CONTINUE(checker_t *ckr, node_t *n) {
 bool checker_check_RETURN(checker_t *ckr, node_t *n) {
    node_def(n, RETURN);
 
-   if (!type_cmp(ckr, ckr->cur_scope->ret, checker_infer_expression(ckr, node->value)))
+
+   if (node->value->type == NODE_NONE) {
+      if (ckr->cur_scope->ret->type == TYPE_BASE && ckr->cur_scope->ret->base != BASE_VOID)
+         error("Invalid Return Type!");
+   } else if (!type_cmp(ckr, ckr->cur_scope->ret, checker_infer_expression(ckr, node->value)))
       error("Invalid Return Type!");
 
    return true;

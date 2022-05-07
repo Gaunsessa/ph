@@ -1,12 +1,14 @@
-🍆 :: alias int
+// Hello World
 
-😳 :: struct {
-   😳: 🍆
+test :: (x: int): = {}
+
+x :: struct {
+   x: int
 }
 
-main :: (): 🍆 = {
-   x: 😳
-   x.😳 = 32
+main :: (): int = {
+   a: x
+   a.x = 43
 
-   return x.😳
+   return a.x
 }
