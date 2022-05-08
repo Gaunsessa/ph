@@ -83,6 +83,19 @@ void checker_pop_scope(checker_t *ckr) {
    free(scope);
 }
 
+type_t *checker_reslove_typedef(checker_t *ckr, type_t *type) {
+   if (type == NULL) return NULL;
+
+   if (type->type == TYPE_ALIAS) {
+      decl_t *dec = checker_get_decl(ckr, type->name);
+
+      if (dec == NULL || dec->type == NULL || !dec->is_typedef) return NULL;
+      else return checker_reslove_typedef(ckr, dec->type);
+   }
+
+   return type;
+}
+
 type_t *checker_reslove_type(checker_t *ckr, type_t *type) {
    if (type == NULL) return NULL;
 

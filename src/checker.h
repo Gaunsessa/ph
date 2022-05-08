@@ -54,6 +54,7 @@ void checker_pop_scope(checker_t *ckr);
 decl_t *checker_get_decl(checker_t *ckr, wchar_t *ident);
 type_t *checker_reslove_type(checker_t *ckr, type_t *type);
 type_t *checker_reslove_base_type(checker_t *ckr, type_t *type);
+type_t *checker_reslove_typedef(checker_t *ckr, type_t *type);
 
 void checker_set_decl(checker_t *ckr, wchar_t *ident, decl_t decl);
 bool checker_decl_exists_cur(checker_t *ckr, wchar_t *ident);

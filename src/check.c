@@ -164,7 +164,7 @@ bool checker_check_IDENTIFIER(checker_t *ckr, node_t *n) {
 bool checker_check_DATA_TYPE(checker_t *ckr, node_t *n) {
    node_def(n, DATA_TYPE);
 
-   type_t *type = checker_reslove_base_type(ckr, node->type);
+   type_t *type = checker_reslove_base_type(ckr, checker_reslove_typedef(ckr, node->type));
    if (type == NULL) error("Unknown Type!");
 
    if (type->type == TYPE_FUNCTION)
@@ -178,7 +178,7 @@ bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, node_t *n) {
    node_def(n, VARIABLE_DECLARATION);
 
    wchar_t *name    = node->ident->IDENTIFIER.value;
-   type_t *type     = checker_reslove_type(ckr, node->type->DATA_TYPE.type);
+   type_t *type     = checker_reslove_typedef(ckr, node->type->DATA_TYPE.type);
    if (type == NULL) return false;
 
    if (ckr->cur_scope != ckr->file_scope && checker_decl_exists_cur(ckr, name)) error("Redeclaration of Variable!");

@@ -37,6 +37,7 @@ void lexer_inc_cursor(lexer_t *lexer, int amt) {
       gettoken(lexer, i) = lexer_read_wchar(lexer);
 
    lexer->cursor = lexer->cursor + amt % MAX_KEYWORD_LEN;
+   lexer->pos += amt;
 }
 
 lexer_t *lexer_new(FILE *f) {
@@ -61,9 +62,13 @@ token_t lexer_get_next_token(lexer_t *lexer) {
    // Newline
    if (curtoken(lexer) == '\n') {
       lexer_inc_cursor(lexer, 1);
-      lexer->line++;
 
-      return (token_t) { TOKEN_NEWLINE, lexer->line, lexer->cursor };
+      token_t t = (token_t) { TOKEN_NEWLINE, lexer->line, lexer->pos };
+      
+      lexer->line++;
+      lexer->pos = 0;
+
+      return t;
    }
 
    // Whitespace
@@ -77,20 +82,25 @@ token_t lexer_get_next_token(lexer_t *lexer) {
 
       lexer_inc_cursor(lexer, 1);
 
-      return (token_t) { TOKEN_NEWLINE, lexer->line, lexer->cursor };
+      token_t t = (token_t) { TOKEN_NEWLINE, lexer->line, lexer->pos };
+
+      lexer->line++;
+      lexer->pos = 0;
+
+      return t;
    }
 
    // Numbers
    if (curtoken(lexer) == '0' && nextoken(lexer) == 'x') {
       lexer_inc_cursor(lexer, 2);
 
-      return (token_t) { TOKEN_NUMBER, lexer->line, lexer->cursor, { .num = lexer_hex(lexer) } };
+      return (token_t) { TOKEN_NUMBER, lexer->line, lexer->pos, { .num = lexer_hex(lexer) } };
    }
 
    if (curtoken(lexer) == '0' && nextoken(lexer) == 'b') {
       lexer_inc_cursor(lexer, 2);
 
-      return (token_t) { TOKEN_NUMBER, lexer->line, lexer->cursor, { .num = lexer_bin(lexer) } };
+      return (token_t) { TOKEN_NUMBER, lexer->line, lexer->pos, { .num = lexer_bin(lexer) } };
    }
 
    if (isdigit(curtoken(lexer))) {
@@ -99,8 +109,8 @@ token_t lexer_get_next_token(lexer_t *lexer) {
       if (curtoken(lexer) == '.') {
          lexer_inc_cursor(lexer, 1);
 
-         return (token_t) { TOKEN_FLOAT, lexer->line, lexer->cursor, { .integer = num, .fraction = lexer_num(lexer) } };
-      } else return (token_t) { TOKEN_NUMBER, lexer->line, lexer->cursor, { .num = num } };
+         return (token_t) { TOKEN_FLOAT, lexer->line, lexer->pos, { .integer = num, .fraction = lexer_num(lexer) } };
+      } else return (token_t) { TOKEN_NUMBER, lexer->line, lexer->pos, { .num = num } };
    }
 
    // Strings
@@ -121,7 +131,7 @@ token_t lexer_get_next_token(lexer_t *lexer) {
       token_t token = (token_t) { 
          TOKEN_STRING, 
          lexer->line, 
-         lexer->cursor, 
+         lexer->pos, 
          { .str = dup_mem(dyi(str), dy_len(str) * sizeof(wchar_t)) } 
       };
 
@@ -155,7 +165,7 @@ token_t lexer_get_next_token(lexer_t *lexer) {
    if (cur != TOKEN_NONE) {
       lexer_inc_cursor(lexer, key_index);
 
-      return (token_t) { cur, lexer->line, lexer->cursor };
+      return (token_t) { cur, lexer->line, lexer->pos };
    }
 
 IDENT:
@@ -183,7 +193,7 @@ IDENT:
       token_t token = (token_t) { 
          TOKEN_IDENTIFIER, 
          lexer->line, 
-         lexer->cursor, 
+         lexer->pos, 
          { .str = dup_mem(dyi(str), dy_len(str) * sizeof(wchar_t)) } 
       };
 
@@ -278,5 +288,15 @@ void print_token_type(TOKEN_TYPE t) {
 #undef TOKEN
 
       default: return;
+   }
+}
+
+const char *token_type_str(TOKEN_TYPE t) {
+      switch (t) {
+#define TOKEN(type, ident) case TOKEN_##type: return M_STR(type);
+      TOKEN_TYPES
+#undef TOKEN
+
+      default: return "";
    }
 }

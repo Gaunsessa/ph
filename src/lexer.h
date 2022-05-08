@@ -97,6 +97,7 @@ typedef struct lexer_t {
    bool end;
 
    size_t line;
+   size_t pos;
 
    size_t cursor;
 } lexer_t;
@@ -149,5 +150,6 @@ void lexer_free(lexer_t *lexer);
 
 void print_token(token_t token);
 void print_token_type(TOKEN_TYPE t);
+const char *token_type_str(TOKEN_TYPE t);
 
 #endif

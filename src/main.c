@@ -23,8 +23,8 @@
 
 // Todo: 1) Checker & Types
 //          Type Handler
-//          Resolve all types
 //          Errors
+//          Struct funcs (impl and {...})
 //       3) Structs
 //       4) Modules
 //       5) Strings
@@ -63,6 +63,10 @@ void comple_file(const char *path, bool compl, bool pretty) {
    //    print_token(lexer_get_next_token(lex));
    //    // sleep(1);
    // }
+
+   // return;
+
+   // error_print_line(fopen(path, "r"), 1);
 
    // return;
 

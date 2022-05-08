@@ -724,7 +724,7 @@ node_t *parser_literal(parser_t *p) {
       case TOKEN_STRING: return node_init(NODE_STRING_LITERAL, .STRING_LITERAL = { token.str });
       case TOKEN_FLOAT: return node_init(NODE_FLOAT_LITERAL, .FLOAT_LITERAL = { token.integer, token.fraction });
 
-      default: eprint("Error: expected literal!");
+      default: unreachable();
    }
 }
 
@@ -789,7 +789,7 @@ node_t *parser_multi_variable_declaration(parser_t *p) {
    dynarr_t(node_t *) types = NULL;
    dynarr_t(node_t *) exprs = NULL;
 
-   parser_eat(p, TOKEN_COLON);
+   token_t col = parser_eat(p, TOKEN_COLON);
 
    if (!M_COMPARE(lookahead(0).type, TOKEN_EQUALS, TOKEN_COLON))
       types = parser_sep_list_func(p, TOKEN_COMMA, TOKEN_NONE, parser_type, underscore_func);
@@ -801,7 +801,7 @@ node_t *parser_multi_variable_declaration(parser_t *p) {
    }
 
    if ((types != NULL && dy_len(types) != dy_len(idents)) || (exprs != NULL && dy_len(exprs) != dy_len(idents)))
-      eprint("Error: Invalid Variable Declaration!");
+      error_token(p->lexer, col, "Error: Invalid Variable Declaration!");
 
    for (int i = 0; i < dy_len(idents); i++) {
       node_t *dec = node_init(NODE_VARIABLE_DECLARATION);
@@ -961,19 +961,19 @@ token_t _parser_eat(parser_t *p, size_t n, ...) {
    va_end(args);
    va_start(args, n);
 
-   printf("Error: expected: ");
+   // printf("Error: expected: ");
 
-   for (int i = 0; i < n; i++) {
-      if (i != 0) printf(" | ");
+   // for (int i = 0; i < n; i++) {
+   //    if (i != 0) printf(" | ");
 
-      print_token_type(va_arg(args, TOKEN_TYPE));
-   }
+   //    print_token_type(va_arg(args, TOKEN_TYPE));
+   // }
 
-   printf(" got: ");
-   print_token_type(lookahead(0).type);
-   printf("!\n");
+   // printf(" got: ");
+   // print_token_type(lookahead(0).type);
+   // printf("!\n");
 
-   error_token(p->lexer, lookahead(0), "");
+   error_token(p->lexer, lookahead(0), "Error: expected %s got %s", token_type_str(va_arg(args, TOKEN_TYPE)), token_type_str(lookahead(0).type));
 
    exit(-1);
 }
