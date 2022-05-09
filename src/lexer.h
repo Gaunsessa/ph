@@ -88,6 +88,7 @@
       TOKEN(RETURN, L"return")           \
       TOKEN(ALIAS, L"alias")             \
       TOKEN(STRUCT, L"struct")           \
+      TOKEN(IMPL, L"impl")               \
 
 const static size_t MAX_KEYWORD_LEN = 32;
 

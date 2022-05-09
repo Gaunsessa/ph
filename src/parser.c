@@ -3,12 +3,14 @@
 /*
    FILE
       | VariableDeclaration
+      | Impl
       | Empty
       ;
 
    Statement*
       : Expression
       | VariableDeclaration
+      | Impl
       | Block
       | If
       | Return
@@ -31,6 +33,10 @@
 
    Struct
       : 'struct' '{' (Identifier ':' Type)(,) '}'
+      ;
+
+   Impl
+      : 'impl' Type '{' (VariableDeclaration(s)) '}'
       ;
 
    If
@@ -69,7 +75,7 @@
 
    FunctionType
       : '(' ')' ':' (Type)
-      | '(' Identifier ':' Types(,) ')' ':' (Type)
+      | '(' (Identifier(,)) Identifier ':' Types(,) ')' ':' (Type)
       ;
 
    BinaryExpression
@@ -197,6 +203,9 @@ node_t *parser_file(parser_t *p) {
                default: goto DEFAULT;
             }
             goto SWITCHEND;
+         case TOKEN_IMPL:
+            node = parser_impl(p);
+            goto SWITCHEND;
          case TOKEN_SEMI_COLON:
          case TOKEN_NEWLINE:
             node = node_init(NODE_EMPTY);
@@ -205,14 +214,24 @@ DEFAULT:
          default: error_token(p->lexer, lookahead(0), "Error: Unexpected Token!");
       }
 
-SWITCHEND:
+SWITCHEND:; // Why cant I declare things after labels and switches? ;-;
+      dynarr_t(node_t *) scope = file->FILE.stmts;
+
+      // switch (node->type == NODE_MULTI ? dyi(node->MULTI.nodes)[0]->type : node->type) {
+      //    case NODE_NONE:
+      //    case NODE_EMPTY:
+      //    case NODE_VARIABLE_DECLARATION: scope = file->FILE.stmts; break;
+      //    case NODE_IMPL: scope = file->FILE.impls; break;
+      //    default: eprint("Invalid Scope!!!", node->type);
+      // }
+
       if (node->type == NODE_MULTI) {
          for (int i = 0; i < dy_len(node->MULTI.nodes); i++)
-            dy_push(file->FILE.stmts, dyi(node->MULTI.nodes)[i]);
+            dy_push(scope, dyi(node->MULTI.nodes)[i]);
 
          dy_free(node->MULTI.nodes);
          free(node);
-      } else dy_push(file->FILE.stmts, node);
+      } else dy_push(scope, node);
 
       if (M_COMPARE(lookahead(0).type, TOKEN_END, TOKEN_NONE)) break;
 
@@ -264,7 +283,10 @@ node_t *parser_statement(parser_t *p) {
 
 // This is bad...
 node_t *parser_parenthesized_statement(parser_t *p) {
-   if (lookahead(1).type == TOKEN_RIGHT_PARENTHESES || lookahead(2).type == TOKEN_COLON) return parser_function_declaration(p);
+   if (lookahead(1).type == TOKEN_RIGHT_PARENTHESES || 
+       lookahead(2).type == TOKEN_COLON || 
+       (lookahead(1).type == TOKEN_IDENTIFIER && (lookahead(2).type == TOKEN_COMMA || lookahead(3).type == TOKEN_COLON)))
+      return parser_function_declaration(p);
    else return _parser_binary_expression(p, 0);
    // return parser_function_declaration(p);
 
@@ -408,7 +430,7 @@ node_t *parser_access_expression(parser_t *p) {
 
       expr = node_init(NODE_ACCESS_EXPRESSION, .ACCESS_EXPRESSION = {
          expr,
-         parser_identifer(p)->IDENTIFIER.value,
+         M_COMPARE(lookahead(1).type, TOKEN_BANG, TOKEN_LEFT_PARENTHESES) ? parser_call_expression(p) : parser_identifer(p),
          false
       });
    }
@@ -433,7 +455,7 @@ node_t *parser_subscript_expression(parser_t *p) {
 node_t *parser_call_expression(parser_t *p) {
    node_t *expr = parser_post_incdec_expression(p);
 
-   while (lookahead(0).type == TOKEN_LEFT_PARENTHESES) {
+   while (M_COMPARE(lookahead(0).type, TOKEN_BANG, TOKEN_LEFT_PARENTHESES)) {
       expr = node_init(NODE_CALL_EXPRESSION, .CALL_EXPRESSION = { expr, dy_init(node_t *) });
 
       if (lookahead(0).type == TOKEN_BANG) {
@@ -470,7 +492,7 @@ node_t *parser_primary_expression(parser_t *p) {
       expr = parser_expression(p);
 
       parser_eat(p, TOKEN_RIGHT_PARENTHESES);
-   } else if (lookahead(0).type == TOKEN_IDENTIFIER) {
+   } else if (lookahead(0).type == TOKEN_IDENTIFIER && lookahead(1).type != TOKEN_LEFT_BRACE) {
       expr = parser_identifer(p);
    } else expr = parser_literal(p);
 
@@ -640,6 +662,12 @@ type_t *parser_function_type(parser_t *p) {
 
    parser_eat(p, TOKEN_LEFT_PARENTHESES);
 
+   if (lookahead(0).type == TOKEN_IDENTIFIER && lookahead(1).type != TOKEN_COLON) {
+      funct->self.name = parser_identifer(p)->IDENTIFIER.value;
+
+      if (lookahead(0).type == TOKEN_COMMA) parser_eat(p, TOKEN_COMMA);
+   }
+
    while (lookahead(0).type != TOKEN_RIGHT_PARENTHESES) {
       struct { wchar_t *name; struct type_t *type; } arg;
 
@@ -669,7 +697,8 @@ type_t *parser_struct_type(parser_t *p) {
    parser_eat(p, TOKEN_STRUCT);
    parser_eat(p, TOKEN_LEFT_BRACE);
 
-   type_t *strt = type_init((type_t) { TYPE_STRUCT, .feilds = dy_init(struct { wchar_t *name; struct type_t *type; }) });
+   type_t *strt = type_init((type_t) { TYPE_STRUCT, .feilds = dy_init(struct { wchar_t *name; struct type_t *type; }), 
+                                                    .funcs = dy_init(struct { wchar_t *name; struct type_t *type; }) });
 
    while (lookahead(0).type != TOKEN_RIGHT_BRACE) {
       parser_skip_newlines(p);
@@ -701,6 +730,34 @@ node_t *parser_struct(parser_t *p) {
    return node_init(NODE_STRUCT, .STRUCT = { parser_type(p) });
 }
 
+/* ---- 
+   IMPL
+   ---- */
+
+node_t *parser_impl(parser_t *p) {
+   node_t *stmt = node_init(NODE_IMPL);
+
+   parser_eat(p, TOKEN_IMPL);
+
+   stmt->IMPL.type  = parser_type(p);
+   stmt->IMPL.funcs = dy_init(node_t *);
+
+   parser_eat(p, TOKEN_LEFT_BRACE);
+   parser_skip_newlines(p);
+
+   while (lookahead(0).type != TOKEN_RIGHT_BRACE) {
+      dy_push(stmt->IMPL.funcs, parser_variable_declaration(p));
+
+      parser_skip_newlines(p);
+   }
+
+   parser_skip_newlines(p);
+
+   parser_eat(p, TOKEN_RIGHT_BRACE);
+
+   return stmt;
+}
+
 /* ------ 
    UNINIT 
    ------ */
@@ -716,15 +773,39 @@ node_t *parser_uninit(parser_t *p) {
    ------- */
 
 node_t *parser_literal(parser_t *p) {
-   token_t token = parser_eat(p, TOKEN_NUMBER, TOKEN_FLOAT, TOKEN_HEX, TOKEN_STRING);
+   // token_t token = parser_eat(p, TOKEN_NUMBER, TOKEN_FLOAT, TOKEN_HEX, TOKEN_STRING, TOKEN_IDENTIFIER);
 
-   switch (token.type) {
+   switch (lookahead(0).type) {
       case TOKEN_HEX:
-      case TOKEN_NUMBER: return node_init(NODE_NUMBER_LITERAL, .NUMBER_LITERAL = { token.num });
-      case TOKEN_STRING: return node_init(NODE_STRING_LITERAL, .STRING_LITERAL = { token.str });
-      case TOKEN_FLOAT: return node_init(NODE_FLOAT_LITERAL, .FLOAT_LITERAL = { token.integer, token.fraction });
+      case TOKEN_NUMBER: return node_init(NODE_NUMBER_LITERAL, .NUMBER_LITERAL = { parser_eat(p, TOKEN_NUMBER, TOKEN_HEX).num });
+      case TOKEN_STRING: return node_init(NODE_STRING_LITERAL, .STRING_LITERAL = { parser_eat(p, TOKEN_STRING).str });
+      case TOKEN_FLOAT:;
+         token_t tok = parser_eat(p, TOKEN_FLOAT);
+         return node_init(NODE_FLOAT_LITERAL, .FLOAT_LITERAL = { tok.integer, tok.fraction });
+      case TOKEN_IDENTIFIER:;
+         node_t *lit = node_init(NODE_STRUCT_LITERAL, .STRUCT_LITERAL = { parser_type(p), dy_init(wchar_t *), dy_init(node_t *) });
 
-      default: unreachable();
+         parser_eat(p, TOKEN_LEFT_BRACE);
+
+         while (lookahead(0).type != TOKEN_RIGHT_BRACE) {
+            parser_skip_newlines(p);
+
+            if (lookahead(1).type == TOKEN_EQUALS) {
+               dy_push(lit->STRUCT_LITERAL.idents, parser_identifer(p)->IDENTIFIER.value);
+
+               parser_eat(p, TOKEN_EQUALS);
+            } else dy_push(lit->STRUCT_LITERAL.idents, NULL);
+
+            dy_push(lit->STRUCT_LITERAL.exprs, parser_expression(p));
+
+            if (lookahead(0).type == TOKEN_COMMA) parser_eat(p, TOKEN_COMMA);
+         }
+
+         parser_eat(p, TOKEN_RIGHT_BRACE);
+
+         return lit;
+
+      default: error_token(p->lexer, lookahead(0), "Error: Unexpected Token!");
    }
 }
 
@@ -737,7 +818,17 @@ node_t *parser_identifer(parser_t *p) {
       parser_eat(p, TOKEN_UNDERSCORE);
 
       return node_init(NODE_NONE);
-   } else return node_init(NODE_IDENTIFIER, .IDENTIFIER = { parser_eat(p, TOKEN_IDENTIFIER).str });
+   } else {
+      // TODO: add current scope to parser and add it to all identifiers 
+      // wchar_t *start = L"seaburger_";
+      token_t ident = parser_eat(p, TOKEN_IDENTIFIER);
+
+      // wchar_t *str = malloc((wcslen(start) + wcslen(ident.str) + 1) * sizeof(wchar_t));
+      // wcscpy(str, start);
+      // wcscpy(str + wcslen(str), ident.str);
+
+      return node_init(NODE_IDENTIFIER, .IDENTIFIER = { ident.str });
+   }
 }
 
 /* -------------------- 

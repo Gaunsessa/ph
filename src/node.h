@@ -31,13 +31,15 @@
       NODE(DEREF_EXPRESSION, struct node_t *, expr)                                                                              \
       NODE(ADDR_EXPRESSION, struct node_t *, expr)                                                                               \
       NODE(CAST_EXPRESSION, struct node_t *, type, struct node_t *, expr)                                                        \
-      NODE(ACCESS_EXPRESSION, struct node_t *, expr, wchar_t *, member, bool, ptr)                                               \
+      NODE(ACCESS_EXPRESSION, struct node_t *, expr, struct node_t *, member, bool, ptr)                                         \
       NODE(ALIAS, struct node_t *, type)                                                                                         \
       NODE(STRUCT, struct node_t *, type)                                                                                        \
+      NODE(IMPL, struct node_t *, type, dynarr_t(struct node_t *), funcs)                                                        \
       NODE(IDENTIFIER, wchar_t *, value)                                                                                         \
       NODE(NUMBER_LITERAL, size_t, value)                                                                                        \
       NODE(FLOAT_LITERAL, size_t, integer, size_t, fraction)                                                                     \
       NODE(STRING_LITERAL, wchar_t *, span)                                                                                      \
+      NODE(STRUCT_LITERAL, struct node_t *, type, dynarr_t(wchar_t *), idents, dynarr_t(struct node_t *), exprs)                 \
       NODE(DATA_TYPE, type_t *, type)                                                                                            \
       NODE(VARIABLE_DECLARATION, struct node_t *, ident, struct node_t *, type, struct node_t *, expr, bool, immutable)          \
       NODE(FUNCTION_DECLARATION, struct node_t *, type, struct node_t *, stmt)                                                   \

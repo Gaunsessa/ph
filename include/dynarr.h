@@ -49,7 +49,15 @@
       elm;                                                                                                     \
    })                                                                                                          \
 
-#define dy_len(arr) _dy_info((arr))->index
+#define dy_insert(arr, i, v)                                                                                   \
+   ({                                                                                                          \
+      memmove(dyi(arr) + (i) + 1, dyi(arr) + (i), (_dy_info((arr))->index - (i)) * _dy_info((arr))->elm_size); \
+      dyi(arr)[i] = (v);                                                                                       \
+      _dy_info((arr))->index++;                                                                                \
+      _dynarr_grow((void **)(arr));                                                                            \
+   })                                                                                                          \
+
+#define dy_len(arr) _dy_info((arr))->index                                                                     \
 
 #define dy_free(arr)                                                                                           \
    ({                                                                                                          \
@@ -57,7 +65,7 @@
       free(arr);                                                                                               \
    })                                                                                                          \
 
-#define _dy_info(arr) ((dynarr_info_t *)(*(arr)) - 1)
+#define _dy_info(arr) ((dynarr_info_t *)(*(arr)) - 1)                                                          \
 
 typedef struct dynarr_info_t {
    size_t elm_size;

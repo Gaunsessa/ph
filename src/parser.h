@@ -67,6 +67,8 @@ type_t *parser_struct_type(parser_t *p);
 
 node_t *parser_struct(parser_t *p);
 
+node_t *parser_impl(parser_t *p);
+
 node_t *parser_uninit(parser_t *p);
 
 node_t *parser_literal(parser_t *p);

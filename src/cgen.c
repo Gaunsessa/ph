@@ -28,6 +28,11 @@ void cgen_file(buf_t buf, node_t *file) {
          case NODE_VARIABLE_DECLARATION:
             cgen_variable_declaration(buf, stmt);
             break;
+         case NODE_IMPL:
+            for (int i = 0; i < dy_len(stmt->IMPL.funcs); i++)
+               cgen_variable_declaration(buf, dyi(stmt->IMPL.funcs)[i]);
+
+            break;
          case NODE_EMPTY: break;
          default: eprint("WHAT????");
       }
@@ -42,6 +47,7 @@ void cgen_statement(buf_t buf, node_t *stmt) {
       case NODE_STRING_LITERAL:
       case NODE_BINARY_EXPRESSION:
       case NODE_CALL_EXPRESSION:
+      case NODE_ACCESS_EXPRESSION:
          return cgen_expression(buf, stmt);
       case NODE_VARIABLE_DECLARATION:
          return cgen_variable_declaration(buf, stmt);
@@ -59,7 +65,7 @@ void cgen_statement(buf_t buf, node_t *stmt) {
          return cgen_return(buf, stmt);
       case NODE_EMPTY:
          break;
-      default: ERROR("Unimplemented statment!");
+      default: ERROR("Unimplemented statment!", stmt->type);
    }
 }
 
@@ -118,6 +124,34 @@ void cgen_expression(buf_t buf, node_t *expr) {
       case NODE_SIGN_EXPRESSION:
          dy_push_str(buf, ht_get_vs(TOKEN_STRS, expr->SIGN_EXPRESSION.op));
          cgen_expression(buf, expr->SIGN_EXPRESSION.expr);
+         break;
+      case NODE_STRUCT_LITERAL:
+         dy_push(buf, L'(');
+
+         cgen_type(buf, expr->STRUCT_LITERAL.type);
+
+         dy_push_str(buf, L"){");
+
+         for (int i = 0; i < dy_len(expr->STRUCT_LITERAL.exprs); i++) {
+            if (i != 0) dy_push(buf, L',');
+
+            wchar_t *ident = dyi(expr->STRUCT_LITERAL.idents)[i];
+            node_t *exp    = dyi(expr->STRUCT_LITERAL.exprs)[i];
+
+            if (ident == NULL) cgen_expression(buf, exp);
+            else {
+               dy_push(buf, L'.');
+
+               dy_push_str(buf, ident);
+
+               dy_push(buf, L'=');
+
+               cgen_expression(buf, exp);
+            }
+         }
+
+         dy_push(buf, L'}');
+
          break;
       case NODE_NUMBER_LITERAL:
       case NODE_FLOAT_LITERAL:
@@ -208,11 +242,30 @@ void cgen_return(buf_t buf, node_t *ret) {
 void cgen_access(buf_t buf, node_t *acc) {
    node_def(acc, ACCESS_EXPRESSION);
 
-   cgen_expression(buf, node->expr);
+   if (node->member->type == NODE_CALL_EXPRESSION) {
+      dy_push_str(buf, node->member->CALL_EXPRESSION.func->IDENTIFIER.value);
 
-   dy_push_str(buf, node->ptr ? L"->" : L".");
+         dy_push(buf, L'(');
 
-   dy_push_str(buf, node->member);
+         if (!node->ptr) dy_push(buf, L'&');
+         cgen_expression(buf, node->expr);
+
+         if (dy_len(node->member->CALL_EXPRESSION.args)) dy_push(buf, L',');
+
+         for (int i = 0; i < dy_len(node->member->CALL_EXPRESSION.args); i++) {
+            if (i != 0) dy_push(buf, L',');
+
+            cgen_expression(buf, dyi(node->member->CALL_EXPRESSION.args)[i]);
+         }
+
+         dy_push(buf, L')');
+   } else {
+      cgen_expression(buf, node->expr);
+
+      dy_push_str(buf, node->ptr ? L"->" : L".");
+
+      dy_push_str(buf, node->member->IDENTIFIER.value);
+   }
 }
 
 void cgen_variable_declaration(buf_t buf, node_t *vard) {
@@ -228,6 +281,16 @@ void cgen_variable_declaration(buf_t buf, node_t *vard) {
       cgen_identifier(buf, node->ident);
 
       dy_push(buf, L'(');
+
+      if (funct->DATA_TYPE.type->self.name != NULL) {
+         _cgen_type(buf, funct->DATA_TYPE.type->self.type);
+
+         dy_push(buf, L' ');
+
+         dy_push_str(buf, funct->DATA_TYPE.type->self.name);
+
+         if (!(dy_len(funct->DATA_TYPE.type->args) - 1)) dy_push(buf, L',');
+      }
 
       for (int i = 0; i < dy_len(funct->DATA_TYPE.type->args); i++) {
          if (i != 0) dy_push(buf, L',');

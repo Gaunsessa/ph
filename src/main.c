@@ -21,6 +21,8 @@
 
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
 
+
+// TODO: make variables and typedefs diffrent scopes!!!!!!!!!!!
 // Todo: 1) Checker & Types
 //          Type Handler
 //          Errors
@@ -72,11 +74,11 @@ void comple_file(const char *path, bool compl, bool pretty) {
 
    node_t *AST = parser_parse(fopen(path, "r"));
 
-   checker_check(AST);
-
    // printf("%s\n", cgen_generate(AST));
 
    if (compl) {
+      checker_check(AST);
+
       wchar_t *code = cgen_generate(AST);
 
       if (pretty) {
@@ -100,6 +102,14 @@ void comple_file(const char *path, bool compl, bool pretty) {
    type_free_all();
 }
 
+typedef struct test_t {
+   int a;
+   int b;
+   int c;
+   int d;
+   int e;
+} test_t;
+
 int main(int argc, char **argv) {
    setlocale(LC_ALL, "");
 
@@ -107,6 +117,14 @@ int main(int argc, char **argv) {
 
    type_module_init();
    lexer_module_init();
+
+   test_t t = (test_t) { 1, .d=2, 3, .b = 4, 5 };
+
+   // print(t.a);
+   // print(t.b);
+   // print(t.c);
+   // print(t.d);
+   // print(t.e);
 
    comple_file("tests/test.ph", true, false);
 

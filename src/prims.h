@@ -21,8 +21,16 @@
       PTYPE(F32,       float,                     { printf("%f", *v); },   {})                    \
       PTYPE(F64,       double,                    { printf("%f", *v); },   {})                    \
       PTYPE(F128,      long double,               { printf("%Lf", *v); },  {})                    \
-      PTYPE(BOOL,      bool,                      { printf("%s\n", *v ? "true" : "false"); }, {}) \
-      PTYPE(STR,       wchar_t *,                 { printf("%ls", *v); },   { free(*v); })         \
+      PTYPE(BOOL,      bool,                      { printf("%s", *v ? "true" : "false"); }, {}) \
+      PTYPE(STR,       wchar_t *,                 { printf("%ls", *v); },   { free(*v); })        \
+      PTYPE(DYNSTR,    dynarr_t(wchar_t *),       {                                               \
+         for (int i = 0; i < dy_len(*v); i++)                                                     \
+            printf("%ls ", dyi(*v)[i]);                                                           \
+      }, {                                                                                        \
+         for (int i = 0; i < dy_len(*v); i++)                                                     \
+            free(dyi(*v)[i]);                                                                     \
+         dy_free(*v);                                                                             \
+      })                                                                                          \
       PTYPE(NODEPTR,   node_t *,                  { print_node(*v); },     { node_free(*v); })    \
       PTYPE(DYNNODE,   dynarr_t(struct node_t *), {                                               \
          for (int i = 0; i < dy_len(*v); i++)                                                     \

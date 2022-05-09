@@ -106,6 +106,7 @@ typedef struct type_t {
 
       // Function
       struct {
+         struct { wchar_t *name; struct type_t *type; } self;
          dynarr_t(struct { wchar_t *name; struct type_t *type; }) args;
          struct type_t *ret;
       };
@@ -113,7 +114,7 @@ typedef struct type_t {
       // Struct
       struct {
          dynarr_t(struct { wchar_t *name; struct type_t *type; }) feilds;
-         ht_t(TOKEN_TYPE, struct type_t *) funcs;
+         dynarr_t(struct { wchar_t *name; struct type_t *type; }) funcs;
       };
 
       // Ptr
@@ -138,7 +139,7 @@ typedef struct type_handler_t {
 
 type_handler_t *type_handler_new();
 
-char *type_to_str(type_t *t);
+wchar_t *type_to_str(type_t *t);
 
 type_t *BASE_UNTYPED_INT;
 type_t *BASE_UNTYPED_FLOAT;

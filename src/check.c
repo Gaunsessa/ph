@@ -31,6 +31,7 @@ bool checker_check_FILE(checker_t *ckr, node_t *n) {
                }
             );
             break;
+         case NODE_IMPL:
          case NODE_EMPTY: continue;
          default: error("Statment Cant be File Scope!");
       }
@@ -71,8 +72,10 @@ bool checker_check_CALL_EXPRESSION(checker_t *ckr, node_t *n) {
    type_t *type = checker_infer_callexpr_funct(ckr, n);
    if (type == NULL) return false;
 
-   if (dy_len(type->args) != dy_len(node->args)) 
+   if (dy_len(type->args) != dy_len(node->args)) {
+      print(dy_len(type->args));
       error("Invalid Amount of Arguments!");
+   }
 
    for (int i = 0; i < dy_len(node->args); i++) {
       type_t *argt = checker_infer_expression(ckr, dyi(node->args)[i]);
@@ -124,11 +127,20 @@ bool checker_check_CAST_EXPRESSION(checker_t *ckr, node_t *n) {
 bool checker_check_ACCESS_EXPRESSION(checker_t *ckr, node_t *n) {
    node_def(n, ACCESS_EXPRESSION);
 
-   type_t *type = checker_infer_expression(ckr, node->expr);
-   if (type == NULL) return false;
+   checker_push_scope(ckr);
 
-   if (type->type == TYPE_PTR) 
+   type_t *oty  = checker_infer_expression(ckr, node->expr);
+   type_t *type = checker_reslove_base_type(ckr, oty);
+   if (oty == NULL || type == NULL) return false;
+
+   if (oty->type == TYPE_PTR) 
       n->ACCESS_EXPRESSION.ptr = true;
+
+   for (int i = 0; i < dy_len(type->funcs); i++)
+      checker_set_decl(ckr, dyi(type->funcs)[i].name, (decl_t) { .is_typedef = true, .type = dyi(type->funcs)[i].type });
+
+   // if (node->member->type == NODE_CALL_EXPRESSION)
+   //    dy_insert(node->member->CALL_EXPRESSION.args, 0, node->expr);
 
    return true;
 }
@@ -209,6 +221,8 @@ bool checker_check_FUNCTION_DECLARATION(checker_t *ckr, node_t *n) {
 
    ckr->cur_scope->ret = type->ret;
 
+   if (type->self.name != NULL) checker_set_decl(ckr, type->self.name, (decl_t) { .type = type->self.type });
+
    for (int i = 0; i < dy_len(type->args); i++) {
       if (checker_decl_exists_cur(ckr, dyi(type->args)[i].name)) error("Redefiation of Variable!");
 
@@ -262,6 +276,74 @@ bool checker_check_RETURN(checker_t *ckr, node_t *n) {
          error("Invalid Return Type!");
    } else if (!type_cmp(ckr, ckr->cur_scope->ret, checker_infer_expression(ckr, node->value)))
       error("Invalid Return Type!");
+
+   return true;
+}
+
+bool checker_check_IMPL(checker_t *ckr, node_t *n) {
+   node_def(n, IMPL);
+
+   type_t *type = checker_reslove_base_type(ckr, checker_reslove_typedef(ckr, node->type->DATA_TYPE.type));
+   if (type == NULL) return false;
+
+   if (type->type != TYPE_STRUCT) error("Impls can only be done on structs!");
+
+   for (int i = 0; i < dy_len(node->funcs); i++) {
+      node_t *func = dyi(node->funcs)[i];
+
+      if (func->VARIABLE_DECLARATION.expr->type != NODE_FUNCTION_DECLARATION)
+         error("Impl can only have functions!");
+
+      func->VARIABLE_DECLARATION.expr->FUNCTION_DECLARATION.type->DATA_TYPE.type->self.type = type_init((type_t) { .type = TYPE_PTR, .ptr_base = node->type->DATA_TYPE.type});
+
+      struct { wchar_t *name; struct type_t *type; } ft = {
+         .name = func->VARIABLE_DECLARATION.ident->IDENTIFIER.value,
+         .type = checker_infer_var_decl(ckr, func)
+      };
+
+      dy_push_unsafe(type->funcs, ft);
+   }
+
+   checker_push_scope(ckr);
+
+   return true;
+}
+
+bool checker_check_STRUCT_LITERAL(checker_t *ckr, node_t *n) {
+   node_def(n, STRUCT_LITERAL);
+
+   type_t *type = checker_reslove_base_type(ckr, checker_reslove_typedef(ckr, node->type->DATA_TYPE.type));
+   if (type == NULL) return false;
+
+   if (type->type != TYPE_STRUCT) error("Struct literals must be of type struct!");
+
+   if (dy_len(type->feilds) < dy_len(node->exprs)) error("Too many arguments to struct ltieral!");
+
+   int type_pos = 0;
+   for (int i = 0; i < dy_len(node->exprs); i++) {
+      if (type_pos >= dy_len(type->feilds)) error("Too many arguments to struct ltieral!");
+
+      type_t *ft = NULL;
+
+      if (dyi(node->idents)[i] == NULL) ft = dyi(type->feilds)[type_pos].type;
+      else {
+         int j = 0;
+         for (; j < dy_len(type->feilds); j++)
+            if (!wcscmp(dyi(type->feilds)[j].name, dyi(node->idents)[i])) {
+               ft = dyi(type->feilds)[j].type;
+               break;
+            }
+
+         if (ft == NULL) error("Struct feild not found!");
+
+         type_pos = j;
+      }
+
+      if (!type_cmp(ckr, ft, checker_infer_expression(ckr, dyi(node->exprs)[i]))) 
+         error("Invalid struct arg type!");
+
+      type_pos++;
+   }
 
    return true;
 }
