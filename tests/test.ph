@@ -23,9 +23,7 @@ impl vec2 {
 main :: (): int = {
    x := vec2 { x = 1.0, y = 1.0 }
 
-   // vec2:new()
-
-   x.mul(32)
+   x.mul(32.0)
 
    return (int)x.mag()
 }

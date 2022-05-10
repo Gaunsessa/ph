@@ -25,10 +25,8 @@ bool checker_check_FILE(checker_t *ckr, node_t *n) {
             checker_set_decl(
                ckr, 
                stmt->VARIABLE_DECLARATION.ident->IDENTIFIER.value, 
-               (decl_t) { 
-                  .is_typedef = is_typedef(stmt->VARIABLE_DECLARATION.expr), 
-                  .type = checker_infer_var_decl(ckr, stmt) 
-               }
+               checker_infer_var_decl(ckr, stmt),
+               true
             );
             break;
          case NODE_IMPL:
@@ -137,7 +135,7 @@ bool checker_check_ACCESS_EXPRESSION(checker_t *ckr, node_t *n) {
       n->ACCESS_EXPRESSION.ptr = true;
 
    for (int i = 0; i < dy_len(type->funcs); i++)
-      checker_set_decl(ckr, dyi(type->funcs)[i].name, (decl_t) { .is_typedef = true, .type = dyi(type->funcs)[i].type });
+      checker_set_decl(ckr, dyi(type->funcs)[i].name, dyi(type->funcs)[i].type, false);
 
    // if (node->member->type == NODE_CALL_EXPRESSION)
    //    dy_insert(node->member->CALL_EXPRESSION.args, 0, node->expr);
@@ -165,7 +163,7 @@ bool checker_check_STRUCT(checker_t *ckr, node_t *n) {
 bool checker_check_IDENTIFIER(checker_t *ckr, node_t *n) {
    node_def(n, IDENTIFIER);
 
-   if (checker_get_decl(ckr, node->value) == NULL) {
+   if (checker_get_decl(ckr, node->value, false) == NULL) {
       printf("%ls\n", node->value);
       error("Unknown Identifier!");
    }
@@ -176,7 +174,7 @@ bool checker_check_IDENTIFIER(checker_t *ckr, node_t *n) {
 bool checker_check_DATA_TYPE(checker_t *ckr, node_t *n) {
    node_def(n, DATA_TYPE);
 
-   type_t *type = checker_reslove_base_type(ckr, checker_reslove_typedef(ckr, node->type));
+   type_t *type = checker_reslove_base_type(ckr, checker_reslove_type(ckr, node->type));
    if (type == NULL) error("Unknown Type!");
 
    if (type->type == TYPE_FUNCTION)
@@ -190,7 +188,7 @@ bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, node_t *n) {
    node_def(n, VARIABLE_DECLARATION);
 
    wchar_t *name    = node->ident->IDENTIFIER.value;
-   type_t *type     = checker_reslove_typedef(ckr, node->type->DATA_TYPE.type);
+   type_t *type     = checker_reslove_type(ckr, node->type->DATA_TYPE.type);
    if (type == NULL) return false;
 
    if (ckr->cur_scope != ckr->file_scope && checker_decl_exists_cur(ckr, name)) error("Redeclaration of Variable!");
@@ -207,7 +205,7 @@ bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, node_t *n) {
       } else if (!type_cmp(ckr, type, infer)) error("Variable Declaration Types do Not Match!");
    }
 
-   checker_set_decl(ckr, name, (decl_t) { .is_typedef = is_typedef(node->expr), .type = node->type->DATA_TYPE.type });
+   checker_set_decl(ckr, name, node->type->DATA_TYPE.type, is_typedef(node->expr));
 
    return true;
 }
@@ -221,12 +219,12 @@ bool checker_check_FUNCTION_DECLARATION(checker_t *ckr, node_t *n) {
 
    ckr->cur_scope->ret = type->ret;
 
-   if (type->self.name != NULL) checker_set_decl(ckr, type->self.name, (decl_t) { .type = type->self.type });
+   if (type->self.name != NULL) checker_set_decl(ckr, type->self.name, type->self.type, false);
 
    for (int i = 0; i < dy_len(type->args); i++) {
       if (checker_decl_exists_cur(ckr, dyi(type->args)[i].name)) error("Redefiation of Variable!");
 
-      checker_set_decl(ckr, dyi(type->args)[i].name, (decl_t) { .type = dyi(type->args)[i].type });
+      checker_set_decl(ckr, dyi(type->args)[i].name, dyi(type->args)[i].type, false);
    }
 
    return true;
@@ -283,7 +281,7 @@ bool checker_check_RETURN(checker_t *ckr, node_t *n) {
 bool checker_check_IMPL(checker_t *ckr, node_t *n) {
    node_def(n, IMPL);
 
-   type_t *type = checker_reslove_base_type(ckr, checker_reslove_typedef(ckr, node->type->DATA_TYPE.type));
+   type_t *type = checker_reslove_base_type(ckr, checker_reslove_type(ckr, node->type->DATA_TYPE.type));
    if (type == NULL) return false;
 
    if (type->type != TYPE_STRUCT) error("Impls can only be done on structs!");
@@ -312,7 +310,7 @@ bool checker_check_IMPL(checker_t *ckr, node_t *n) {
 bool checker_check_STRUCT_LITERAL(checker_t *ckr, node_t *n) {
    node_def(n, STRUCT_LITERAL);
 
-   type_t *type = checker_reslove_base_type(ckr, checker_reslove_typedef(ckr, node->type->DATA_TYPE.type));
+   type_t *type = checker_reslove_base_type(ckr, checker_reslove_type(ckr, node->type->DATA_TYPE.type));
    if (type == NULL) return false;
 
    if (type->type != TYPE_STRUCT) error("Struct literals must be of type struct!");

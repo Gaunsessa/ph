@@ -21,7 +21,6 @@
 
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
 
-
 // TODO: make variables and typedefs diffrent scopes!!!!!!!!!!!
 // Todo: 1) Checker & Types
 //          Type Handler

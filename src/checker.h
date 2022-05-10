@@ -18,15 +18,16 @@
 #include "prims.h"
 #include "error.h"
 
-typedef struct decl_t {
-   bool is_typedef;
-   bool is_init;
+// typedef struct decl_t {
+//    bool is_typedef;
+//    bool is_init;
 
-   type_t *type;
-} decl_t;
+//    type_t *type;
+// } decl_t;
 
 typedef struct scope_t {
-   ht_t(wchar_t *, decl_t *) decls;
+   ht_t(wchar_t *, type_t *) decls;
+   ht_t(wchar_t *, type_t *) types;
    type_t *ret;
 
    struct scope_t *parent;
@@ -51,12 +52,12 @@ bool checker_check_node(checker_t *ckr, node_t *node);
 void checker_push_scope(checker_t *ckr);
 void checker_pop_scope(checker_t *ckr);
 
-decl_t *checker_get_decl(checker_t *ckr, wchar_t *ident);
+type_t *checker_get_decl(checker_t *ckr, wchar_t *ident, bool typedf);
 type_t *checker_reslove_type(checker_t *ckr, type_t *type);
 type_t *checker_reslove_base_type(checker_t *ckr, type_t *type);
 type_t *checker_reslove_typedef(checker_t *ckr, type_t *type);
 
-void checker_set_decl(checker_t *ckr, wchar_t *ident, decl_t decl);
+void checker_set_decl(checker_t *ckr, wchar_t *ident, type_t *type, bool typedf);
 bool checker_decl_exists_cur(checker_t *ckr, wchar_t *ident);
 void free_decl(void *decl);
 

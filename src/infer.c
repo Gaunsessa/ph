@@ -123,10 +123,10 @@ type_t *checker_infer_literal(checker_t *ckr, node_t *lit) {
 type_t *checker_infer_identifier(checker_t *ckr, node_t *ident) {
    node_def(ident, IDENTIFIER);
 
-   decl_t *decl = checker_get_decl(ckr, node->value);
-   if (decl == NULL || decl->is_typedef) return NULL;
+   type_t *type = checker_get_decl(ckr, node->value, false);
+   if (type == NULL) return NULL;
 
-   return decl->type;
+   return type;
 }
 
 type_t *checker_infer_var_decl(checker_t *ckr, node_t *vard) {
