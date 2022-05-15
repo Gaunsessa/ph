@@ -26,7 +26,7 @@ bool checker_check_FILE(checker_t *ckr, node_t *n) {
                ckr, 
                stmt->VARIABLE_DECLARATION.ident->IDENTIFIER.value, 
                checker_infer_var_decl(ckr, stmt),
-               true
+               is_typedef(stmt->VARIABLE_DECLARATION.expr)
             );
             break;
          case NODE_IMPL:
@@ -70,10 +70,8 @@ bool checker_check_CALL_EXPRESSION(checker_t *ckr, node_t *n) {
    type_t *type = checker_infer_callexpr_funct(ckr, n);
    if (type == NULL) return false;
 
-   if (dy_len(type->args) != dy_len(node->args)) {
-      print(dy_len(type->args));
+   if (dy_len(type->args) != dy_len(node->args))
       error("Invalid Amount of Arguments!");
-   }
 
    for (int i = 0; i < dy_len(node->args); i++) {
       type_t *argt = checker_infer_expression(ckr, dyi(node->args)[i]);
@@ -122,23 +120,58 @@ bool checker_check_CAST_EXPRESSION(checker_t *ckr, node_t *n) {
    return true;
 }
 
-bool checker_check_ACCESS_EXPRESSION(checker_t *ckr, node_t *n) {
-   node_def(n, ACCESS_EXPRESSION);
-
-   checker_push_scope(ckr);
+bool checker_check_FEILD_EXPRESSION(checker_t *ckr, node_t *n) {
+   node_def(n, FEILD_EXPRESSION);
 
    type_t *oty  = checker_infer_expression(ckr, node->expr);
    type_t *type = checker_reslove_base_type(ckr, oty);
    if (oty == NULL || type == NULL) return false;
 
-   if (oty->type == TYPE_PTR) 
-      n->ACCESS_EXPRESSION.ptr = true;
+   if (type->type != TYPE_STRUCT) error("Only structs have feilds!");
 
-   for (int i = 0; i < dy_len(type->funcs); i++)
-      checker_set_decl(ckr, dyi(type->funcs)[i].name, dyi(type->funcs)[i].type, false);
+   if (oty->type == TYPE_PTR) 
+      n->FEILD_EXPRESSION.ptr = true;
+
+   // for (int i = 0; i < dy_len(type->funcs); i++)
+   //    checker_set_decl(ckr, dyi(type->funcs)[i].name, dyi(type->funcs)[i].type, false);
+
+   // if (node->member->type == NODE_CALL_EXPRESSION)
+   //    checker_check_CALL_EXPRESSION(ckr, node->member);
 
    // if (node->member->type == NODE_CALL_EXPRESSION)
    //    dy_insert(node->member->CALL_EXPRESSION.args, 0, node->expr);
+
+   return true;
+}
+
+bool checker_check_METHOD_EXPRESSION(checker_t *ckr, node_t *n) {
+   node_def(n, METHOD_EXPRESSION);
+
+   type_t *oty  = checker_infer_expression(ckr, node->expr);
+   type_t *type = checker_reslove_base_type(ckr, oty);
+   if (oty == NULL || type == NULL) return false;
+
+   if (type->type != TYPE_STRUCT) error("Only structs have methods!");
+
+   type_t *func = NULL;
+   for (int i = 0; i < dy_len(type->funcs); i++)
+      if (!wcscmp(dyi(type->funcs)[i].name, node->member))
+         func = dyi(type->funcs)[i].type;
+
+   if (func == NULL) error("Unkown method!");
+
+   if (dy_len(func->args) != dy_len(node->args))
+      error("Invalid Amount of Arguments!");
+
+   for (int i = 0; i < dy_len(node->args); i++) {
+      type_t *argt = checker_infer_expression(ckr, dyi(node->args)[i]);
+      type_t *typt = checker_reslove_type(ckr, dyi(func->args)[i].type);
+
+      if (!type_cmp(ckr, typt, argt)) error("Invalid Argument Type!");
+   }
+
+   if (oty->type == TYPE_PTR)
+      n->METHOD_EXPRESSION.ptr = true;
 
    return true;
 }
@@ -248,13 +281,15 @@ bool checker_check_FOR(checker_t *ckr, node_t *n) {
    // This needs to be checked before
    checker_check_node(ckr, node->init);
 
-   type_t *type = checker_infer_expression(ckr, node->cond);
+   if (node->cond->type != NODE_NONE) {
+      type_t *type = checker_infer_expression(ckr, node->cond);
 
-   // TODO: for needs to make scope
+      // TODO: for needs to make scope
 
-   if (type->type == TYPE_BASE && type->base == BASE_BOOL)
-      return true;
-   else error("For condition must be bool!");
+      if (type->type == TYPE_BASE && type->base == BASE_BOOL)
+         return true;
+      else error("For condition must be bool!");
+   } else return true;
 }
 
 bool checker_check_BREAK(checker_t *ckr, node_t *n) {

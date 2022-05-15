@@ -20,8 +20,8 @@
 #include "util.h"
 
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
+//       type_t has memory leak
 
-// TODO: make variables and typedefs diffrent scopes!!!!!!!!!!!
 // Todo: 1) Checker & Types
 //          Type Handler
 //          Errors
@@ -116,14 +116,6 @@ int main(int argc, char **argv) {
 
    type_module_init();
    lexer_module_init();
-
-   test_t t = (test_t) { 1, .d=2, 3, .b = 4, 5 };
-
-   // print(t.a);
-   // print(t.b);
-   // print(t.c);
-   // print(t.d);
-   // print(t.e);
 
    comple_file("tests/test.ph", true, false);
 

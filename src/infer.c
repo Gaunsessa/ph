@@ -10,7 +10,8 @@ type_t *checker_infer_expression_no_res(checker_t *ckr, node_t *expr) {
       case NODE_CAST_EXPRESSION: return checker_infer_castexpr(ckr, expr);
       case NODE_DEREF_EXPRESSION: return checker_infer_derefexpr(ckr, expr);
       case NODE_CALL_EXPRESSION: return checker_infer_callexpr(ckr, expr);
-      case NODE_ACCESS_EXPRESSION: return checker_infer_accessexpr(ckr, expr);
+      case NODE_FEILD_EXPRESSION: return checker_infer_feildexpr(ckr, expr);
+      case NODE_METHOD_EXPRESSION: return checker_infer_methodexpr(ckr, expr);
       case NODE_NUMBER_LITERAL:
       case NODE_FLOAT_LITERAL:
       case NODE_STRING_LITERAL: return checker_infer_literal(ckr, expr);
@@ -52,23 +53,33 @@ type_t *checker_infer_binexpr(checker_t *ckr, node_t *expr) {
    }
 }
 
-type_t *checker_infer_accessexpr(checker_t *ckr, node_t *expr) {
-   node_def(expr, ACCESS_EXPRESSION);
+type_t *checker_infer_feildexpr(checker_t *ckr, node_t *expr) {
+   node_def(expr, FEILD_EXPRESSION);
+
+   type_t *type = checker_reslove_base_type(ckr, checker_infer_expression_no_res(ckr, node->expr));
+   if (type == NULL || type->type != TYPE_STRUCT) return NULL;
+
+   for (int i = 0; i < dy_len(type->feilds); i++)
+      if (!wcscmp(dyi(type->feilds)[i].name, node->member)) 
+         return dyi(type->feilds)[i].type;
+
+   return NULL;
+}
+
+type_t *checker_infer_methodexpr(checker_t *ckr, node_t *expr) {
+   node_def(expr, METHOD_EXPRESSION);
 
    type_t *type = checker_reslove_base_type(ckr, checker_infer_expression_no_res(ckr, node->expr));
    if (type == NULL) return NULL;
 
-   NODE_TYPE memtype = node->member->type;
+   type_t *funct = NULL;
+   for (int i = 0; i < dy_len(type->funcs); i++)
+      if (!wcscmp(dyi(type->funcs)[i].name, node->member))
+         funct = dyi(type->funcs)[i].type;
 
-   typeof(type->feilds) feilds = memtype == NODE_IDENTIFIER ? type->feilds : (void *)type->funcs;
-   wchar_t *ident = memtype == NODE_IDENTIFIER ? node->member->IDENTIFIER.value : 
-                                                 node->member->CALL_EXPRESSION.func->IDENTIFIER.value;
+   if (funct == NULL) return NULL;
 
-   for (int i = 0; i < dy_len(feilds); i++)
-      if (!wcscmp(dyi(feilds)[i].name, ident)) 
-         return memtype == NODE_IDENTIFIER ? dyi(type->feilds)[i].type : checker_infer_callexpr(ckr, node->member);
-
-   return NULL;
+   return funct->ret;
 }
 
 type_t *checker_infer_addrexpr(checker_t *ckr, node_t *expr) {
@@ -97,6 +108,8 @@ type_t *checker_infer_callexpr(checker_t *ckr, node_t *expr) {
    node_def(expr, CALL_EXPRESSION);
 
    type_t *ctype = checker_reslove_type(ckr, checker_infer_identifier(ckr, node->func));
+   // print(ctype == NULL);
+   // printf("%d: %ls\n", ctype == NULL, node->func->IDENTIFIER.value);
    if (ctype == NULL) return NULL;
 
    return ctype->ret;

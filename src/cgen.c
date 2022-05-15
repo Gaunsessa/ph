@@ -47,7 +47,8 @@ void cgen_statement(buf_t buf, node_t *stmt) {
       case NODE_STRING_LITERAL:
       case NODE_BINARY_EXPRESSION:
       case NODE_CALL_EXPRESSION:
-      case NODE_ACCESS_EXPRESSION:
+      case NODE_FEILD_EXPRESSION:
+      case NODE_METHOD_EXPRESSION:
          return cgen_expression(buf, stmt);
       case NODE_VARIABLE_DECLARATION:
          return cgen_variable_declaration(buf, stmt);
@@ -115,8 +116,8 @@ void cgen_expression(buf_t buf, node_t *expr) {
 
          cgen_expression(buf, expr->CAST_EXPRESSION.expr);
          break;
-      case NODE_ACCESS_EXPRESSION:
-         cgen_access(buf, expr);
+      case NODE_FEILD_EXPRESSION:
+         cgen_feild(buf, expr);
          break;
       case NODE_IDENTIFIER:
          cgen_identifier(buf, expr);
@@ -151,6 +152,25 @@ void cgen_expression(buf_t buf, node_t *expr) {
          }
 
          dy_push(buf, L'}');
+
+         break;
+      case NODE_METHOD_EXPRESSION:
+         dy_push_str(buf, expr->METHOD_EXPRESSION.member);
+
+         dy_push(buf, L'(');
+
+         if (!expr->METHOD_EXPRESSION.ptr) dy_push(buf, L'&');
+         cgen_expression(buf, expr->METHOD_EXPRESSION.expr);
+
+         if (dy_len(expr->METHOD_EXPRESSION.args) > 0) dy_push(buf, L',');
+
+         for (int i = 0; i < dy_len(expr->METHOD_EXPRESSION.args); i++) {
+            if (i != 0) dy_push(buf, L',');
+
+            cgen_expression(buf, dyi(expr->METHOD_EXPRESSION.args)[i]);
+         }
+
+         dy_push(buf, L')');
 
          break;
       case NODE_NUMBER_LITERAL:
@@ -192,30 +212,61 @@ void cgen_if(buf_t buf, node_t *ifstmt) {
 void cgen_for(buf_t buf, node_t *forstmt) {
    node_def(forstmt, FOR);
 
-   dy_push_str(buf, L"for(");
-
-   if (node->init->type != NODE_NONE) 
-      cgen_statement(buf, node->init);
-
-   dy_push(buf, L';');
-
-   if (node->cond->type != NODE_NONE) 
-      cgen_statement(buf, node->cond);
-
-   dy_push(buf, L';');
-
-   if (node->post->type != NODE_NONE) 
-      cgen_statement(buf, node->post);
-
-   dy_push(buf, L')');
-
-   if (node->stmt->type == NODE_BLOCK) cgen_block(buf, node->stmt);
-   else {
+   if (node->dor) {
       dy_push(buf, L'{');
 
-      cgen_statement(buf, node->stmt);
+      if (node->init->type != NODE_NONE)
+         cgen_statement(buf, node->init);
 
-      dy_push_str(buf, L";}");
+      dy_push_str(buf, L";do{");
+
+      if (node->stmt->type == NODE_BLOCK) cgen_block(buf, node->stmt);
+      else {
+         dy_push(buf, L'{');
+
+         cgen_statement(buf, node->stmt);
+
+         dy_push_str(buf, L";} ");
+      }
+
+      if (node->post->type != NODE_NONE) {
+         cgen_statement(buf, node->post);
+         dy_push(buf, L';');
+      }
+
+      dy_push_str(buf, L"}while(");
+
+      if (node->cond->type != NODE_NONE)
+         cgen_statement(buf, node->cond);
+      else dy_push(buf, L'1');
+
+      dy_push_str(buf, L");}");
+   } else {
+      dy_push_str(buf, L"for(");
+
+      if (node->init->type != NODE_NONE) 
+         cgen_statement(buf, node->init);
+
+      dy_push(buf, L';');
+
+      if (node->cond->type != NODE_NONE) 
+         cgen_statement(buf, node->cond);
+
+      dy_push(buf, L';');
+
+      if (node->post->type != NODE_NONE) 
+         cgen_statement(buf, node->post);
+
+      dy_push(buf, L')');
+
+      if (node->stmt->type == NODE_BLOCK) cgen_block(buf, node->stmt);
+      else {
+         dy_push(buf, L'{');
+
+         cgen_statement(buf, node->stmt);
+
+         dy_push_str(buf, L";} ");
+      }
    }
 }
 
@@ -239,33 +290,33 @@ void cgen_return(buf_t buf, node_t *ret) {
    if (node->value->type != NODE_NONE) cgen_expression(buf, node->value);
 }
 
-void cgen_access(buf_t buf, node_t *acc) {
-   node_def(acc, ACCESS_EXPRESSION);
+void cgen_feild(buf_t buf, node_t *acc) {
+   node_def(acc, FEILD_EXPRESSION);
 
-   if (node->member->type == NODE_CALL_EXPRESSION) {
-      dy_push_str(buf, node->member->CALL_EXPRESSION.func->IDENTIFIER.value);
+   // if (node->member->type == NODE_CALL_EXPRESSION) {
+   //    dy_push_str(buf, node->member->CALL_EXPRESSION.func->IDENTIFIER.value);
 
-         dy_push(buf, L'(');
+   //       dy_push(buf, L'(');
 
-         if (!node->ptr) dy_push(buf, L'&');
-         cgen_expression(buf, node->expr);
+   //       if (!node->ptr) dy_push(buf, L'&');
+   //       cgen_expression(buf, node->expr);
 
-         if (dy_len(node->member->CALL_EXPRESSION.args)) dy_push(buf, L',');
+   //       if (dy_len(node->member->CALL_EXPRESSION.args)) dy_push(buf, L',');
 
-         for (int i = 0; i < dy_len(node->member->CALL_EXPRESSION.args); i++) {
-            if (i != 0) dy_push(buf, L',');
+   //       for (int i = 0; i < dy_len(node->member->CALL_EXPRESSION.args); i++) {
+   //          if (i != 0) dy_push(buf, L',');
 
-            cgen_expression(buf, dyi(node->member->CALL_EXPRESSION.args)[i]);
-         }
+   //          cgen_expression(buf, dyi(node->member->CALL_EXPRESSION.args)[i]);
+   //       }
 
-         dy_push(buf, L')');
-   } else {
+   //       dy_push(buf, L')');
+   // } else {
       cgen_expression(buf, node->expr);
 
       dy_push_str(buf, node->ptr ? L"->" : L".");
 
-      dy_push_str(buf, node->member->IDENTIFIER.value);
-   }
+      dy_push_str(buf, node->member);
+   // }
 }
 
 void cgen_variable_declaration(buf_t buf, node_t *vard) {

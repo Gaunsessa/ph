@@ -83,6 +83,7 @@
       TOKEN(IF, L"if")                   \
       TOKEN(ELSE, L"else")               \
       TOKEN(FOR, L"for")                 \
+      TOKEN(DOR, L"dor")                 \
       TOKEN(BREAK, L"break")             \
       TOKEN(CONTINUE, L"continue")       \
       TOKEN(RETURN, L"return")           \

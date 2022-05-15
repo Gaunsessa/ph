@@ -36,7 +36,7 @@ void cgen_continue(buf_t buf, node_t *cnt);
 
 void cgen_return(buf_t buf, node_t *ret);
 
-void cgen_access(buf_t buf, node_t *acc);
+void cgen_feild(buf_t buf, node_t *acc);
 
 void cgen_variable_declaration(buf_t buf, node_t *vard);
 

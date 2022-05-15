@@ -26,13 +26,6 @@ void node_walker(node_t *node, void (*start)(node_t *node), void (*end)(node_t *
          end(node);
 
          return;
-      case NODE_ACCESS_EXPRESSION:
-         node_walker(node->ACCESS_EXPRESSION.expr, start, end);
-         if (node->ACCESS_EXPRESSION.member->type != NODE_IDENTIFIER) 
-            node_walker(node->ACCESS_EXPRESSION.member, start, end);
-         end(node);
-
-         return;
       case NODE_STRUCT:
          end(node);
 

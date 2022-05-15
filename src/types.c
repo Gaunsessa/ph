@@ -79,9 +79,9 @@ bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
    if (t1 == NULL || t2 == NULL) return false;
 
    if (t1->type == TYPE_UNTYPED || t2->type == TYPE_UNTYPED) {
-      if ((type_is_integer(t1) && type_is_integer(t2)) || ((type_is_float(t1) && type_is_float(t2))))
-         return true;
-      else return false;
+      // if ((type_is_integer(t1) && type_is_integer(t2)) || ((type_is_float(t1) && type_is_float(t2))))
+      return true;
+      // else return false;
    }
 
    // if (t1->type == TYPE_TYPE_REF) t1 = type_deref_ref(t1);

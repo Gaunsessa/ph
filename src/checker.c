@@ -51,7 +51,7 @@ void checker_check_end(node_t *node, checker_t *ckr) {
       switch (node->type) {
          case NODE_BLOCK:
          case NODE_IMPL:
-         case NODE_ACCESS_EXPRESSION:
+         // case NODE_ACCESS_EXPRESSION:
          case NODE_FUNCTION_DECLARATION: checker_pop_scope(check);
          default: return;
       }

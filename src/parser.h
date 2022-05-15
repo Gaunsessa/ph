@@ -38,7 +38,8 @@ node_t *_parser_expression(parser_t *p, int precedence);
 
 node_t *parser_sign_expression(parser_t *p);
 node_t *parser_pre_incdec_expression(parser_t *p);
-node_t *parser_access_expression(parser_t *p);
+node_t *parser_feild_expression(parser_t *p);
+node_t *parser_method_expression(parser_t *p);
 node_t *parser_post_incdec_expression(parser_t *p);
 node_t *parser_not_expression(parser_t *p);
 node_t *parser_subscript_expression(parser_t *p);

@@ -63,6 +63,7 @@
       TYPE(INT, L"int", L"int")       \
       TYPE(VOID, L"void", L"void")    \
       TYPE(STRING, L"str", L"str_t")  \
+      TYPE(RUNE, L"rune", L"wchar_t") \
       // TYPE(FUNCTION, L"", L"")        \
       // TYPE(TYPE_, L"Type", L"type")   
 
