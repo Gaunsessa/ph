@@ -1,5 +1,7 @@
 // Hello World
 
-main :: (argc: int, argv: ^^char): int = {
-   printf("Hello World!")
+printf :: (fmt: ^u8): = ---
+
+main :: (): int = {
+   printf((^u8)"Hello World!\n")
 }

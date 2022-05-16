@@ -20,6 +20,7 @@ bool checker_check(node_t *AST) {
 
    ckr->cur_scope = &ckr->scope;
    ckr->file_scope = &ckr->scope;
+   ckr->errors = 0;
    ckr->error = false;
 
    checker_check_start(AST, ckr);

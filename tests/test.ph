@@ -56,7 +56,7 @@ main :: (): int = {
 
    // x.norm()
 
-   // x.norm().mul(32)
+   x.norm().mul(100)
 
    // x,new()
 
@@ -67,11 +67,11 @@ main :: (): int = {
    // x = x * x
    // x = vec2_astrix(&x, &x)
 
-   // putnum((int)v.x)
-   // putnum((int)v.y)
-}
+   putnum((int)v.x)
+   putnum((int)v.y)
 
-test :: (x: u32): = {}
+   return 0
+}
 
 // Hello World
 

@@ -1,3 +1,7 @@
-#include <stdint.h>
-#include <stddef.h>
-double log10(double x);double ceil(double x);double floor(double x);double pow(double x,double y);int puts(uint8_t* str);int putchar(int char);void putnum(int num){if(((num)>=(0))){(putchar((((int)(floor((((double)(num))/(pow((10.0),((ceil((log10(((double)(num))))))-(1))))))))+(48))));if(((ceil((log10(((double)(num))))))!=(0.0))){(putnum(((int)(((double)(num))-((pow((10.0),((ceil((log10(((double)(num))))))-(1))))*(floor((((double)(num))/(pow((10.0),((ceil((log10(((double)(num))))))-(1))))))))))));};};};int main(){(putnum((32)));(puts(((uint8_t*)("\n"))));return (0);};
+#include <stdio.h>
+
+int main(int argc, char **argv) {
+   printf("Seaburger\n");
+
+   return 0;
+}
