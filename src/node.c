@@ -2,40 +2,20 @@
 
 #include "prims.h"
 
-#define _walk_arr(arr) ({ for (int i = 0; i < dy_len(arr); i++) node_walker(dyi(arr)[i], start, end); })
+#define _walk_arr(arr) ({ for (int i = 0; i < dy_len(arr); i++) node_walker(dyi(arr)[i], special, start, end); })
 
-void node_walker(node_t *node, void (*start)(node_t *node), void (*end)(node_t *node)) {
+void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node_t *node), void (*end)(node_t *node)) {
    start(node);
 
-   // Special Case
-   switch (node->type) {
-      case NODE_VARIABLE_DECLARATION:
-         node_walker(node->VARIABLE_DECLARATION.expr, start, end);
-         node_walker(node->VARIABLE_DECLARATION.type, start, end);
-         end(node);
+   if (special(node)) {
+      end(node);
 
-         return;
-      case NODE_FUNCTION_DECLARATION:
-         node_walker(node->FUNCTION_DECLARATION.stmt, start, end);
-         end(node);
-
-         return;
-      case NODE_FOR:
-         node_walker(node->FOR.stmt, start, end);
-         node_walker(node->FOR.post, start, end);
-         end(node);
-
-         return;
-      case NODE_STRUCT:
-         end(node);
-
-         return;
-      default: break;
+      return;
    }
 
 #define _NODE(a, b, c, i, ...)                                                                                    \
    ({                                                                                                             \
-      if (__builtin_types_compatible_p(a, struct node_t *)) node_walker((void *)*(void **)&node->c.b, start, end);           \
+      if (__builtin_types_compatible_p(a, struct node_t *)) node_walker((void *)*(void **)&node->c.b, special, start, end);           \
       else if(__builtin_types_compatible_p(a, dynarr_t(struct node_t *))) _walk_arr((void ***)*(void **)&node->c.b);        \
    });                                                                                                            \
 

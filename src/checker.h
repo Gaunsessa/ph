@@ -44,6 +44,7 @@ typedef struct checker_t {
 
 // Checker
 bool checker_check(node_t *AST);
+bool checker_check_special(node_t *node);
 void checker_check_start(node_t *node, checker_t *ckr);
 void checker_check_end(node_t *node, checker_t *ckr);
 

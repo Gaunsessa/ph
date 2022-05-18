@@ -276,6 +276,7 @@ node_t *parser_statement(parser_t *p) {
       case TOKEN_CONTINUE: return parser_continue(p);
       case TOKEN_RETURN: return parser_return(p);
       case TOKEN_ALIAS: return parser_alias(p);
+      case TOKEN_DEFER: return parser_defer(p);
       case TOKEN_SEMI_COLON:
       case TOKEN_NEWLINE: return node_init(NODE_EMPTY);
       default: error_token(p->lexer, lookahead(0), "Error: Unexpected Token!");
@@ -431,7 +432,7 @@ node_t *parser_feild_expression(parser_t *p) {
 
       expr = node_init(NODE_FEILD_EXPRESSION, .FEILD_EXPRESSION = {
          expr,
-         parser_identifer(p)->IDENTIFIER.value,
+         parser_identifer_str(p),
          false
       });
    }
@@ -448,7 +449,7 @@ node_t *parser_method_expression(parser_t *p) {
 
       expr = node_init(NODE_METHOD_EXPRESSION, .METHOD_EXPRESSION = { 
          expr,
-         parser_identifer(p)->IDENTIFIER.value,
+         parser_identifer_str(p),
          dy_init(node_t *), 
       });
 
@@ -617,6 +618,16 @@ node_t *parser_continue(parser_t *p) {
    return node_init(NODE_CONTINUE);
 }
 
+/* ----- 
+   DEFER
+   ----- */
+
+node_t *parser_defer(parser_t *p) {
+   parser_eat(p, TOKEN_DEFER);
+
+   return node_init(NODE_DEFER, .DEFER = { parser_statement(p) });
+}
+
 /* ----------- 
    ARROW BLOCK 
    ----------- */
@@ -658,7 +669,7 @@ type_t *_parser_type(parser_t *p) {
 }
 
 type_t *parser_base_type(parser_t *p) {
-   wchar_t *name = parser_identifer(p)->IDENTIFIER.value;
+   wchar_t *name = parser_identifer_str(p);
 
    return ht_exists_sv(BASE_TYPE_STR_VALUES, name) ? ht_get_sv(BASE_TYPE_STR_VALUES, name) : type_init((type_t) { TYPE_ALIAS, .name = name });
 }
@@ -691,7 +702,7 @@ type_t *parser_function_type(parser_t *p) {
    parser_eat(p, TOKEN_LEFT_PARENTHESES);
 
    if (lookahead(0).type == TOKEN_IDENTIFIER && lookahead(1).type != TOKEN_COLON) {
-      funct->self.name = parser_identifer(p)->IDENTIFIER.value;
+      funct->self.name = parser_identifer_str(p);
 
       if (lookahead(0).type == TOKEN_COMMA) parser_eat(p, TOKEN_COMMA);
    }
@@ -699,7 +710,7 @@ type_t *parser_function_type(parser_t *p) {
    while (lookahead(0).type != TOKEN_RIGHT_PARENTHESES) {
       struct { wchar_t *name; struct type_t *type; } arg;
 
-      arg.name = parser_identifer(p)->IDENTIFIER.value;
+      arg.name = parser_identifer_str(p);
 
       parser_eat(p, TOKEN_COLON);
 
@@ -732,7 +743,7 @@ type_t *parser_struct_type(parser_t *p) {
       parser_skip_newlines(p);
 
       struct { wchar_t *name; struct type_t *type; } feild;
-      feild.name = parser_identifer(p)->IDENTIFIER.value;
+      feild.name = parser_identifer_str(p);
 
       parser_eat(p, TOKEN_COLON);
 
@@ -819,7 +830,7 @@ node_t *parser_literal(parser_t *p) {
             parser_skip_newlines(p);
 
             if (lookahead(1).type == TOKEN_EQUALS) {
-               dy_push(lit->STRUCT_LITERAL.idents, parser_identifer(p)->IDENTIFIER.value);
+               dy_push(lit->STRUCT_LITERAL.idents, parser_identifer_str(p));
 
                parser_eat(p, TOKEN_EQUALS);
             } else dy_push(lit->STRUCT_LITERAL.idents, NULL);
@@ -848,15 +859,12 @@ node_t *parser_identifer(parser_t *p) {
       return node_init(NODE_NONE);
    } else {
       // TODO: add current scope to parser and add it to all identifiers 
-      // wchar_t *start = L"seaburger_";
-      token_t ident = parser_eat(p, TOKEN_IDENTIFIER);
-
-      // wchar_t *str = malloc((wcslen(start) + wcslen(ident.str) + 1) * sizeof(wchar_t));
-      // wcscpy(str, start);
-      // wcscpy(str + wcslen(str), ident.str);
-
-      return node_init(NODE_IDENTIFIER, .IDENTIFIER = { ident.str });
+      return node_init(NODE_IDENTIFIER, .IDENTIFIER = { parser_eat(p, TOKEN_IDENTIFIER).str });
    }
+}
+
+wchar_t *parser_identifer_str(parser_t *p) {
+   return parser_eat(p, TOKEN_IDENTIFIER).str;
 }
 
 /* -------------------- 

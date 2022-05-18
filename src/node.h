@@ -50,6 +50,7 @@
       NODE(BREAK)                                                                                                                   \
       NODE(CONTINUE)                                                                                                                \
       NODE(RETURN, struct node_t *, value)                                                                                          \
+      NODE(DEFER, struct node_t *, expr)                                                                                            \
 
 typedef enum NODE_TYPE {
    _NODE_ = -2,
@@ -70,7 +71,7 @@ typedef struct node_t {
 
 #define node_init(...) ({ node_t *n = calloc(1, sizeof(node_t)); memcpy(n, &(node_t) { __VA_ARGS__ }, sizeof(node_t)); n; })
 
-void node_walker(node_t *node, void (*start)(node_t *node), void (*end)(node_t *node));
+void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node_t *node), void (*end)(node_t *node));
 
 void node_free(node_t *node);
 

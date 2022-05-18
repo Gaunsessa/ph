@@ -26,9 +26,32 @@ bool checker_check(node_t *AST) {
    checker_check_start(AST, ckr);
    checker_check_end(AST, ckr);
 
-   node_walker(AST, _check_start, _check_end);
+   node_walker(AST, checker_check_special, _check_start, _check_end);
 
    return ckr->errors == 0;
+}
+
+bool checker_check_special(node_t *node) {
+   switch (node->type) {
+      case NODE_VARIABLE_DECLARATION:
+         node_walker(node->VARIABLE_DECLARATION.expr, checker_check_special, _check_start, _check_end);
+         node_walker(node->VARIABLE_DECLARATION.type, checker_check_special, _check_start, _check_end);
+
+         return true;
+      case NODE_FUNCTION_DECLARATION:
+         node_walker(node->FUNCTION_DECLARATION.stmt, checker_check_special, _check_start, _check_end);
+
+         return true;
+      case NODE_FOR:
+         node_walker(node->FOR.stmt, checker_check_special, _check_start, _check_end);
+         node_walker(node->FOR.post, checker_check_special, _check_start, _check_end);
+
+         return true;
+      case NODE_STRUCT:
+
+         return true;
+      default: return false;
+   }
 }
 
 void checker_check_start(node_t *node, checker_t *ckr) {

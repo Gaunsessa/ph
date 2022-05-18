@@ -55,6 +55,7 @@ node_t *parser_if(parser_t *p);
 node_t *parser_for(parser_t *p);
 node_t *parser_break(parser_t *p);
 node_t *parser_continue(parser_t *p);
+node_t *parser_defer(parser_t *p);
 
 node_t *parser_arrow_block(parser_t *p);
 
@@ -75,6 +76,7 @@ node_t *parser_uninit(parser_t *p);
 node_t *parser_literal(parser_t *p);
 
 node_t *parser_identifer(parser_t *p);
+wchar_t *parser_identifer_str(parser_t *p);
 
 node_t *parser_variable_declaration(parser_t *p);
 node_t *parser_multi_variable_declaration(parser_t *p);

@@ -11,6 +11,7 @@ bool checker_check_FLOAT_LITERAL(checker_t *ckr, node_t *n)  { return true; }
 bool checker_check_STRING_LITERAL(checker_t *ckr, node_t *n) { return true; }
 bool checker_check_ALIAS(checker_t *ckr, node_t *n)          { return true; }
 bool checker_check_UNINIT(checker_t *ckr, node_t *n)         { return true; }
+bool checker_check_DEFER(checker_t *ckr, node_t *n)          { return true; }
 
 bool checker_check_FILE(checker_t *ckr, node_t *n) {
    node_def(n, FILE);

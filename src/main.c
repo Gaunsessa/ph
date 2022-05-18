@@ -4,6 +4,7 @@
 #include <string.h>
 #include <locale.h>
 #include <unistd.h>
+#include <setjmp.h>
 
 #include "cgen.h"
 #include "dynarr.h"
@@ -22,6 +23,7 @@
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
 //       type_t has memory leak
 
+// TODO: 0) Desugar step
 // Todo: 1) Checker & Types
 //          Type Handler
 //          Errors
