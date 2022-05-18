@@ -4,7 +4,6 @@
 #include <string.h>
 #include <locale.h>
 #include <unistd.h>
-#include <setjmp.h>
 
 #include "cgen.h"
 #include "dynarr.h"
