@@ -39,6 +39,8 @@ void cgen_file(buf_t buf, node_t *file) {
 
       if (stmt->type != NODE_EMPTY) dy_push(buf, L';');
    }
+
+   dy_push_str(buf, L"int main() { return main_(); }");
 }
 
 void cgen_statement(buf_t buf, node_t *stmt) {

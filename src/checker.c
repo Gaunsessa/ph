@@ -19,9 +19,14 @@ bool checker_check(node_t *AST) {
    };
 
    ckr->cur_scope = &ckr->scope;
-   ckr->file_scope = &ckr->scope;
+   ckr->file_scope = NULL;
    ckr->errors = 0;
    ckr->error = false;
+
+   // TODO:
+   //       change checker_t to support multiple scopes at the same time
+   //       run checker_check_FILE on every file before walking them
+   //       implment infering from cross file/scopes
 
    checker_check_start(AST, ckr);
    checker_check_end(AST, ckr);
@@ -65,7 +70,6 @@ void checker_check_start(node_t *node, checker_t *ckr) {
          default: return;
       }
    }
-
 }
 
 void checker_check_end(node_t *node, checker_t *ckr) {
@@ -73,6 +77,8 @@ void checker_check_end(node_t *node, checker_t *ckr) {
    if (ckr != NULL) check = ckr;
    else {
       switch (node->type) {
+         case NODE_FILE:
+            check->file_scope = NULL;
          case NODE_BLOCK:
          case NODE_IMPL:
          // case NODE_ACCESS_EXPRESSION:

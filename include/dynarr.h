@@ -113,7 +113,7 @@ static inline int _dynarr_shrink(void **arr) {
    dynarr_info_t *info = _dy_info(arr);
 
    if (info->index <= info->length / 2 && info->length != 0)
-      return _dynarr_resize(arr, info->length / 2);
+      return _dynarr_resize(arr, info->length / 2 + 1);
 
    return 0;
 }

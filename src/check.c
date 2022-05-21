@@ -13,8 +13,25 @@ bool checker_check_ALIAS(checker_t *ckr, node_t *n)          { return true; }
 bool checker_check_UNINIT(checker_t *ckr, node_t *n)         { return true; }
 bool checker_check_DEFER(checker_t *ckr, node_t *n)          { return true; }
 
+bool checker_check_PROJECT(checker_t *ckr, node_t *n) {
+   return true;
+}
+
 bool checker_check_FILE(checker_t *ckr, node_t *n) {
    node_def(n, FILE);
+
+   checker_push_scope(ckr);
+
+   ckr->file_scope = ckr->cur_scope;
+
+   // TODO: This will cause a double free when type freeing is implemented!
+   for (int i = 0; i < dy_len(node->imports); i++)
+      checker_set_decl(
+         ckr, 
+         dyi(node->imports)[i], 
+         type_init((type_t) { TYPE_MODULE, .name = dyi(node->imports)[i] }), 
+         false
+      );
 
    for (int i = 0; i < dy_len(node->stmts); i++) {
       node_t *stmt = dyi(node->stmts)[i];
@@ -128,19 +145,21 @@ bool checker_check_FEILD_EXPRESSION(checker_t *ckr, node_t *n) {
    type_t *type = checker_reslove_base_type(ckr, oty);
    if (oty == NULL || type == NULL) return false;
 
-   if (type->type != TYPE_STRUCT) error("Only structs have feilds!");
+   if (type->type == TYPE_STRUCT) {
+      if (oty->type == TYPE_PTR) 
+         n->FEILD_EXPRESSION.ptr = true;
 
-   if (oty->type == TYPE_PTR) 
-      n->FEILD_EXPRESSION.ptr = true;
+      // for (int i = 0; i < dy_len(type->funcs); i++)
+      //    checker_set_decl(ckr, dyi(type->funcs)[i].name, dyi(type->funcs)[i].type, false);
 
-   // for (int i = 0; i < dy_len(type->funcs); i++)
-   //    checker_set_decl(ckr, dyi(type->funcs)[i].name, dyi(type->funcs)[i].type, false);
+      // if (node->member->type == NODE_CALL_EXPRESSION)
+      //    checker_check_CALL_EXPRESSION(ckr, node->member);
 
-   // if (node->member->type == NODE_CALL_EXPRESSION)
-   //    checker_check_CALL_EXPRESSION(ckr, node->member);
-
-   // if (node->member->type == NODE_CALL_EXPRESSION)
-   //    dy_insert(node->member->CALL_EXPRESSION.args, 0, node->expr);
+      // if (node->member->type == NODE_CALL_EXPRESSION)
+      //    dy_insert(node->member->CALL_EXPRESSION.args, 0, node->expr);
+   } else if (type->type == TYPE_MODULE) {
+      ERROR("UNIMPLEMENTED!");
+   } else error("Only structs and modules have feilds!");
 
    return true;
 }
@@ -152,27 +171,29 @@ bool checker_check_METHOD_EXPRESSION(checker_t *ckr, node_t *n) {
    type_t *type = checker_reslove_base_type(ckr, oty);
    if (oty == NULL || type == NULL) return false;
 
-   if (type->type != TYPE_STRUCT) error("Only structs have methods!");
+   if (type->type == TYPE_STRUCT) {
+      type_t *func = NULL;
+      for (int i = 0; i < dy_len(type->funcs); i++)
+         if (!wcscmp(dyi(type->funcs)[i].name, node->member))
+            func = dyi(type->funcs)[i].type;
 
-   type_t *func = NULL;
-   for (int i = 0; i < dy_len(type->funcs); i++)
-      if (!wcscmp(dyi(type->funcs)[i].name, node->member))
-         func = dyi(type->funcs)[i].type;
+      if (func == NULL) error("Unkown method!");
 
-   if (func == NULL) error("Unkown method!");
+      if (dy_len(func->args) != dy_len(node->args))
+         error("Invalid Amount of Arguments!");
 
-   if (dy_len(func->args) != dy_len(node->args))
-      error("Invalid Amount of Arguments!");
+      for (int i = 0; i < dy_len(node->args); i++) {
+         type_t *argt = checker_infer_expression(ckr, dyi(node->args)[i]);
+         type_t *typt = checker_reslove_type(ckr, dyi(func->args)[i].type);
 
-   for (int i = 0; i < dy_len(node->args); i++) {
-      type_t *argt = checker_infer_expression(ckr, dyi(node->args)[i]);
-      type_t *typt = checker_reslove_type(ckr, dyi(func->args)[i].type);
+         if (!type_cmp(ckr, typt, argt)) error("Invalid Argument Type!");
+      }
 
-      if (!type_cmp(ckr, typt, argt)) error("Invalid Argument Type!");
-   }
-
-   if (oty->type == TYPE_PTR)
-      n->METHOD_EXPRESSION.ptr = true;
+      if (oty->type == TYPE_PTR)
+         n->METHOD_EXPRESSION.ptr = true;
+   } else if (type->type == TYPE_MODULE) {
+      ERROR("UNIMPLEMENTED!");
+   } else error("Only structs and modules have feilds!");
 
    return true;
 }
@@ -317,6 +338,8 @@ bool checker_check_RETURN(checker_t *ckr, node_t *n) {
 bool checker_check_IMPL(checker_t *ckr, node_t *n) {
    node_def(n, IMPL);
 
+   checker_push_scope(ckr);
+
    type_t *type = checker_reslove_base_type(ckr, checker_reslove_type(ckr, node->type->DATA_TYPE.type));
    if (type == NULL) return false;
 
@@ -337,8 +360,6 @@ bool checker_check_IMPL(checker_t *ckr, node_t *n) {
 
       dy_push_unsafe(type->funcs, ft);
    }
-
-   checker_push_scope(ckr);
 
    return true;
 }

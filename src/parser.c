@@ -162,7 +162,19 @@
    MAIN 
    ---- */
 
-node_t *parser_parse(FILE *f) {
+node_t *parser_parse(size_t amt, ...) {
+   va_list args;
+   va_start(args, amt);
+
+   node_t *AST = node_init(NODE_PROJECT, .PROJECT = { dy_init(node_t *) });
+
+   for (int i = 0; i < amt; i++)
+      dy_push(AST->PROJECT.modules, parser_parse_file(va_arg(args, FILE *)));
+
+   return AST;
+}
+
+node_t *parser_parse_file(FILE *f) {
    parser_t *inner = calloc(1, sizeof(parser_t));
 
    inner->lexer = lexer_new(f);
@@ -186,7 +198,13 @@ node_t *parser_parse(FILE *f) {
    ---- */
 
 node_t *parser_file(parser_t *p) {
-   node_t *file = node_init(NODE_FILE, .FILE = { dy_init(node_t *) });
+   parser_eat(p, TOKEN_MODULE);
+
+   node_t *file = node_init(NODE_FILE, .FILE = { 
+      parser_eat(p, TOKEN_IDENTIFIER).str, 
+      dy_init(wchar_t *), 
+      dy_init(node_t *) 
+   });
 
    while (!(M_COMPARE(lookahead(0).type, TOKEN_END))) { 
       if (lookahead(0).type == TOKEN_NONE)
@@ -195,6 +213,14 @@ node_t *parser_file(parser_t *p) {
       node_t *node;
 
       switch (lookahead(0).type) {
+         case TOKEN_IMPORT:
+            parser_eat(p, TOKEN_IMPORT);
+
+            dy_push(file->FILE.imports, parser_eat(p, TOKEN_IDENTIFIER).str);
+
+            parser_eat(p, TOKEN_NEWLINE);
+
+            continue;
          case TOKEN_UNDERSCORE:
          case TOKEN_IDENTIFIER:
             switch (lookahead(1).type) {

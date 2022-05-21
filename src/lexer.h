@@ -91,6 +91,8 @@
       TOKEN(STRUCT, L"struct")           \
       TOKEN(IMPL, L"impl")               \
       TOKEN(DEFER, L"defer")             \
+      TOKEN(MODULE, L"module")           \
+      TOKEN(IMPORT, L"import")           \
 
 const static size_t MAX_KEYWORD_LEN = 32;
 

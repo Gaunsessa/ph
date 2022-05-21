@@ -20,7 +20,8 @@
       NODE(NONE)                                                                                                                    \
       NODE(EMPTY)                                                                                                                   \
       NODE(MULTI, dynarr_t(struct node_t *), nodes)                                                                                 \
-      NODE(FILE, dynarr_t(struct node_t *), stmts)                                                                                  \
+      NODE(PROJECT, dynarr_t(struct node_t *), modules)                                                                             \
+      NODE(FILE, wchar_t *, name, dynarr_t(wchar_t *), imports, dynarr_t(struct node_t *), stmts)                                   \
       NODE(BLOCK, dynarr_t(struct node_t *), stmts)                                                                                 \
       NODE(BINARY_EXPRESSION, TOKEN_TYPE, op, struct node_t *, left, struct node_t *, right)                                        \
       NODE(CALL_EXPRESSION, struct node_t *, func, dynarr_t(struct node_t *), args, bool, curried)                                  \

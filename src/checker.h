@@ -34,6 +34,8 @@ typedef struct scope_t {
 } scope_t;
 
 typedef struct checker_t {
+   // ht_t(wchar_t *, scope_t *) modules;
+
    scope_t scope;
    scope_t *cur_scope;
    scope_t *file_scope;

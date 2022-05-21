@@ -1,25 +1,25 @@
-// Defers
-
-puts :: (std: ^u8): = ---
-
-main :: (): int = {
-   x := 10
-   x = (f32)32
-
-   puts((^u8)"Seaburger")
-
-   return 0
+Entity :: struct {
+   x: f64
+   y: f64
 }
 
-// int test() {
-//    int ret;
+impl Entity {
+   kill :: (e): = {}
+}
 
-//    int x = 10;
+_entity_kill :: (e: Entity): = {}
 
-//    ret = x;
-//    goto DEFERS;
+func :: (): = {}
 
-// DEFERS:
-//    x = 3
-//    return ret;
-// }
+main :: (): int = {
+   c := Entity { 32, 32 }
+
+   c.kill()
+
+   func()
+
+   // _entity_kill(&c)
+
+   // c.cum() is invalid!
+   // cum(c) is valid!
+}

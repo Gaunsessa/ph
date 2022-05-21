@@ -13,6 +13,7 @@
 #include "parser.h"
 #include "lexer.h"
 #include "checker.h"
+#include "desugar.h"
 #include "types.h"
 
 #include "prims.h"
@@ -104,7 +105,8 @@ int main(int argc, char **argv) {
       exit(-1);
    }
 
-   node_t *AST = parser_parse(fopen(argv[2], "r"));
+   node_t *AST = parser_parse(2, fopen("tests/proj/main.ph", "r"), fopen("tests/proj/test.ph", "r"));
+   // desugar_desugar(AST);
    if (!checker_check(AST)) exit(-1);
    
    if (!strcmp(argv[1], "build")) {
