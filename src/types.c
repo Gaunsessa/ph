@@ -70,11 +70,11 @@ bool type_is_indexable(type_t *t) {
 // }
 
 // True = equal, False = not equal
-bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
+bool type_cmp(module_t *mod, type_t *t1, type_t *t2) {
    if (t1 == NULL || t2 == NULL) return false;
 
-   if (t1->type == TYPE_ALIAS) t1 = checker_reslove_type(ckr, t1);
-   if (t2->type == TYPE_ALIAS) t2 = checker_reslove_type(ckr, t2);
+   if (t1->type == TYPE_ALIAS) t1 = checker_resolve_type(mod, t1);
+   if (t2->type == TYPE_ALIAS) t2 = checker_resolve_type(mod, t2);
 
    if (t1 == NULL || t2 == NULL) return false;
 
@@ -101,14 +101,14 @@ bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
       case TYPE_BASE:
          return t1->base == t2->base;
       case TYPE_PTR:
-         return type_cmp(ckr, t1->ptr_base, t2->ptr_base);
+         return type_cmp(mod, t1->ptr_base, t2->ptr_base);
       case TYPE_ARRAY:
-         return t1->length == t2->length ? type_cmp(ckr, t1->arr_base, t2->arr_base) : false; 
+         return t1->length == t2->length ? type_cmp(mod, t1->arr_base, t2->arr_base) : false; 
       case TYPE_FUNCTION:
-         if (dy_len(t1->args) != dy_len(t2->args) || !type_cmp(ckr, t1->ret, t2->ret)) return false;
+         if (dy_len(t1->args) != dy_len(t2->args) || !type_cmp(mod, t1->ret, t2->ret)) return false;
 
          for (int i = 0; i < dy_len(t1->args); i++) {
-            if (!type_cmp(ckr, dyi(t1->args)[i].type, dyi(t2->args)[i].type))
+            if (!type_cmp(mod, dyi(t1->args)[i].type, dyi(t2->args)[i].type))
                return false;
 
             if (wcscmp(dyi(t1->args)[i].name, dyi(t2->args)[i].name) != 0)
@@ -120,7 +120,7 @@ bool type_cmp(checker_t *ckr, type_t *t1, type_t *t2) {
          if (dy_len(t1->feilds) != dy_len(t2->feilds)) return false;
 
          for (int i = 0; i < dy_len(t1->feilds); i++) {
-            if (!type_cmp(ckr, dyi(t1->feilds)[i].type, dyi(t2->feilds)[i].type))
+            if (!type_cmp(mod, dyi(t1->feilds)[i].type, dyi(t2->feilds)[i].type))
                return false;
 
             if (wcscmp(dyi(t1->feilds)[i].name, dyi(t2->feilds)[i].name) != 0)

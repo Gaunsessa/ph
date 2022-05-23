@@ -1,3 +1,5 @@
+module main
+
 Entity :: struct {
    x: f64
    y: f64

@@ -167,8 +167,8 @@ bool type_is_indexable(type_t *t);
 
 type_t *type_deref_ref(type_t *t);
 
-struct checker_t;
-bool type_cmp(struct checker_t *ckr, type_t *t1, type_t *t2);
+struct module_t;
+bool type_cmp(struct module_t *mod, type_t *t1, type_t *t2);
 
 const wchar_t *type_base_cname(type_t *t);
 

@@ -1,3 +1,4 @@
+module main
 // Hello World
 
 log10 :: (x: f64): f64 = ---

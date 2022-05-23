@@ -162,14 +162,11 @@
    MAIN 
    ---- */
 
-node_t *parser_parse(size_t amt, ...) {
-   va_list args;
-   va_start(args, amt);
-
+node_t *parser_parse(size_t amt, FILE **files) {
    node_t *AST = node_init(NODE_PROJECT, .PROJECT = { dy_init(node_t *) });
 
    for (int i = 0; i < amt; i++)
-      dy_push(AST->PROJECT.modules, parser_parse_file(va_arg(args, FILE *)));
+      dy_push(AST->PROJECT.modules, parser_parse_file(files[i]));
 
    return AST;
 }
@@ -549,9 +546,21 @@ node_t *parser_primary_expression(parser_t *p) {
       expr = parser_expression(p);
 
       parser_eat(p, TOKEN_RIGHT_PARENTHESES);
-   } else if (lookahead(0).type == TOKEN_IDENTIFIER && lookahead(1).type != TOKEN_LEFT_BRACE) {
+   } else if (lookahead(0).type == TOKEN_IDENTIFIER && !(lookahead(1).type == TOKEN_LEFT_BRACE || (lookahead(1).type == TOKEN_DOT && lookahead(3).type == TOKEN_LEFT_BRACE))) {
       expr = parser_identifer(p);
    } else expr = parser_literal(p);
+
+   return expr;
+}
+
+node_t *parser_module_feild_expression(parser_t *p) {
+   node_t *expr = node_init(NODE_FEILD_EXPRESSION);
+
+   expr->FEILD_EXPRESSION.expr = parser_identifer(p);
+
+   parser_eat(p, TOKEN_DOT);
+
+   expr->FEILD_EXPRESSION.member = parser_identifer_str(p);
 
    return expr;
 }
@@ -677,7 +686,8 @@ node_t *parser_arrow_block(parser_t *p) {
    ---- */
 
 node_t *parser_type(parser_t *p) {
-   return node_init(NODE_DATA_TYPE, .DATA_TYPE = { _parser_type(p) });
+   if (lookahead(1).type == TOKEN_DOT && lookahead(3).type == TOKEN_LEFT_BRACE) return parser_module_feild_expression(p);
+   else return node_init(NODE_DATA_TYPE, .DATA_TYPE = { _parser_type(p) });
 }
 
 node_t *parser_infer_type(parser_t *p) {

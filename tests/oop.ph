@@ -1,32 +1,34 @@
-Entity :: struct {
-   pos: vec2
+module main
 
-   get_pos :: (e: Entity): vec2 = return e.pos
-}
+// Entity :: struct {
+//    pos: vec2
 
-impl Entity {
-   kill :: (e: Entity): = {}
-}
+//    get_pos :: (e: Entity): vec2 = return e.pos
+// }
 
-Cow :: struct {
-   use ent: Entity
+// impl Entity {
+//    kill :: (e: Entity): = {}
+// }
 
-   get_pos :: (e: Cow): vec2 = return e.pos * 2
-}
+// Cow :: struct {
+//    use ent: Entity
 
-cum :: (e: Entity): = {
-   if e.get_pos().x > 3 -> printf("cum")
-}
+//    get_pos :: (e: Cow): vec2 = return e.pos * 2
+// }
 
-main :: (): int {
-   c := Cow { pos = { 32, 32 } }
-   c = Cow { ent = { pos = { 32, 32 } } }
+// cum :: (e: Entity): = {
+//    if e.get_pos().x > 3 -> printf("cum")
+// }
 
-   c.get_pos() // 64, 64
-   c.ent.get_pos() // 32, 32
+// main :: (): int {
+//    c := Cow { pos = { 32, 32 } }
+//    c = Cow { ent = { pos = { 32, 32 } } }
 
-   c.kill()
+//    c.get_pos() // 64, 64
+//    c.ent.get_pos() // 32, 32
 
-   // c.cum() is invalid!
-   // cum(c) is valid!
-}
+//    c.kill()
+
+//    // c.cum() is invalid!
+//    // cum(c) is valid!
+// }

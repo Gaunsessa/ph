@@ -1,3 +1,5 @@
+module main
+
 // Hello World
 
 printf :: (fmt: ^u8): = ---

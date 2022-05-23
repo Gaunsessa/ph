@@ -1,3 +1,5 @@
+module main
+
 main :: (argc: int, argv: ^^char): int = {
    _int := 1
    _float := 2.3

@@ -33,12 +33,15 @@ typedef struct scope_t {
    struct scope_t *parent;
 } scope_t;
 
-typedef struct checker_t {
-   // ht_t(wchar_t *, scope_t *) modules;
+typedef struct module_t {
+   scope_t *scope;
 
-   scope_t scope;
    scope_t *cur_scope;
    scope_t *file_scope;
+} module_t;
+
+typedef struct checker_t {
+   ht_t(wchar_t *, module_t *) modules;
 
    bool error;
    size_t errors;
@@ -47,45 +50,49 @@ typedef struct checker_t {
 // Checker
 bool checker_check(node_t *AST);
 bool checker_check_special(node_t *node);
-void checker_check_start(node_t *node, checker_t *ckr);
-void checker_check_end(node_t *node, checker_t *ckr);
+void checker_check_start(node_t *node, checker_t *ckr, module_t *mod);
+void checker_check_end(node_t *node, checker_t *ckr, module_t *mod);
 
-bool checker_check_node(checker_t *ckr, node_t *node);
+bool checker_check_node(checker_t *ckr, module_t *mod, node_t *node);
 
-void checker_push_scope(checker_t *ckr);
-void checker_pop_scope(checker_t *ckr);
+scope_t *checker_scope_new();
+void checker_scope_free(scope_t *scope);
 
-type_t *checker_get_decl(checker_t *ckr, wchar_t *ident, bool typedf);
-type_t *checker_reslove_type(checker_t *ckr, type_t *type);
-type_t *checker_reslove_base_type(checker_t *ckr, type_t *type);
-type_t *checker_reslove_typedef(checker_t *ckr, type_t *type);
+void checker_push_scope(module_t *mod);
+void checker_pop_scope(module_t *mod);
 
-void checker_set_decl(checker_t *ckr, wchar_t *ident, type_t *type, bool typedf);
-bool checker_decl_exists_cur(checker_t *ckr, wchar_t *ident);
+type_t *checker_get_decl(module_t *mod, wchar_t *ident, bool typedf);
+type_t *checker_get_decl_both(module_t *mod, wchar_t *ident);
+type_t *checker_resolve_type(module_t *mod, type_t *type);
+type_t *checker_resolve_base_type(module_t *mod, type_t *type);
+type_t *checker_resolve_typedef(module_t *mod, type_t *type);
+
+void checker_set_decl(module_t *mod, wchar_t *ident, type_t *type, bool typedf);
+bool checker_decl_exists_cur(module_t *mod, wchar_t *ident);
 void free_decl(void *decl);
 
 // Check
 bool checker_check_check(checker_t *ckr, node_t *node);
 
-#define NODE(ident, ...) bool checker_check_##ident(checker_t *ckr, node_t *n);
+#define NODE(ident, ...) bool checker_check_##ident(checker_t *ckr, module_t *mod, node_t *n);
    NODE_TYPES
 #undef NODE
 
 // Infer
-type_t *checker_infer_expression(checker_t *ckr, node_t *expr);
-type_t *checker_infer_expression_no_res(checker_t *ckr, node_t *expr);
-type_t *checker_infer_binexpr(checker_t *ckr, node_t *expr);
-type_t *checker_infer_feildexpr(checker_t *ckr, node_t *expr);
-type_t *checker_infer_methodexpr(checker_t *ckr, node_t *expr);
-type_t *checker_infer_addrexpr(checker_t *ckr, node_t *expr);
-type_t *checker_infer_derefexpr(checker_t *ckr, node_t *expr);
-type_t *checker_infer_castexpr(checker_t *ckr, node_t *expr);
-type_t *checker_infer_callexpr(checker_t *ckr, node_t *expr);
-type_t *checker_infer_callexpr_funct(checker_t *ckr, node_t *expr);
-type_t *checker_infer_literal(checker_t *ckr, node_t *lit);
-type_t *checker_infer_identifier(checker_t *ckr, node_t *ident);
+type_t *checker_infer_expression(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_expression_no_res(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_binexpr(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_feildexpr(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_methodexpr(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_addrexpr(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_derefexpr(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_castexpr(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_callexpr(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_callexpr_funct(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_literal(checker_t *ckr, module_t *mod, node_t *lit);
+type_t *checker_infer_identifier(checker_t *ckr, module_t *mod, node_t *ident);
 
-type_t *checker_infer_var_decl(checker_t *ckr, node_t *vard);
-type_t *checker_infer_alias(checker_t *ckr, node_t *alias);
+type_t *checker_infer_var_decl(checker_t *ckr, module_t *mod, node_t *vard);
+type_t *checker_infer_alias(checker_t *ckr, module_t *mod, node_t *alias);
 
 #endif

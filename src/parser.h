@@ -25,7 +25,7 @@ typedef struct parser_t {
    bool req_semi;
 } parser_t;
 
-node_t *parser_parse(size_t amt, ...);
+node_t *parser_parse(size_t amt, FILE **files);
 
 node_t *parser_parse_file(FILE *f);
 
@@ -51,6 +51,7 @@ node_t *parser_cast_expression(parser_t *p);
 node_t *parser_call_expression(parser_t *p);
 
 node_t *parser_primary_expression(parser_t *p);
+node_t *parser_module_feild_expression(parser_t *p);
 
 node_t *parser_if(parser_t *p);
 
