@@ -45,15 +45,24 @@ void node_free(node_t *node) {
    }
 }
 
+void _print_tabs(int amt) {
+   for (int i = 0; i < amt; i++)
+      printf(" ");
+}
+
 void print_node(node_t *node) {
+   static int t = 0;
+
    switch (node->type) {
-#define _NODE(type, name, ident, i, ...) { _printtype(&node->ident.name, primtype(node->ident.name)); printf(" "); }
+#define _NODE(type, name, ident, i, ...) { _print_tabs(t); _printtype(&node->ident.name, primtype(node->ident.name)); printf(M_VALEN(__VA_ARGS__) ? "\n" : ""); }
 #define NODE(ident, ...)                         \
       case NODE_##ident: {                       \
          if (node->type == NODE_EMPTY) return;   \
          printf("%s : ", M_STR(NODE_##ident));   \
+         printf("\n");                           \
+         t += 2;                                 \
          M_MAP2(_NODE, ident, __VA_ARGS__);      \
-         printf("");                             \
+         t -= 2;                                 \
       } break;                                   \
 
       NODE_TYPES

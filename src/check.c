@@ -178,6 +178,8 @@ bool checker_check_FEILD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
       if (oty->type == TYPE_PTR) 
          n->FEILD_EXPRESSION.ptr = true;
    } else if (type->type == TYPE_MODULE) {
+      n->FEILD_EXPRESSION.module = true;
+
       if (!ht_exists_sv(ckr->modules, node->expr->IDENTIFIER.value)) return false;
 
       if (checker_get_decl_both(ht_get_sv(ckr->modules, node->expr->IDENTIFIER.value), node->member) == NULL)
@@ -203,6 +205,8 @@ bool checker_check_METHOD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
       if (oty->type == TYPE_PTR)
             n->METHOD_EXPRESSION.ptr = true;
    } else if (type->type == TYPE_MODULE) {
+      n->METHOD_EXPRESSION.module = true;
+
       if (!ht_exists_sv(ckr->modules, node->expr->IDENTIFIER.value)) return false;
 
       func = checker_get_decl(ht_get_sv(ckr->modules, node->expr->IDENTIFIER.value), node->member, false);

@@ -4,11 +4,11 @@
 #define dy_push_ptr(arr, ptr, len) ({ for (int _i_ = 0; _i_ < len; _i_++) dy_push((arr), (ptr)[_i_]); })
 
 wchar_t *cgen_generate(node_t *AST) {
-   if (AST->type != NODE_FILE) eprint("Error: Invalid AST!");
+   if (AST->type != NODE_PROJECT) eprint("Error: Invalid AST!");
 
    buf_t buffer = dy_init(wchar_t);
 
-   cgen_file(buffer, AST);
+   cgen_file(buffer, dyi(AST->PROJECT.modules)[0]);
    
    dy_push(buffer, 0);
 
@@ -428,9 +428,9 @@ void cgen_block(buf_t buf, node_t *block) {
 }
 
 void cgen_type(buf_t buf, node_t *type) {
-   node_def(type, DATA_TYPE);
-
-   _cgen_type(buf, node->type);
+   if (type->type == NODE_DATA_TYPE) _cgen_type(buf, type->DATA_TYPE.type);
+   else cgen_expression(buf, type);
+   // node_def(type, DATA_TYPE);
 }
 
 void _cgen_type(buf_t buf, type_t *type) {

@@ -35,6 +35,8 @@ void desugar_file(node_t *file, desugar_t *des);
 
 void desugar_ident(node_t *ident, desugar_t *des);
 
+void desugar_feild_expr(node_t *expr, desugar_t *des);
+
 void desugar_data_type(node_t *dtype, desugar_t *des);
 void desugar_type(type_t *type, desugar_t *des);
 

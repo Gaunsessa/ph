@@ -39,7 +39,7 @@
          for (int i = 0; i < dy_len(*v); i++) node_free(dyi(*v)[i]);                              \
          dy_free(*v);                                                                             \
       })                                                                                          \
-      PTYPE(TYPEPTR, type_t *, { print_type(*v); }, {  })                                \
+      PTYPE(TYPEPTR, type_t *, { print_type(*v); }, {  })                                         \
 
 typedef enum PRIM_TYPE {
    PRIM_NONE,
@@ -52,7 +52,7 @@ typedef enum PRIM_TYPE {
 static inline void _printtype(void *data, PRIM_TYPE type) {
    switch (type) {
       case PRIM_NONE:
-         printf("None printable type!");
+         printf("None printable type!\n");
          break;
 
 #define PTYPE(ident, type, pimpl, fimpl) case PRIM_##ident: { type *v = data; pimpl } break;
@@ -64,7 +64,7 @@ static inline void _printtype(void *data, PRIM_TYPE type) {
 static inline void _freetype(void *data, PRIM_TYPE type) {
    switch (type) {
       case PRIM_NONE:
-         printf("None freeable type!");
+         printf("None freeable type!\n");
          break;
 
 #define PTYPE(ident, type, pimpl, fimpl) case PRIM_##ident: { type *v = data; fimpl } break;

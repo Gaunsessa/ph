@@ -6,4 +6,4 @@ build: src/*
 
 run:
 	make -B
-	./build/ph build tests/test.ph
+	./build/ph dump tests/proj/

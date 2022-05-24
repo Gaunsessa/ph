@@ -90,6 +90,16 @@ void desugar_ident(node_t *ident, desugar_t *des) {
    }
 }
 
+void desugar_feild_expr(node_t *expr, desugar_t *des) {
+   node_def(expr, FEILD_EXPRESSION);
+
+   if (node->module) {
+      // memset(expr, 0, sizeof(node_t));
+
+      // node->
+   }
+}
+
 void desugar_data_type(node_t *dtype, desugar_t *des) {
    node_def(dtype, DATA_TYPE);
 
