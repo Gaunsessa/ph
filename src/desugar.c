@@ -124,14 +124,15 @@ wchar_t *_desugar_rename_ident(desugar_t *des, wchar_t *ident, size_t amt, ...) 
    va_list args;
    va_start(args, amt);
 
-   size_t len = des->module_name_len + wcslen(ident) + 2;
+   size_t ident_len = wcslen(ident);
+   size_t len       = des->module_name_len + ident_len + 2;
 
    for (int i = 0; i < amt; i++)
       len += wcslen(va_arg(args, wchar_t *)) + 1;
 
    ident = realloc(ident, len * sizeof(wchar_t));
    // wcscpy(ident + len - wcslen(ident) - 1, ident);
-   memmove(ident + len - wcslen(ident) - 1, ident, (wcslen(ident) + 1) * sizeof(wchar_t));
+   memmove(ident + len - ident_len - 1, ident, (ident_len + 1) * sizeof(wchar_t));
 
    va_start(args, amt);
 

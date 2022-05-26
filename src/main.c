@@ -7,7 +7,6 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-#include "cgen.h"
 #include "dynarr.h"
 #include "ht.h"
 
@@ -17,6 +16,7 @@
 #include "checker.h"
 #include "desugar.h"
 #include "types.h"
+#include "cgen.h"
 
 #include "prims.h"
 #include "print.h"
@@ -27,6 +27,7 @@
 
 // TODO: 0) Desugar step
 //          I think I should desugar after the check stage and desugar all modules down to a NODE_FILE with renamed names
+//          and maybe even convert it into a new ast node instead of file that has a list of functions and variables and ...
 // Todo: 1) Checker & Types
 //          Type Handler
 //          Errors
@@ -165,7 +166,7 @@ int main(int argc, char **argv) {
    dy_free(files);
 
    if (!checker_check(AST)) exit(-1);
-   
+
    desugar_desugar(AST);
    
    if (!strcmp(argv[1], "build")) {
