@@ -72,3 +72,13 @@ void print_node(node_t *node) {
       default: eprint("Error: unknown node type!");
    }
 }
+
+void print_node_type(NODE_TYPE type) {
+   switch (type) {
+#define NODE(ident, ...) case NODE_##ident: printf("%s\n", M_STR(NODE_##ident)); break;
+      NODE_TYPES
+#undef NODE
+
+      default: return;
+   }
+}

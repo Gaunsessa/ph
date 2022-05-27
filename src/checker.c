@@ -67,6 +67,8 @@ bool checker_check_special(node_t *node) {
          node_walker(node->FOR.post, checker_check_special, _check_start, _check_end);
 
          return true;
+      case NODE_PATH_EXPRESSION:
+         return true;
       case NODE_STRUCT:
 
          return true;

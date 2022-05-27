@@ -4,11 +4,11 @@
 #define dy_push_ptr(arr, ptr, len) ({ for (int _i_ = 0; _i_ < len; _i_++) dy_push((arr), (ptr)[_i_]); })
 
 wchar_t *cgen_generate(node_t *AST) {
-   if (AST->type != NODE_PROJECT) eprint("Error: Invalid AST!");
+   if (AST->type != NODE_SOURCE) eprint("Error: Invalid AST!");
 
    buf_t buffer = dy_init(wchar_t);
 
-   cgen_file(buffer, dyi(AST->PROJECT.modules)[0]);
+   cgen_variable_declaration(buffer, dyi(AST->SOURCE.funcs)[0]);
    
    dy_push(buffer, 0);
 
@@ -294,6 +294,14 @@ void cgen_return(buf_t buf, node_t *ret) {
 
 void cgen_feild(buf_t buf, node_t *acc) {
    node_def(acc, FEILD_EXPRESSION);
+
+   if (node->module) {
+      dy_push_str(buf, node->expr->IDENTIFIER.value);
+      dy_push(buf, L'_');
+      dy_push_str(buf, node->member);
+
+      return;
+   }
 
    // if (node->member->type == NODE_CALL_EXPRESSION) {
    //    dy_push_str(buf, node->member->CALL_EXPRESSION.func->IDENTIFIER.value);

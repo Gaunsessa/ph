@@ -24,6 +24,7 @@
 
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
 //       type_t has memory leak
+//       node_free dosent free the malloc of the node itself
 
 // TODO: 0) Desugar step
 //          I think I should desugar after the check stage and desugar all modules down to a NODE_FILE with renamed names
@@ -167,12 +168,13 @@ int main(int argc, char **argv) {
 
    if (!checker_check(AST)) exit(-1);
 
-   desugar_desugar(AST);
+   // node_t *NAST = desugar_desugar(AST);
+   node_t *NAST = AST;
    
    if (!strcmp(argv[1], "build")) {
-      printf("%ls\n", cgen_generate(AST));
+      printf("%ls\n", cgen_generate(NAST));
    } else if (!strcmp(argv[1], "run")) {
-      compile_and_run(cgen_generate(AST));
+      compile_and_run(cgen_generate(NAST));
    } else if (!strcmp(argv[1], "dump")) {
       print_node(AST);
    } else {

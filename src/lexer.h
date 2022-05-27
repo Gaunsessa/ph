@@ -78,6 +78,7 @@
       TOKEN(EQUALS, L"=")                \
       TOKEN(ARROW, L"->")                \
       TOKEN(DOT, L".")                   \
+      TOKEN(APOSTROOHE, L"'")            \
       TOKEN(UNINIT, L"---")              \
                                          \
       TOKEN(IF, L"if")                   \

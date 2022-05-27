@@ -444,7 +444,37 @@ node_t *parser_sign_expression(parser_t *p) {
 node_t *parser_pre_incdec_expression(parser_t *p) {
    if (M_COMPARE(lookahead(0).type, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS))
       return node_init(NODE_INCDEC_EXPRESSION, .INCDEC_EXPRESSION = { parser_eat(p, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS).type, parser_pre_incdec_expression(p), true });
-   else return parser_feild_expression(p);
+   else return parser_struct_literal(p);
+}
+
+node_t *parser_struct_literal(parser_t *p) {
+   node_t *expr = parser_feild_expression(p);
+
+   if (lookahead(0).type == TOKEN_LEFT_BRACE) {
+      expr = node_init(NODE_STRUCT_LITERAL, .STRUCT_LITERAL = { expr, dy_init(wchar_t *), dy_init(node_t *) });
+
+      parser_eat(p, TOKEN_LEFT_BRACE);
+
+      parser_skip_newlines(p);
+
+      while (lookahead(0).type != TOKEN_RIGHT_BRACE) {
+         parser_skip_newlines(p);
+
+         if (lookahead(1).type == TOKEN_EQUALS) {
+            dy_push(expr->STRUCT_LITERAL.idents, parser_identifer_str(p));
+
+            parser_eat(p, TOKEN_EQUALS);
+         } else dy_push(expr->STRUCT_LITERAL.idents, NULL);
+
+         dy_push(expr->STRUCT_LITERAL.exprs, parser_expression(p));
+
+         if (lookahead(0).type == TOKEN_COMMA) parser_eat(p, TOKEN_COMMA);
+      }
+
+      parser_eat(p, TOKEN_RIGHT_BRACE);
+   }
+
+   return expr;
 }
 
 node_t *parser_feild_expression(parser_t *p) {
@@ -529,10 +559,24 @@ node_t *parser_call_expression(parser_t *p) {
 }
 
 node_t *parser_post_incdec_expression(parser_t *p) {
-   node_t *expr = parser_primary_expression(p);
+   node_t *expr = parser_path_expression(p);
 
    while (M_COMPARE(lookahead(0).type, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS))
       expr = node_init(NODE_INCDEC_EXPRESSION, .INCDEC_EXPRESSION = { parser_eat(p, TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS).type, expr, false });
+
+   return expr;
+}
+
+node_t *parser_path_expression(parser_t *p) {
+   node_t *expr = parser_primary_expression(p);
+
+   if (lookahead(0).type == TOKEN_APOSTROOHE) {
+      expr = node_init(NODE_PATH_EXPRESSION, .PATH_EXPRESSION = { expr });
+
+      parser_eat(p, TOKEN_APOSTROOHE);
+
+      expr->PATH_EXPRESSION.expr = lookahead(1).type == TOKEN_LEFT_PARENTHESES ? parser_call_expression(p) : parser_identifer(p);
+   }
 
    return expr;
 }
@@ -546,24 +590,24 @@ node_t *parser_primary_expression(parser_t *p) {
       expr = parser_expression(p);
 
       parser_eat(p, TOKEN_RIGHT_PARENTHESES);
-   } else if (lookahead(0).type == TOKEN_IDENTIFIER && !(lookahead(1).type == TOKEN_LEFT_BRACE || (lookahead(1).type == TOKEN_DOT && lookahead(3).type == TOKEN_LEFT_BRACE))) {
+   } else if (lookahead(0).type == TOKEN_IDENTIFIER && lookahead(1).type != TOKEN_LEFT_BRACE) {
       expr = parser_identifer(p);
    } else expr = parser_literal(p);
 
    return expr;
 }
 
-node_t *parser_module_feild_expression(parser_t *p) {
-   node_t *expr = node_init(NODE_FEILD_EXPRESSION);
+// node_t *parser_module_feild_expression(parser_t *p) {
+//    node_t *expr = node_init(NODE_FEILD_EXPRESSION);
 
-   expr->FEILD_EXPRESSION.expr = parser_identifer(p);
+//    expr->FEILD_EXPRESSION.expr = parser_identifer(p);
 
-   parser_eat(p, TOKEN_DOT);
+//    parser_eat(p, TOKEN_DOT);
 
-   expr->FEILD_EXPRESSION.member = parser_identifer_str(p);
+//    expr->FEILD_EXPRESSION.member = parser_identifer_str(p);
 
-   return expr;
-}
+//    return expr;
+// }
 
 /* -- 
    IF 
@@ -686,7 +730,7 @@ node_t *parser_arrow_block(parser_t *p) {
    ---- */
 
 node_t *parser_type(parser_t *p) {
-   if (lookahead(1).type == TOKEN_DOT && lookahead(3).type == TOKEN_LEFT_BRACE) return parser_module_feild_expression(p);
+   if (lookahead(1).type == TOKEN_APOSTROOHE) return parser_expression(p);
    else return node_init(NODE_DATA_TYPE, .DATA_TYPE = { _parser_type(p) });
 }
 
@@ -857,29 +901,7 @@ node_t *parser_literal(parser_t *p) {
       case TOKEN_FLOAT:;
          token_t tok = parser_eat(p, TOKEN_FLOAT);
          return node_init(NODE_FLOAT_LITERAL, .FLOAT_LITERAL = { tok.integer, tok.fraction });
-      case TOKEN_IDENTIFIER:;
-         node_t *lit = node_init(NODE_STRUCT_LITERAL, .STRUCT_LITERAL = { parser_type(p), dy_init(wchar_t *), dy_init(node_t *) });
-
-         parser_eat(p, TOKEN_LEFT_BRACE);
-
-         while (lookahead(0).type != TOKEN_RIGHT_BRACE) {
-            parser_skip_newlines(p);
-
-            if (lookahead(1).type == TOKEN_EQUALS) {
-               dy_push(lit->STRUCT_LITERAL.idents, parser_identifer_str(p));
-
-               parser_eat(p, TOKEN_EQUALS);
-            } else dy_push(lit->STRUCT_LITERAL.idents, NULL);
-
-            dy_push(lit->STRUCT_LITERAL.exprs, parser_expression(p));
-
-            if (lookahead(0).type == TOKEN_COMMA) parser_eat(p, TOKEN_COMMA);
-         }
-
-         parser_eat(p, TOKEN_RIGHT_BRACE);
-
-         return lit;
-
+      case TOKEN_IDENTIFIER: return parser_type(p);
       default: error_token(p->lexer, lookahead(0), "Error: Unexpected Token!");
    }
 }

@@ -39,6 +39,8 @@ __attribute__((noreturn)) static inline void error_token(lexer_t *lexer, token_t
    for (int i = 0; i < token.pos - 1; i++) printf(" ");
    printf("^\n");
 
+   print_token_type(token.type);
+
    exit(-1);
 }
 

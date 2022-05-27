@@ -23,6 +23,10 @@
       NODE(MULTI,                           \
          dynarr_t(struct node_t *), nodes   \
       )                                     \
+      NODE(SOURCE,                          \
+         dynarr_t(struct node_t *), funcs,  \
+         dynarr_t(struct node_t *), vars    \
+      )                                     \
       NODE(PROJECT,                         \
          dynarr_t(struct node_t *), modules \
       )                                     \
@@ -96,6 +100,10 @@
          struct node_t *, func,             \
          dynarr_t(struct node_t *), args,   \
          bool, curried                      \
+      )                                     \
+      NODE(PATH_EXPRESSION,                 \
+         struct node_t *, module,           \
+         struct node_t *, expr              \
       )                                     \
       NODE(FEILD_EXPRESSION,                \
          struct node_t *, expr,             \
@@ -174,5 +182,7 @@ void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node
 void node_free(node_t *node);
 
 void print_node(node_t *node);
+
+void print_node_type(NODE_TYPE type);
 
 #endif

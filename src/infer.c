@@ -10,6 +10,7 @@ type_t *checker_infer_expression_no_res(checker_t *ckr, module_t *mod, node_t *e
       case NODE_CAST_EXPRESSION: return checker_infer_castexpr(ckr, mod, expr);
       case NODE_DEREF_EXPRESSION: return checker_infer_derefexpr(ckr, mod, expr);
       case NODE_CALL_EXPRESSION: return checker_infer_callexpr(ckr, mod, expr);
+      case NODE_PATH_EXPRESSION: return checker_infer_pathexpr(ckr, mod, expr);
       case NODE_FEILD_EXPRESSION: return checker_infer_feildexpr(ckr, mod, expr);
       case NODE_METHOD_EXPRESSION: return checker_infer_methodexpr(ckr, mod, expr);
       case NODE_NUMBER_LITERAL:
@@ -53,18 +54,38 @@ type_t *checker_infer_binexpr(checker_t *ckr, module_t *mod, node_t *expr) {
    }
 }
 
+type_t *checker_infer_pathexpr(checker_t *ckr, module_t *mod, node_t *expr) {
+   node_def(expr, PATH_EXPRESSION);
+
+   if (node->expr->type == NODE_IDENTIFIER) {
+      if (!ht_exists_sv(ckr->modules, node->module->IDENTIFIER.value)) return NULL;
+
+      type_t *type = checker_get_decl_both(ht_get_sv(ckr->modules, node->module->IDENTIFIER.value), node->expr->IDENTIFIER.value);
+
+      return type;
+   } else if (node->expr->type == NODE_CALL_EXPRESSION) {
+      if (!ht_exists_sv(ckr->modules, node->module->IDENTIFIER.value)) return NULL;
+
+      type_t * type = checker_get_decl(ht_get_sv(ckr->modules, node->module->IDENTIFIER.value), node->expr->CALL_EXPRESSION.func->IDENTIFIER.value, false);
+
+      if (type == NULL || type->type != TYPE_FUNCTION) return NULL;
+
+      return type->ret;
+   }
+
+   return NULL;
+}
+
 type_t *checker_infer_feildexpr(checker_t *ckr, module_t *mod, node_t *expr) {
    node_def(expr, FEILD_EXPRESSION);
 
    type_t *type = checker_resolve_base_type(mod, checker_infer_expression_no_res(ckr, mod, node->expr));
    if (type == NULL) return NULL;
 
-   if (type->type == TYPE_STRUCT) {
+   if (type->type == TYPE_STRUCT)
       for (int i = 0; i < dy_len(type->feilds); i++)
          if (!wcscmp(dyi(type->feilds)[i].name, node->member)) 
             return dyi(type->feilds)[i].type;
-   } else if (type->type == TYPE_MODULE)
-      return checker_get_decl_both(ht_get_sv(ckr->modules, node->expr->IDENTIFIER.value), node->member);
 
    return NULL;
 }
@@ -77,12 +98,10 @@ type_t *checker_infer_methodexpr(checker_t *ckr, module_t *mod, node_t *expr) {
 
    type_t *funct = NULL;
 
-   if (type->type == TYPE_STRUCT) {
+   if (type->type == TYPE_STRUCT)
       for (int i = 0; i < dy_len(type->funcs); i++)
          if (!wcscmp(dyi(type->funcs)[i].name, node->member))
             funct = dyi(type->funcs)[i].type;
-   } else if (type->type == TYPE_MODULE)
-      funct = checker_get_decl(ht_get_sv(ckr->modules, node->expr->IDENTIFIER.value), node->member, false);
 
    if (funct == NULL || funct->type != TYPE_FUNCTION) return NULL;
 

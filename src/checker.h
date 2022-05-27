@@ -82,6 +82,7 @@ bool checker_check_check(checker_t *ckr, node_t *node);
 type_t *checker_infer_expression(checker_t *ckr, module_t *mod, node_t *expr);
 type_t *checker_infer_expression_no_res(checker_t *ckr, module_t *mod, node_t *expr);
 type_t *checker_infer_binexpr(checker_t *ckr, module_t *mod, node_t *expr);
+type_t *checker_infer_pathexpr(checker_t *ckr, module_t *mod, node_t *expr);
 type_t *checker_infer_feildexpr(checker_t *ckr, module_t *mod, node_t *expr);
 type_t *checker_infer_methodexpr(checker_t *ckr, module_t *mod, node_t *expr);
 type_t *checker_infer_addrexpr(checker_t *ckr, module_t *mod, node_t *expr);

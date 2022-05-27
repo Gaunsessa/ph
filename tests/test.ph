@@ -1,27 +1,18 @@
 module main
 
-Entity :: struct {
-   x: f64
-   y: f64
+import ham
+
+cock :: struct {
+   x: f32
 }
 
-impl Entity {
-   kill :: (e): = {}
-}
+main :: (): = {
+   x: ham'vec
+   y: cock
+   // x := ham'vec { 32, 32 }
+   // v := cock { 32 }
 
-_entity_kill :: (e: Entity): = {}
+   // a := ham'var
 
-func :: (): = {}
-
-main :: (): int = {
-   c := Entity { 32, 32 }
-
-   c.kill()
-
-   func()
-
-   // _entity_kill(&c)
-
-   // c.cum() is invalid!
-   // cum(c) is valid!
+   // ham'test()
 }

@@ -13,6 +13,8 @@ bool checker_check_ALIAS(checker_t *ckr, module_t *mod, node_t *n)          { re
 bool checker_check_UNINIT(checker_t *ckr, module_t *mod, node_t *n)         { return true; }
 bool checker_check_DEFER(checker_t *ckr, module_t *mod, node_t *n)          { return true; }
 
+bool checker_check_SOURCE(checker_t *ckr, module_t *mod, node_t *n)         { unreachable(); }
+
 bool checker_check_PROJECT(checker_t *ckr, module_t *mod, node_t *n) {
    return true;
 }
@@ -160,6 +162,35 @@ bool checker_check_CAST_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
    return true;
 }
 
+bool checker_check_PATH_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
+   node_def(n, PATH_EXPRESSION);
+
+   if (node->expr->type == NODE_IDENTIFIER) {
+      if (!ht_exists_sv(ckr->modules, node->module->IDENTIFIER.value)) error("Unkown import!");
+
+      if (checker_get_decl_both(ht_get_sv(ckr->modules, node->module->IDENTIFIER.value), node->expr->IDENTIFIER.value) == NULL)
+         error("Unknown identifier on module!");
+   } else if (node->expr->type == NODE_CALL_EXPRESSION) {
+      if (!ht_exists_sv(ckr->modules, node->module->IDENTIFIER.value)) error("Unkown import!");
+
+      type_t *func = checker_get_decl(ht_get_sv(ckr->modules, node->module->IDENTIFIER.value), node->expr->CALL_EXPRESSION.func->IDENTIFIER.value, false);
+
+      if (func == NULL) error("Unkown method!");
+
+      if (dy_len(func->args) != dy_len(node->expr->CALL_EXPRESSION.args))
+         error("Invalid Amount of Arguments!");
+
+      for (int i = 0; i < dy_len(node->expr->CALL_EXPRESSION.args); i++) {
+         type_t *argt = checker_infer_expression(ckr, mod, dyi(node->expr->CALL_EXPRESSION.args)[i]);
+         type_t *typt = checker_resolve_type(mod, dyi(func->args)[i].type);
+
+         if (!type_cmp(mod, typt, argt)) error("Invalid Argument Type!");
+      }
+   } else error("Path exprssions can only be idents and funcs!");
+
+   return true;
+}
+
 bool checker_check_FEILD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
    node_def(n, FEILD_EXPRESSION);
 
@@ -177,14 +208,7 @@ bool checker_check_FEILD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
 
       if (oty->type == TYPE_PTR) 
          n->FEILD_EXPRESSION.ptr = true;
-   } else if (type->type == TYPE_MODULE) {
-      n->FEILD_EXPRESSION.module = true;
-
-      if (!ht_exists_sv(ckr->modules, node->expr->IDENTIFIER.value)) return false;
-
-      if (checker_get_decl_both(ht_get_sv(ckr->modules, node->expr->IDENTIFIER.value), node->member) == NULL)
-         error("Unknown feild!");
-   } else error("Only structs and modules have feilds!");
+   } else error("Only structs have feilds!");
 
    return true;
 }
@@ -204,12 +228,6 @@ bool checker_check_METHOD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
 
       if (oty->type == TYPE_PTR)
             n->METHOD_EXPRESSION.ptr = true;
-   } else if (type->type == TYPE_MODULE) {
-      n->METHOD_EXPRESSION.module = true;
-
-      if (!ht_exists_sv(ckr->modules, node->expr->IDENTIFIER.value)) return false;
-
-      func = checker_get_decl(ht_get_sv(ckr->modules, node->expr->IDENTIFIER.value), node->member, false);
    } else error("Only structs and modules have feilds!");
 
    if (func == NULL) error("Unkown method!");
@@ -271,8 +289,8 @@ bool checker_check_DATA_TYPE(checker_t *ckr, module_t *mod, node_t *n) {
 bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, module_t *mod, node_t *n) {
    node_def(n, VARIABLE_DECLARATION);
 
-   wchar_t *name    = node->ident->IDENTIFIER.value;
-   type_t *type     = checker_resolve_type(mod, checker_infer_expression(ckr, mod, node->type));
+   wchar_t *name = node->ident->IDENTIFIER.value;
+   type_t *type  = checker_resolve_type(mod, checker_infer_expression(ckr, mod, node->type));
    if (type == NULL) return false;
 
    if (mod->cur_scope != mod->file_scope && checker_decl_exists_cur(mod, name)) error("Redeclaration of Variable!");
@@ -286,6 +304,9 @@ bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, module_t *mod, node_t *n
          if (infer->type == TYPE_UNTYPED) infer = infer->uninfer; 
 
          node->type->DATA_TYPE.type = infer;
+
+         printf("%ls: ", name);
+         print(infer->type);
       } else if (!type_cmp(mod, type, infer)) error("Variable Declaration Types do Not Match!");
    }
 

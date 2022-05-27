@@ -159,9 +159,12 @@ void print_type(type_t *type) {
 
             print_type(dyi(type->args)[i].type);
 
-            printf(" ");
+            printf("\n");
          }
          break;
-      default: printf("Not printable type!\n");
+      case TYPE_ALIAS:
+         printf("Type: Alias | %ls\n", type->name);
+         break;
+      default: printf("None printable type!\n");
    }
 }
