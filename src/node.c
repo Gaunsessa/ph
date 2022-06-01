@@ -3,6 +3,7 @@
 #include "prims.h"
 
 #define _walk_arr(arr) ({ for (int i = 0; i < dy_len(arr); i++) node_walker(dyi(arr)[i], special, start, end); })
+#define node_walk_arr(arr, tbl, scope, hscope, special, start, end) ({ for (int i = 0; i < dy_len(arr); i++) _node_walk(dyi(arr)[i], tbl, scope, hscope, special, start, end); })
 
 void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node_t *node), void (*end)(node_t *node)) {
    start(node);
@@ -28,6 +29,73 @@ void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node
 #undef _NODE
 
    end(node);
+}
+
+void node_walk(node_t *node, sym_table_t *tbl, size_t scope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, size_t scope)) {
+   size_t hscope = scope;
+
+   _node_walk(node, tbl, scope, &hscope, special, start, end);
+}
+
+void _node_walk(node_t *node, sym_table_t *tbl, size_t scope, size_t *hscope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, size_t scope)) {
+   start(node, tbl, scope);
+
+   if (M_COMPARE(
+      node->type, 
+      NODE_BLOCK, NODE_IMPL, 
+      NODE_IF,    NODE_FOR
+   )) {
+      (*hscope)++;
+
+      if (!ht_exists(tbl->sinf, *hscope))
+         sym_table_push_scope(tbl, *hscope, scope);
+
+      scope = *hscope;
+   }
+
+   if (special(node)) goto END;
+
+#define _NODE(a, b, c, i, ...)                                                                   \
+   ({                                                                                            \
+      if (__builtin_types_compatible_p(a, struct node_t *))                                      \
+         _node_walk((void *)*(void **)&node->c.b, tbl, scope, hscope, special, start, end);      \
+      else if(__builtin_types_compatible_p(a, dynarr_t(struct node_t *)))                        \
+         node_walk_arr((void ***)*(void **)&node->c.b, tbl, scope, hscope, special, start, end); \
+   });                                                                                           \
+
+#define NODE(ident, ...) case NODE_##ident: { M_MAP2(_NODE, ident, __VA_ARGS__) } break;
+   switch (node->type) {
+      case _NODE_: break;
+      NODE_TYPES
+   }
+#undef NODE
+#undef _NODE
+
+END:
+   if (M_COMPARE(
+      node->type, 
+      NODE_BLOCK, NODE_IMPL, 
+      NODE_IF,    NODE_FOR
+   )) scope = ht_get(tbl->sinf, scope)->parent->id;
+
+   end(node, tbl, scope);
+}
+
+void node_replace(node_t *onode, node_t nnode) {
+   switch (onode->type) {
+#define _NODE(type, name, ident, i, ...) _freetype(&onode->ident.name, primtype(onode->ident.name));
+#define NODE(ident, ...)                    \
+      case NODE_##ident:                    \
+         M_MAP2(_NODE, ident, __VA_ARGS__); \
+         break;                             \
+
+      NODE_TYPES
+#undef NODE
+#undef _NODE
+      default: break;
+   }
+
+   memcpy(onode, &nnode, sizeof(node_t));
 }
 
 void node_free(node_t *node) {

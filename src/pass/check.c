@@ -28,13 +28,13 @@ bool checker_check_FILE(checker_t *ckr, module_t *mod, node_t *n) {
 
    // TODO: This will cause a double free when type freeing is implemented!
    // TODO: parse if import is real
-   for (int i = 0; i < dy_len(node->imports); i++)
-      checker_set_decl(
-         mod, 
-         dyi(node->imports)[i], 
-         type_init((type_t) { TYPE_MODULE, .name = dyi(node->imports)[i] }), 
-         false
-      );
+   // for (int i = 0; i < dy_len(node->imports); i++)
+   //    checker_set_decl(
+   //       mod, 
+   //       dyi(node->imports)[i], 
+   //       type_init((type_t) { TYPE_MODULE, .name = dyi(node->imports)[i] }), 
+   //       false
+   //    );
 
    for (int i = 0; i < dy_len(node->stmts); i++) {
       node_t *stmt = dyi(node->stmts)[i];
@@ -51,23 +51,23 @@ bool checker_check_FILE(checker_t *ckr, module_t *mod, node_t *n) {
             );
             break;
          case NODE_IMPL:;
-            type_t *type = checker_resolve_base_type(mod, checker_infer_expression(ckr, mod, stmt->IMPL.type));
-            if (type == NULL) return false;
+            // type_t *type = checker_resolve_base_type(mod, checker_infer_expression(ckr, mod, stmt->IMPL.type));
+            // if (type == NULL) return false;
 
-            if (type->type != TYPE_STRUCT) error("Impls can only be done on structs!");
+            // if (type->type != TYPE_STRUCT) error("Impls can only be done on structs!");
 
-            for (int i = 0; i < dy_len(stmt->IMPL.funcs); i++) {
-               node_t *func = dyi(stmt->IMPL.funcs)[i];
+            // for (int i = 0; i < dy_len(stmt->IMPL.funcs); i++) {
+            //    node_t *func = dyi(stmt->IMPL.funcs)[i];
 
-               func->VARIABLE_DECLARATION.expr->FUNCTION_DECLARATION.type->DATA_TYPE.type->self.type = type_init((type_t) { .type = TYPE_PTR, .ptr_base = stmt->IMPL.type->DATA_TYPE.type});
+            //    // func->VARIABLE_DECLARATION.expr->FUNCTION_DECLARATION.type->DATA_TYPE.type->self.type = type_init((type_t) { .type = TYPE_PTR, .ptr_base = stmt->IMPL.type->DATA_TYPE.type});
 
-               struct { wchar_t *name; struct type_t *type; } ft = {
-                  .name = func->VARIABLE_DECLARATION.ident->IDENTIFIER.value,
-                  .type = checker_infer_var_decl(ckr, mod, func)
-               };
+            //    struct { wchar_t *name; struct type_t *type; } ft = {
+            //       .name = func->VARIABLE_DECLARATION.ident->IDENTIFIER.value,
+            //       .type = checker_infer_var_decl(ckr, mod, func)
+            //    };
 
-               dy_push_unsafe(type->funcs, ft);
-            }
+            //    dy_push_unsafe(type->funcs, ft);
+            // }
 
             continue;
          case NODE_EMPTY: continue;
@@ -76,6 +76,18 @@ bool checker_check_FILE(checker_t *ckr, module_t *mod, node_t *n) {
    }
 
    return true;
+}
+
+bool checker_check_DATA_TYPE(checker_t *ckr, module_t *mod, node_t *n) {
+   ERROR("YEEEE");
+}
+
+bool checker_check_FUNCTION_TYPE(checker_t *ckr, module_t *mod, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
+}
+
+bool checker_check_PTR_TYPE(checker_t *ckr, module_t *mod, node_t *n) {
+   ERROR("UNIMPLEMENTED!");
 }
 
 bool checker_check_BLOCK(checker_t *ckr, module_t *mod, node_t *n) {
@@ -107,7 +119,7 @@ bool checker_check_BINARY_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
 bool checker_check_CALL_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
    node_def(n, CALL_EXPRESSION);
 
-   type_t *type = checker_infer_callexpr_funct(ckr, mod, n);
+   type_t *type = type_get(ckr->type_handler, checker_infer_callexpr_funct(ckr, mod, n));
    if (type == NULL) return false;
 
    if (type->type != TYPE_FUNCTION) error("Invalid type being called!");
@@ -116,8 +128,8 @@ bool checker_check_CALL_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
       error("Invalid Amount of Arguments!");
 
    for (int i = 0; i < dy_len(node->args); i++) {
-      type_t *argt = checker_infer_expression(ckr, mod, dyi(node->args)[i]);
-      type_t *typt = checker_resolve_type(mod, dyi(type->args)[i].type);
+      type_idx argt = checker_infer_expression_no_res(ckr, mod, dyi(node->args)[i]);
+      type_idx typt = dyi(type->args)[i].type;
 
       if (!type_cmp(mod, typt, argt)) error("Invalid Argument Type!");
    }
@@ -142,12 +154,13 @@ bool checker_check_NOT_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
 }
 
 bool checker_check_DEREF_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
-   node_def(n, DEREF_EXPRESSION);
+   ERROR("UNIMPLEMENTED!");
+   // node_def(n, DEREF_EXPRESSION);
 
-   if (!type_is_ptr(checker_infer_expression(ckr, mod, node->expr))) 
-      error("Cannot Derefrence Non Ptr Type!");
+   // if (!type_is_ptr(checker_infer_expression(ckr, mod, node->expr))) 
+   //    error("Cannot Derefrence Non Ptr Type!");
 
-   return true;
+   // return true;
 }
 
 bool checker_check_ADDR_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
@@ -168,12 +181,19 @@ bool checker_check_PATH_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
    if (node->expr->type == NODE_IDENTIFIER) {
       if (!ht_exists_sv(ckr->modules, node->module->IDENTIFIER.value)) error("Unkown import!");
 
-      if (checker_get_decl_both(ht_get_sv(ckr->modules, node->module->IDENTIFIER.value), node->expr->IDENTIFIER.value) == NULL)
+      if (checker_get_decl_both(ht_get_sv(ckr->modules, node->module->IDENTIFIER.value), node->expr->IDENTIFIER.value) < 0)
          error("Unknown identifier on module!");
    } else if (node->expr->type == NODE_CALL_EXPRESSION) {
       if (!ht_exists_sv(ckr->modules, node->module->IDENTIFIER.value)) error("Unkown import!");
 
-      type_t *func = checker_get_decl(ht_get_sv(ckr->modules, node->module->IDENTIFIER.value), node->expr->CALL_EXPRESSION.func->IDENTIFIER.value, false);
+      type_t *func = type_get(
+         ckr->type_handler, 
+         checker_get_decl(
+            ht_get_sv(ckr->modules, node->module->IDENTIFIER.value), 
+            node->expr->CALL_EXPRESSION.func->IDENTIFIER.value, 
+            false
+         )
+      );
 
       if (func == NULL) error("Unkown method!");
 
@@ -181,8 +201,8 @@ bool checker_check_PATH_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
          error("Invalid Amount of Arguments!");
 
       for (int i = 0; i < dy_len(node->expr->CALL_EXPRESSION.args); i++) {
-         type_t *argt = checker_infer_expression(ckr, mod, dyi(node->expr->CALL_EXPRESSION.args)[i]);
-         type_t *typt = checker_resolve_type(mod, dyi(func->args)[i].type);
+         type_idx argt = checker_infer_expression_no_res(ckr, mod, dyi(node->expr->CALL_EXPRESSION.args)[i]);
+         type_idx typt = dyi(func->args)[i].type;
 
          if (!type_cmp(mod, typt, argt)) error("Invalid Argument Type!");
       }
@@ -194,8 +214,10 @@ bool checker_check_PATH_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
 bool checker_check_FEILD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
    node_def(n, FEILD_EXPRESSION);
 
-   type_t *oty  = checker_infer_expression(ckr, mod, node->expr);
-   type_t *type = checker_resolve_base_type(mod, oty);
+   type_idx tidx = checker_infer_expression_no_res(ckr, mod, node->expr);
+   type_t *oty   = type_get(ckr->type_handler, tidx);
+   type_t *type  = type_get(ckr->type_handler, checker_resolve_base_type(mod, tidx));
+
    if (oty == NULL || type == NULL) return false;
 
    if (type->type == TYPE_STRUCT) {
@@ -216,15 +238,17 @@ bool checker_check_FEILD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
 bool checker_check_METHOD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
    node_def(n, METHOD_EXPRESSION);
 
-   type_t *oty  = checker_infer_expression(ckr, mod, node->expr);
-   type_t *type = checker_resolve_base_type(mod, oty);
+   type_idx tidx = checker_infer_expression_no_res(ckr, mod, node->expr);
+   type_t *oty   = type_get(ckr->type_handler, tidx);
+   type_t *type  = type_get(ckr->type_handler, checker_resolve_base_type(mod, tidx));
+
    if (oty == NULL || type == NULL) return false;
 
    type_t *func = NULL;
    if (type->type == TYPE_STRUCT) {
       for (int i = 0; i < dy_len(type->funcs); i++)
          if (!wcscmp(dyi(type->funcs)[i].name, node->member))
-            func = dyi(type->funcs)[i].type;
+            func = type_get(ckr->type_handler, dyi(type->funcs)[i].type);
 
       if (oty->type == TYPE_PTR)
             n->METHOD_EXPRESSION.ptr = true;
@@ -236,8 +260,9 @@ bool checker_check_METHOD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
       error("Invalid Amount of Arguments!");
 
    for (int i = 0; i < dy_len(node->args); i++) {
-      type_t *argt = checker_infer_expression(ckr, mod, dyi(node->args)[i]);
-      type_t *typt = checker_resolve_type(mod, dyi(func->args)[i].type);
+      type_idx argt = checker_infer_expression_no_res(ckr, mod, dyi(node->args)[i]);
+      // TODO: Whenever ive used checker_resolve_type its looking for a alias I need to make sure all alias are converted into typeidxs
+      type_idx typt = dyi(func->args)[i].type;
 
       if (!type_cmp(mod, typt, argt)) error("Invalid Argument Type!");
    }
@@ -246,26 +271,27 @@ bool checker_check_METHOD_EXPRESSION(checker_t *ckr, module_t *mod, node_t *n) {
 }
 
 bool checker_check_STRUCT(checker_t *ckr, module_t *mod, node_t *n) {
-   node_def(n, STRUCT);
+   ERROR("UNIMPLEMENTED!");
+   // node_def(n, STRUCT);
 
-   type_t *type = checker_infer_expression(ckr, mod, node->type);
+   // type_t *type = checker_infer_expression(ckr, mod, node->type);
 
-   for (int i = 0; i < dy_len(type->feilds); i++) {
-      for (int j = i - 1; j >= 0; j--)
-         if (!wcscmp(dyi(type->feilds)[i].name, dyi(type->feilds)[j].name))
-            error("Duplicate Name in Struct!");
+   // for (int i = 0; i < dy_len(type->feilds); i++) {
+   //    for (int j = i - 1; j >= 0; j--)
+   //       if (!wcscmp(dyi(type->feilds)[i].name, dyi(type->feilds)[j].name))
+   //          error("Duplicate Name in Struct!");
 
-      type_t *fet = checker_resolve_type(mod, dyi(type->feilds)[i].type);
-      if (fet == NULL) error("Unknown Type!");
-   }
+   //    type_t *fet = checker_resolve_type(mod, dyi(type->feilds)[i].type);
+   //    if (fet == NULL) error("Unknown Type!");
+   // }
 
-   return true;
+   // return true;
 }
 
 bool checker_check_IDENTIFIER(checker_t *ckr, module_t *mod, node_t *n) {
    node_def(n, IDENTIFIER);
 
-   if (checker_get_decl(mod, node->value, false) == NULL) {
+   if (checker_get_decl(mod, node->value, false) < 0) {
       printf("%ls\n", node->value);
       error("Unknown Identifier!");
    }
@@ -273,15 +299,15 @@ bool checker_check_IDENTIFIER(checker_t *ckr, module_t *mod, node_t *n) {
    return true;
 }
 
-bool checker_check_DATA_TYPE(checker_t *ckr, module_t *mod, node_t *n) {
-   node_def(n, DATA_TYPE);
+bool checker_check_TYPE_IDX(checker_t *ckr, module_t *mod, node_t *n) {
+   node_def(n, TYPE_IDX);
 
-   type_t *type = checker_resolve_base_type(mod, checker_resolve_type(mod, node->type));
+   type_t *type = type_get(ckr->type_handler, checker_resolve_base_type(mod, node->type));
    if (type == NULL) error("Unknown Type!");
 
    if (type->type == TYPE_FUNCTION)
       for (int i = 0; i < dy_len(type->args); i++)
-         if (checker_resolve_base_type(mod, dyi(type->args)[i].type) == NULL) error("Unknown Type!");
+         if (checker_resolve_base_type(mod, dyi(type->args)[i].type) < 0) error("Unknown Type!");
 
    return true;
 }
@@ -289,25 +315,28 @@ bool checker_check_DATA_TYPE(checker_t *ckr, module_t *mod, node_t *n) {
 bool checker_check_VARIABLE_DECLARATION(checker_t *ckr, module_t *mod, node_t *n) {
    node_def(n, VARIABLE_DECLARATION);
 
+   if (node->expr->type == NODE_FUNCTION_DECLARATION) checker_check_FUNCTION_DECLARATION(ckr, mod, node->expr);
+
    wchar_t *name = node->ident->IDENTIFIER.value;
-   type_t *type  = checker_resolve_type(mod, checker_infer_expression(ckr, mod, node->type));
-   if (type == NULL) return false;
+   type_idx tidx = checker_infer_expression_no_res(ckr, mod, node->type);
+   // if (type == NULL) return false;
 
    if (mod->cur_scope != mod->file_scope && checker_decl_exists_cur(mod, name)) error("Redeclaration of Variable!");
 
    if (!(node->expr->type == NODE_NONE || node->expr->type == NODE_UNINIT)) {
-      type_t *infer = checker_infer_expression(ckr, mod, node->expr);
-      if (infer == NULL) return false;
+      type_idx infer = checker_infer_expression_no_res(ckr, mod, node->expr);
+      if (infer < 0) return false;
 
-      if (type->type == TYPE_INFER) {
-         infer = checker_infer_expression_no_res(ckr, mod, node->expr);
-         if (infer->type == TYPE_UNTYPED) infer = infer->uninfer; 
+      if (node->type->type == NODE_NONE) {
+         printf("%ls\n", node->ident->IDENTIFIER.value);
+         print(infer);
+         type_t *inft = type_get(ckr->type_handler, infer);
 
-         node->type->DATA_TYPE.type = infer;
+         if (inft->type == TYPE_UNTYPED) infer = inft->uninfer; 
 
-         printf("%ls: ", name);
-         print(infer->type);
-      } else if (!type_cmp(mod, type, infer)) error("Variable Declaration Types do Not Match!");
+         node->type->type = NODE_TYPE_IDX;
+         node->type->TYPE_IDX.type = infer;
+      } else if (!type_cmp(mod, tidx, infer)) error("Variable Declaration Types do Not Match!");
    }
 
    checker_set_decl(mod, name, checker_infer_expression_no_res(ckr, mod, node->type), is_typedef(node->expr));
@@ -376,9 +405,11 @@ bool checker_check_RETURN(checker_t *ckr, module_t *mod, node_t *n) {
    node_def(n, RETURN);
 
    if (node->value->type == NODE_NONE) {
-      if (mod->cur_scope->ret->type == TYPE_BASE && mod->cur_scope->ret->base != BASE_VOID)
+      type_t *rt = type_get(ckr->type_handler, mod->cur_scope->ret);
+
+      if (rt->type == TYPE_BASE && rt->base != BASE_VOID)
          error("Invalid Return Type!");
-   } else if (!type_cmp(mod, mod->cur_scope->ret, checker_infer_expression(ckr, mod, node->value)))
+   } else if (!type_cmp(mod, mod->cur_scope->ret, checker_infer_expression_no_res(ckr, mod, node->value)))
       error("Invalid Return Type!");
 
    return true;
@@ -389,7 +420,7 @@ bool checker_check_IMPL(checker_t *ckr, module_t *mod, node_t *n) {
 
    checker_push_scope(mod);
 
-   type_t *type = checker_resolve_base_type(mod, checker_infer_expression(ckr, mod, node->type));
+   type_t *type = type_get(ckr->type_handler, checker_resolve_base_type(mod, checker_infer_expression_no_res(ckr, mod, node->type)));
    if (type == NULL) return false;
 
    if (type->type != TYPE_STRUCT) error("Impls can only be done on structs!");
@@ -416,7 +447,7 @@ bool checker_check_IMPL(checker_t *ckr, module_t *mod, node_t *n) {
 bool checker_check_STRUCT_LITERAL(checker_t *ckr, module_t *mod, node_t *n) {
    node_def(n, STRUCT_LITERAL);
 
-   type_t *type = checker_resolve_base_type(mod, checker_infer_expression(ckr, mod, node->type));
+   type_t *type = type_get(ckr->type_handler, checker_resolve_base_type(mod, checker_infer_expression_no_res(ckr, mod, node->type)));
    if (type == NULL) return false;
 
    if (type->type != TYPE_STRUCT) error("Struct literals must be of type struct!");
@@ -427,7 +458,7 @@ bool checker_check_STRUCT_LITERAL(checker_t *ckr, module_t *mod, node_t *n) {
    for (int i = 0; i < dy_len(node->exprs); i++) {
       if (type_pos >= dy_len(type->feilds)) error("Too many arguments to struct ltieral!");
 
-      type_t *ft = NULL;
+      type_idx ft = -1;
 
       if (dyi(node->idents)[i] == NULL) ft = dyi(type->feilds)[type_pos].type;
       else {
@@ -438,12 +469,12 @@ bool checker_check_STRUCT_LITERAL(checker_t *ckr, module_t *mod, node_t *n) {
                break;
             }
 
-         if (ft == NULL) error("Struct feild not found!");
+         if (ft < 0) error("Struct feild not found!");
 
          type_pos = j;
       }
 
-      if (!type_cmp(mod, ft, checker_infer_expression(ckr, mod, dyi(node->exprs)[i]))) 
+      if (!type_cmp(mod, ft, checker_infer_expression_no_res(ckr, mod, dyi(node->exprs)[i]))) 
          error("Invalid struct arg type!");
 
       type_pos++;

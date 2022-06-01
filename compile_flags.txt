@@ -1,3 +1,4 @@
 -I/Users/gus/Code/ph/include/
+-I/Users/gus/Code/ph/src/
 -std=gnu17
 -Wall

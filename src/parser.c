@@ -450,9 +450,10 @@ node_t *parser_pre_incdec_expression(parser_t *p) {
 node_t *parser_struct_literal(parser_t *p) {
    node_t *expr = parser_feild_expression(p);
 
-   if (lookahead(0).type == TOKEN_LEFT_BRACE) {
+   if (lookahead(0).type == TOKEN_APOSTROOHE && lookahead(1).type == TOKEN_LEFT_BRACE) {
       expr = node_init(NODE_STRUCT_LITERAL, .STRUCT_LITERAL = { expr, dy_init(wchar_t *), dy_init(node_t *) });
 
+      parser_eat(p, TOKEN_APOSTROOHE);
       parser_eat(p, TOKEN_LEFT_BRACE);
 
       parser_skip_newlines(p);
@@ -469,6 +470,8 @@ node_t *parser_struct_literal(parser_t *p) {
          dy_push(expr->STRUCT_LITERAL.exprs, parser_expression(p));
 
          if (lookahead(0).type == TOKEN_COMMA) parser_eat(p, TOKEN_COMMA);
+
+         parser_skip_newlines(p);
       }
 
       parser_eat(p, TOKEN_RIGHT_BRACE);
@@ -570,7 +573,7 @@ node_t *parser_post_incdec_expression(parser_t *p) {
 node_t *parser_path_expression(parser_t *p) {
    node_t *expr = parser_primary_expression(p);
 
-   if (lookahead(0).type == TOKEN_APOSTROOHE) {
+   if (lookahead(0).type == TOKEN_APOSTROOHE && lookahead(1).type != TOKEN_LEFT_BRACE) {
       expr = node_init(NODE_PATH_EXPRESSION, .PATH_EXPRESSION = { expr });
 
       parser_eat(p, TOKEN_APOSTROOHE);
@@ -590,7 +593,7 @@ node_t *parser_primary_expression(parser_t *p) {
       expr = parser_expression(p);
 
       parser_eat(p, TOKEN_RIGHT_PARENTHESES);
-   } else if (lookahead(0).type == TOKEN_IDENTIFIER && lookahead(1).type != TOKEN_LEFT_BRACE) {
+   } else if (lookahead(0).type == TOKEN_IDENTIFIER) {
       expr = parser_identifer(p);
    } else expr = parser_literal(p);
 
@@ -730,73 +733,65 @@ node_t *parser_arrow_block(parser_t *p) {
    ---- */
 
 node_t *parser_type(parser_t *p) {
-   if (lookahead(1).type == TOKEN_APOSTROOHE) return parser_expression(p);
-   else return node_init(NODE_DATA_TYPE, .DATA_TYPE = { _parser_type(p) });
-}
+   node_t *type = node_init(NODE_DATA_TYPE);
 
-node_t *parser_infer_type(parser_t *p) {
-   return node_init(NODE_DATA_TYPE, .DATA_TYPE = { type_init((type_t) { TYPE_INFER }) });
-}
-
-type_t *_parser_type(parser_t *p) {
    switch (lookahead(0).type) {
-      case TOKEN_CARET: return parser_ptr_type(p);
-      case TOKEN_LEFT_BRACKET: return parser_array_type(p);
-      case TOKEN_LEFT_PARENTHESES: return parser_function_type(p);
-      case TOKEN_STRUCT: return parser_struct_type(p);
-      default: return parser_base_type(p);
+      case TOKEN_CARET: type->DATA_TYPE.type = parser_ptr_type(p); break;
+      case TOKEN_LEFT_BRACKET: type->DATA_TYPE.type = parser_array_type(p); break;
+      case TOKEN_LEFT_PARENTHESES: type->DATA_TYPE.type = parser_function_type(p); break;
+      case TOKEN_STRUCT: type->DATA_TYPE.type = parser_struct_type(p); break;
+      default: type->DATA_TYPE.type = parser_expression(p); break;
    }
-}
-
-type_t *parser_base_type(parser_t *p) {
-   wchar_t *name = parser_identifer_str(p);
-
-   return ht_exists_sv(BASE_TYPE_STR_VALUES, name) ? ht_get_sv(BASE_TYPE_STR_VALUES, name) : type_init((type_t) { TYPE_ALIAS, .name = name });
-}
-
-type_t *parser_ptr_type(parser_t *p) {
-   parser_eat(p, TOKEN_CARET);
-
-   return type_init((type_t) { TYPE_PTR, .ptr_base = _parser_type(p) });
-}
-
-type_t *parser_array_type(parser_t *p) {
-   type_t *type = type_init((type_t) { TYPE_ARRAY });
-
-   parser_eat(p, TOKEN_LEFT_BRACKET);
-
-   type->length = parser_eat(p, TOKEN_NUMBER).num;
-
-   parser_eat(p, TOKEN_RIGHT_BRACKET);
-
-   type->arr_base = _parser_type(p);
 
    return type;
 }
 
-type_t *parser_function_type(parser_t *p) {
-   type_t *funct = type_init((type_t) { TYPE_FUNCTION });
+node_t *parser_infer_type(parser_t *p) {
+   return node_init(NODE_NONE);
+   // return node_init(NODE_DATA_TYPE, .DATA_TYPE = { type_init((type_t) { TYPE_INFER }) });
+}
 
-   funct->args = dy_init(struct { wchar_t *name; struct type_t *type; });
+node_t *parser_ptr_type(parser_t *p) {
+   parser_eat(p, TOKEN_CARET);
+
+   return node_init(NODE_PTR_TYPE, .PTR_TYPE = { parser_type(p) });
+}
+
+node_t *parser_array_type(parser_t *p) {
+   ERROR("UNIMPLEMENTED!");
+   // type_t *type = type_init((type_t) { TYPE_ARRAY });
+
+   // parser_eat(p, TOKEN_LEFT_BRACKET);
+
+   // type->length = parser_eat(p, TOKEN_NUMBER).num;
+
+   // parser_eat(p, TOKEN_RIGHT_BRACKET);
+
+   // type->arr_base = _parser_type(p);
+
+   // return type;
+}
+
+node_t *parser_function_type(parser_t *p) {
+   node_t *funct = node_init(NODE_FUNCTION_TYPE, .FUNCTION_TYPE = {
+      .arg_names = dy_init(wchar_t *),
+      .arg_types = dy_init(node_t *),
+   });
 
    parser_eat(p, TOKEN_LEFT_PARENTHESES);
 
    if (lookahead(0).type == TOKEN_IDENTIFIER && lookahead(1).type != TOKEN_COLON) {
-      funct->self.name = parser_identifer_str(p);
+      funct->FUNCTION_TYPE.self = parser_identifer_str(p);
 
       if (lookahead(0).type == TOKEN_COMMA) parser_eat(p, TOKEN_COMMA);
    }
 
    while (lookahead(0).type != TOKEN_RIGHT_PARENTHESES) {
-      struct { wchar_t *name; struct type_t *type; } arg;
-
-      arg.name = parser_identifer_str(p);
+      dy_push(funct->FUNCTION_TYPE.arg_names, parser_identifer_str(p));
 
       parser_eat(p, TOKEN_COLON);
 
-      arg.type = _parser_type(p);
-
-      dy_push_unsafe(funct->args, arg);
+      dy_push(funct->FUNCTION_TYPE.arg_types, parser_type(p));
 
       if (lookahead(0).type == TOKEN_COMMA) parser_eat(p, TOKEN_COMMA);
    }
@@ -805,40 +800,42 @@ type_t *parser_function_type(parser_t *p) {
    parser_eat(p, TOKEN_COLON);
 
    if (M_COMPARE(lookahead(0).type, TOKEN_IDENTIFIER, TOKEN_CARET, TOKEN_LEFT_BRACKET, TOKEN_LEFT_PARENTHESES))
-      funct->ret = _parser_type(p);
+      funct->FUNCTION_TYPE.ret = parser_type(p);
    else
-      funct->ret = ht_get(BASE_TYPE_ENUM_VALUES, BASE_VOID);
+      funct->FUNCTION_TYPE.ret = node_init(NODE_NONE);
 
    return funct;
 }
 
-type_t *parser_struct_type(parser_t *p) {
-   parser_eat(p, TOKEN_STRUCT);
-   parser_eat(p, TOKEN_LEFT_BRACE);
+node_t *parser_struct_type(parser_t *p) {
+   ERROR("UNIMPLEMENTED!");
 
-   type_t *strt = type_init((type_t) { TYPE_STRUCT, .feilds = dy_init(struct { wchar_t *name; struct type_t *type; }), 
-                                                    .funcs = dy_init(struct { wchar_t *name; struct type_t *type; }) });
+   // parser_eat(p, TOKEN_STRUCT);
+   // parser_eat(p, TOKEN_LEFT_BRACE);
 
-   while (lookahead(0).type != TOKEN_RIGHT_BRACE) {
-      parser_skip_newlines(p);
+   // type_t *strt = type_init((type_t) { TYPE_STRUCT, .feilds = dy_init(struct { wchar_t *name; struct type_t *type; }), 
+   //                                                  .funcs = dy_init(struct { wchar_t *name; struct type_t *type; }) });
 
-      struct { wchar_t *name; struct type_t *type; } feild;
-      feild.name = parser_identifer_str(p);
+   // while (lookahead(0).type != TOKEN_RIGHT_BRACE) {
+   //    parser_skip_newlines(p);
 
-      parser_eat(p, TOKEN_COLON);
+   //    struct { wchar_t *name; struct type_t *type; } feild;
+   //    feild.name = parser_identifer_str(p);
 
-      feild.type = _parser_type(p);
+   //    parser_eat(p, TOKEN_COLON);
 
-      dy_push_unsafe(strt->feilds, feild);
+   //    feild.type = _parser_type(p);
 
-      if (lookahead(0).type == TOKEN_SEMI_COLON) parser_eat(p, TOKEN_SEMI_COLON);
+   //    dy_push_unsafe(strt->feilds, feild);
 
-      parser_skip_newlines(p);
-   }
+   //    if (lookahead(0).type == TOKEN_SEMI_COLON) parser_eat(p, TOKEN_SEMI_COLON);
 
-   parser_eat(p, TOKEN_RIGHT_BRACE);
+   //    parser_skip_newlines(p);
+   // }
 
-   return strt;
+   // parser_eat(p, TOKEN_RIGHT_BRACE);
+
+   // return strt;
 }
 
 /* ------ 

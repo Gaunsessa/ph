@@ -39,7 +39,7 @@
          for (int i = 0; i < dy_len(*v); i++) node_free(dyi(*v)[i]);                              \
          dy_free(*v);                                                                             \
       })                                                                                          \
-      PTYPE(TYPEPTR, type_t *, { print_type(*v); }, {  })                                         \
+      PTYPE(TYPEPTR, type_t *, { printf("TYPE!!!!"); }, {  })                                     \
 
 typedef enum PRIM_TYPE {
    PRIM_NONE,

@@ -1,18 +1,32 @@
 module main
 
-import ham
+// https://www.csie.ntu.edu.tw/~b93501005/slide5.pdf
+// Give all scopes a unique id
+// Give all variables in that scope the scope id
+// When looking up a variable look for the closest scope ided var
 
-cock :: struct {
-   x: f32
-}
+// 0
+x := 10
 
 main :: (): = {
-   x: ham'vec
-   y: cock
-   // x := ham'vec { 32, 32 }
-   // v := cock { 32 }
+   // 1
+   x := 10
 
-   // a := ham'var
+   {
+      // 2
+      x := 10
 
-   // ham'test()
+      {
+         // 3
+      }
+
+   }
+
+   {
+      // 4
+   }
+}
+
+test :: (): = {
+   
 }

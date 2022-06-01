@@ -75,20 +75,20 @@ typedef enum BASE_TYPE {
 
 typedef enum TYPE_TYPE {
    TYPE_NONE,
-   TYPE_INFER,
    TYPE_MODULE,
    TYPE_BASE,
-   TYPE_ALIAS,
    TYPE_UNTYPED,
+   TYPE_ALIAS,
    TYPE_PTR,
    TYPE_ARRAY,
    TYPE_FUNCTION,
    TYPE_STRUCT,
 } TYPE_TYPE;
 
+typedef int type_idx;
+
 typedef struct type_t {
    TYPE_TYPE type;
-   bool distinct;
 
    union {
       // Base
@@ -96,37 +96,37 @@ typedef struct type_t {
          BASE_TYPE base;
       };
 
-      // Alias | Module
+      // Alias
       struct {
-         wchar_t *name;
+         bool distinct;
       };
 
       // Untyped
       struct {
-         struct type_t *uninfer;
+         type_idx uninfer;
       };
 
       // Function
       struct {
-         struct { wchar_t *name; struct type_t *type; } self;
-         dynarr_t(struct { wchar_t *name; struct type_t *type; }) args;
-         struct type_t *ret;
+         struct { wchar_t *name; type_idx type; } self;
+         dynarr_t(struct { wchar_t *name; type_idx type; }) args;
+         type_idx ret;
       };
 
       // Struct
       struct {
-         dynarr_t(struct { wchar_t *name; struct type_t *type; }) feilds;
-         dynarr_t(struct { wchar_t *name; struct type_t *type; }) funcs;
+         dynarr_t(struct { wchar_t *name; type_idx type; }) feilds;
+         dynarr_t(struct { wchar_t *name; type_idx type; }) funcs;
       };
 
       // Ptr
       struct {
-         struct type_t *ptr_base;
+         type_idx ptr_base;
       };
 
       // Array
       struct {
-         struct type_t *arr_base;
+         type_idx arr_base;
          size_t length;
       };
 
@@ -135,43 +135,19 @@ typedef struct type_t {
 } type_t;
 
 typedef struct type_handler_t {
-   ht_t(char *, type_t *) types;
    dynarr_t(type_t *) allocs;
 } type_handler_t;
 
-type_handler_t *type_handler_new();
-
-wchar_t *type_to_str(type_t *t);
-
-type_t *BASE_UNTYPED_INT;
-type_t *BASE_UNTYPED_FLOAT;
-
-ht_t(BASE_TYPE, type_t *) BASE_TYPE_ENUM_VALUES;
-ht_t(wchar_t *, type_t *) BASE_TYPE_STR_VALUES;
-
-dynarr_t(type_t *) ALLOCATED_TYPES;
-
-#define _type_init(...) ({ type_t *t = calloc(1, sizeof(type_t)); memcpy(t, &(type_t) { __VA_ARGS__ }, sizeof(type_t)); t; })
-
 void type_module_init();
 
-type_t *type_init(type_t type);
-void type_free_all();
+type_handler_t *type_handler_new();
 
-bool type_is_base(type_t *t);
-bool type_is_numeric(type_t *t);
-bool type_is_integer(type_t *t);
-bool type_is_float(type_t *t);
-bool type_is_ptr(type_t *t);
-bool type_is_indexable(type_t *t);
+void type_handler_free(type_handler_t *hnd);
 
-type_t *type_deref_ref(type_t *t);
+type_idx type_init(type_handler_t *hnd, type_t type);
+type_t *type_get(type_handler_t *hnd, type_idx idx);
 
 struct module_t;
-bool type_cmp(struct module_t *mod, type_t *t1, type_t *t2);
-
-const wchar_t *type_base_cname(type_t *t);
-
-void print_type(type_t *type);
+bool type_cmp(struct module_t *mod, type_idx t1, type_idx t2);
 
 #endif

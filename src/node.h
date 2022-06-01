@@ -15,6 +15,7 @@
 #include "util.h"
 #include "lexer.h"
 #include "types.h"
+#include "symbol.h"
 
 #define NODE_TYPES                          \
       /* Others */                          \
@@ -34,9 +35,22 @@
          wchar_t *, name,                   \
          dynarr_t(wchar_t *), imports,      \
          dynarr_t(struct node_t *), stmts   \
+      /* Types */                           \
       )                                     \
       NODE(DATA_TYPE,                       \
-         type_t *, type                     \
+         struct node_t *, type              \
+      )                                     \
+      NODE(TYPE_IDX,                        \
+         type_idx, type                     \
+      )                                     \
+      NODE(PTR_TYPE,                        \
+         struct node_t *, base              \
+      )                                     \
+      NODE(FUNCTION_TYPE,                   \
+         wchar_t *, self,                   \
+         dynarr_t(wchar_t *), arg_names,    \
+         dynarr_t(struct node_t *), arg_types, \
+         struct node_t *, ret               \
       )                                     \
       /* Statements */                      \
       NODE(BLOCK,                           \
@@ -177,7 +191,12 @@ typedef struct node_t {
 
 #define node_init(...) ({ node_t *n = calloc(1, sizeof(node_t)); memcpy(n, &(node_t) { __VA_ARGS__ }, sizeof(node_t)); n; })
 
+void node_walk(node_t *node, sym_table_t *tbl, size_t scope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, size_t scope));
+void _node_walk(node_t *node, sym_table_t *tbl, size_t scope, size_t *hscope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, size_t scope));
+
 void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node_t *node), void (*end)(node_t *node));
+
+void node_replace(node_t *onode, node_t nnode);
 
 void node_free(node_t *node);
 

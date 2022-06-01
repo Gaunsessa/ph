@@ -13,14 +13,17 @@
 #include "node.h"
 #include "parser.h"
 #include "lexer.h"
-#include "checker.h"
-#include "desugar.h"
 #include "types.h"
+#include "symbol.h"
 #include "cgen.h"
 
 #include "prims.h"
 #include "print.h"
 #include "util.h"
+
+#include "pass/init.h"
+#include "pass/checker.h"
+#include "pass/desugar.h"
 
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
 //       type_t has memory leak
@@ -160,21 +163,42 @@ int main(int argc, char **argv) {
       exit(-1);
    }
 
+   type_handler_t *type_handler = type_handler_new();
+   sym_table_t *symtbl = sym_table_new();
+
+   // sym_table_push_scope(symtbl, 1, 0);
+   // sym_table_push_scope(symtbl, 2, 0);
+   // sym_table_push_scope(symtbl, 3, 1);
+
+   // sym_table_set(symtbl, L"joe", 0, false, 69);
+   // sym_table_set(symtbl, L"joe", 1, false, 420);
+
+   // print(sym_table_get(symtbl, L"joe", 3, false));
+
+
+   // return 0;
+
    dynarr_t(FILE *) files = load_files(argc - 2, argv + 2, NULL);
 
    node_t *AST = parser_parse(dy_len(files), dyi(files));
 
    dy_free(files);
 
-   if (!checker_check(AST)) exit(-1);
+   init_pass(AST, symtbl);
+
+   print(sym_table_get(symtbl, L"fewfe", 0, false));
+
+   return 0;
+
+   // if (!checker_check(AST, type_handler)) exit(-1);
 
    // node_t *NAST = desugar_desugar(AST);
    node_t *NAST = AST;
    
    if (!strcmp(argv[1], "build")) {
-      printf("%ls\n", cgen_generate(NAST));
+      // printf("%ls\n", cgen_generate(NAST));
    } else if (!strcmp(argv[1], "run")) {
-      compile_and_run(cgen_generate(NAST));
+      // compile_and_run(cgen_generate(NAST));
    } else if (!strcmp(argv[1], "dump")) {
       print_node(AST);
    } else {
@@ -183,5 +207,5 @@ int main(int argc, char **argv) {
    }
 
    node_free(AST);
-   type_free_all();
+   type_handler_free(type_handler);
 }
