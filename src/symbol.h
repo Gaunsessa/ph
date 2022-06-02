@@ -28,7 +28,7 @@ typedef struct sym_entry_t {
    struct sym_entry_t *next;
 } sym_entry_t;
 
-typedef struct sym_table_t {
+typedef struct sym_module_t {
    ht_t(wchar_t *, sym_entry_t *) decls;
    ht_t(wchar_t *, sym_entry_t *) types;
 
@@ -38,19 +38,26 @@ typedef struct sym_table_t {
       dynarr_t(struct sinf_t *) children;
    } sinf_arr;
    ht_t(int, struct sinf_t *) sinf;
+} sym_module_t;
+
+typedef struct sym_table_t {
+   type_handler_t *ty_hdl;
+
+   ht_t(wchar_t *, sym_module_t *) modules;
 } sym_table_t;
 
 sym_table_t *sym_table_new();
 
-void sym_table_push_scope(sym_table_t *tbl, size_t scope, size_t parent);
+void sym_table_push_module(sym_table_t *tbl, wchar_t *name);
+void sym_table_push_scope(sym_module_t *mod, size_t scope, size_t parent);
 
-void sym_table_set(sym_table_t *tbl, wchar_t *name, size_t scope, bool typedf, type_idx type);
+void sym_table_set(sym_module_t *mod, wchar_t *name, size_t scope, bool typedf, type_idx type);
 
-type_idx sym_table_get_cur(sym_table_t *tbl, wchar_t *name, size_t scope, bool typedf);
-type_idx sym_table_get(sym_table_t *tbl, wchar_t *name, size_t scope, bool typedf);
+type_idx sym_table_get_cur(sym_module_t *mod, wchar_t *name, size_t scope, bool typedf);
+type_idx sym_table_get(sym_module_t *mod, wchar_t *name, size_t scope, bool typedf);
 
-type_idx sym_table_get_cur_both(sym_table_t *tbl, wchar_t *name, size_t scope);
-type_idx sym_table_get_both(sym_table_t *tbl, wchar_t *name, size_t scope);
+type_idx sym_table_get_cur_both(sym_module_t *mod, wchar_t *name, size_t scope);
+type_idx sym_table_get_both(sym_module_t *mod, wchar_t *name, size_t scope);
 
 void sym_table_free(sym_table_t *tbl);
 

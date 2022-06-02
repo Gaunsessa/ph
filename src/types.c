@@ -1,5 +1,4 @@
 #include "types.h"
-#include "pass/checker.h"
 
 void type_module_init() {
    
@@ -9,6 +8,10 @@ type_handler_t *type_handler_new() {
    type_handler_t *handler = malloc(sizeof(type_handler_t));
 
    handler->allocs = dy_init(type_t *);
+
+#define TYPE(ident, str, cstr) type_init(handler, (type_t) { TYPE_BASE, .base = BASE_##ident });
+   BASE_TYPES
+#undef TYPE
 
    return handler;
 }
@@ -25,8 +28,6 @@ type_idx type_init(type_handler_t *hnd, type_t type) {
 
    dy_push(hnd->allocs, ptype);
 
-   print("A: ", dy_len(hnd->allocs));
-
    return dy_len(hnd->allocs) - 1;
 }
 
@@ -37,8 +38,8 @@ type_t *type_get(type_handler_t *hnd, type_idx idx) {
 }
 
 // True = equal, False = not equal
-bool type_cmp(module_t *mod, type_idx t1, type_idx t2) {
-   ERROR("UNIMPLMENTED!");
+// bool type_cmp(module_t *mod, type_idx t1, type_idx t2) {
+   // ERROR("UNIMPLMENTED!");
 
    // if (t1 == NULL || t2 == NULL) return false;
 
@@ -99,4 +100,4 @@ bool type_cmp(module_t *mod, type_idx t1, type_idx t2) {
    //       return true;
    //    default: eprint("Unreachable Statement!", t1->type);
    // }
-}
+// }

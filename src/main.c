@@ -22,8 +22,11 @@
 #include "util.h"
 
 #include "pass/init.h"
-#include "pass/checker.h"
-#include "pass/desugar.h"
+#include "pass/globals.h"
+
+// TODO: stop fucking around and make parser take in a type_handler and make data_type just have a type_idx
+//       this will make things so much easier
+//       ;-; ;-; ;-; bonejaw
 
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
 //       type_t has memory leak
@@ -163,17 +166,21 @@ int main(int argc, char **argv) {
       exit(-1);
    }
 
-   type_handler_t *type_handler = type_handler_new();
+   // type_handler_t *type_handler = type_handler_new();
    sym_table_t *symtbl = sym_table_new();
 
-   // sym_table_push_scope(symtbl, 1, 0);
-   // sym_table_push_scope(symtbl, 2, 0);
-   // sym_table_push_scope(symtbl, 3, 1);
+   // sym_table_push_module(symtbl, L"main");
 
-   // sym_table_set(symtbl, L"joe", 0, false, 69);
-   // sym_table_set(symtbl, L"joe", 1, false, 420);
+   // sym_module_t *symmod = ht_get_sv(symtbl->modules, L"main");
 
-   // print(sym_table_get(symtbl, L"joe", 3, false));
+   // sym_table_push_scope(symmod, 1, 0);
+   // sym_table_push_scope(symmod, 2, 0);
+   // sym_table_push_scope(symmod, 3, 0);
+
+   // sym_table_set(symmod, L"joe", 0, false, 69);
+   // sym_table_set(symmod, L"joe", 1, false, 420);
+
+   // print(sym_table_get(symmod, L"joe", 3, false));
 
 
    // return 0;
@@ -184,9 +191,11 @@ int main(int argc, char **argv) {
 
    dy_free(files);
 
-   init_pass(AST, symtbl);
+   globals_pass(AST, symtbl);
 
-   print(sym_table_get(symtbl, L"fewfe", 0, false));
+   // init_pass(AST, symtbl);
+
+   print(type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"b", 0, false))->base);
 
    return 0;
 
@@ -207,5 +216,5 @@ int main(int argc, char **argv) {
    }
 
    node_free(AST);
-   type_handler_free(type_handler);
+   // type_handler_free(type_handler);
 }

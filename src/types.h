@@ -89,6 +89,7 @@ typedef int type_idx;
 
 typedef struct type_t {
    TYPE_TYPE type;
+   wchar_t *name;
 
    union {
       // Base
@@ -147,7 +148,7 @@ void type_handler_free(type_handler_t *hnd);
 type_idx type_init(type_handler_t *hnd, type_t type);
 type_t *type_get(type_handler_t *hnd, type_idx idx);
 
-struct module_t;
-bool type_cmp(struct module_t *mod, type_idx t1, type_idx t2);
+// struct module_t;
+// bool type_cmp(struct module_t *mod, type_idx t1, type_idx t2);
 
 #endif

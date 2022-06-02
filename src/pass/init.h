@@ -17,11 +17,14 @@
 #include "lexer.h"
 #include "node.h"
 #include "symbol.h"
+#include "types.h"
 
 void init_pass(node_t *AST, sym_table_t *tbl);
 
 bool init_special(node_t *node);
-void init_start(node_t *node, sym_table_t *tbl, size_t scope);
-void init_end(node_t *node, sym_table_t *tbl, size_t scope);
+void init_start(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope);
+void init_end(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope);
+
+void init_data_type(node_t *dtype, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
 #endif

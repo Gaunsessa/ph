@@ -3,7 +3,7 @@
 #include "prims.h"
 
 #define _walk_arr(arr) ({ for (int i = 0; i < dy_len(arr); i++) node_walker(dyi(arr)[i], special, start, end); })
-#define node_walk_arr(arr, tbl, scope, hscope, special, start, end) ({ for (int i = 0; i < dy_len(arr); i++) _node_walk(dyi(arr)[i], tbl, scope, hscope, special, start, end); })
+#define node_walk_arr(arr, tbl, mod, scope, hscope, special, start, end) ({ for (int i = 0; i < dy_len(arr); i++) _node_walk(dyi(arr)[i], tbl, mod, scope, hscope, special, start, end); })
 
 void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node_t *node), void (*end)(node_t *node)) {
    start(node);
@@ -31,37 +31,48 @@ void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node
    end(node);
 }
 
-void node_walk(node_t *node, sym_table_t *tbl, size_t scope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, size_t scope)) {
+void node_walk(node_t *node, sym_table_t *tbl, size_t scope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope)) {
    size_t hscope = scope;
 
-   _node_walk(node, tbl, scope, &hscope, special, start, end);
+   _node_walk(node, tbl, NULL, scope, &hscope, special, start, end);
 }
 
-void _node_walk(node_t *node, sym_table_t *tbl, size_t scope, size_t *hscope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, size_t scope)) {
-   start(node, tbl, scope);
+void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope)) {
+   start(node, tbl, mod, scope);
 
-   if (M_COMPARE(
+   size_t *ohscope = hscope;
+   if (node->type == NODE_FILE) {
+      if (!ht_exists_sv(tbl->modules, node->FILE.name))
+         sym_table_push_module(tbl, node->FILE.name);
+
+      mod = ht_get_sv(tbl->modules, node->FILE.name);
+
+      size_t *nhscope = malloc(sizeof(size_t));
+      hscope = nhscope;
+   }
+
+   if (mod != NULL && M_COMPARE(
       node->type, 
       NODE_BLOCK, NODE_IMPL, 
       NODE_IF,    NODE_FOR
    )) {
       (*hscope)++;
 
-      if (!ht_exists(tbl->sinf, *hscope))
-         sym_table_push_scope(tbl, *hscope, scope);
+      if (!ht_exists(mod->sinf, *hscope))
+         sym_table_push_scope(mod, *hscope, scope);
 
       scope = *hscope;
    }
 
    if (special(node)) goto END;
 
-#define _NODE(a, b, c, i, ...)                                                                   \
-   ({                                                                                            \
-      if (__builtin_types_compatible_p(a, struct node_t *))                                      \
-         _node_walk((void *)*(void **)&node->c.b, tbl, scope, hscope, special, start, end);      \
-      else if(__builtin_types_compatible_p(a, dynarr_t(struct node_t *)))                        \
-         node_walk_arr((void ***)*(void **)&node->c.b, tbl, scope, hscope, special, start, end); \
-   });                                                                                           \
+#define _NODE(a, b, c, i, ...)                                                                        \
+   ({                                                                                                 \
+      if (__builtin_types_compatible_p(a, struct node_t *))                                           \
+         _node_walk((void *)*(void **)&node->c.b, tbl, mod, scope, hscope, special, start, end);      \
+      else if(__builtin_types_compatible_p(a, dynarr_t(struct node_t *)))                             \
+         node_walk_arr((void ***)*(void **)&node->c.b, tbl, mod, scope, hscope, special, start, end); \
+   });                                                                                                \
 
 #define NODE(ident, ...) case NODE_##ident: { M_MAP2(_NODE, ident, __VA_ARGS__) } break;
    switch (node->type) {
@@ -72,13 +83,19 @@ void _node_walk(node_t *node, sym_table_t *tbl, size_t scope, size_t *hscope, bo
 #undef _NODE
 
 END:
-   if (M_COMPARE(
+   if (mod != NULL && M_COMPARE(
       node->type, 
       NODE_BLOCK, NODE_IMPL, 
       NODE_IF,    NODE_FOR
-   )) scope = ht_get(tbl->sinf, scope)->parent->id;
+   )) scope = ht_get(mod->sinf, scope)->parent->id;
 
-   end(node, tbl, scope);
+   if (node->type == NODE_FILE) {
+      free(hscope);
+
+      hscope = ohscope;
+   }
+
+   end(node, tbl, mod, scope);
 }
 
 void node_replace(node_t *onode, node_t nnode) {

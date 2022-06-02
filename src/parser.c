@@ -740,8 +740,10 @@ node_t *parser_type(parser_t *p) {
       case TOKEN_LEFT_BRACKET: type->DATA_TYPE.type = parser_array_type(p); break;
       case TOKEN_LEFT_PARENTHESES: type->DATA_TYPE.type = parser_function_type(p); break;
       case TOKEN_STRUCT: type->DATA_TYPE.type = parser_struct_type(p); break;
-      default: type->DATA_TYPE.type = parser_expression(p); break;
+      default: type->DATA_TYPE.type = parser_path_expression(p); break;
    }
+
+   ASSERT(type->DATA_TYPE.type->type, NODE_PTR_TYPE, NODE_FUNCTION_TYPE, NODE_IDENTIFIER, NODE_PATH_EXPRESSION);
 
    return type;
 }
