@@ -5,6 +5,13 @@ module main
 // // Give all variables in that scope the scope id
 // // When looking up a variable look for the closest scope ided var
 
+vec :: struct {
+   x: f32
+   y: f32
+}
+
+x := vec'{}
+
 main :: (): = {
-   
+
 }

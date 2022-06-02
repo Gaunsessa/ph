@@ -10,7 +10,7 @@ bool typeres_special(node_t *node) {
 
 void typeres_start(node_t *node) {
    switch (node->type) {
-      case NODE_DATA_TYPE: return typeres_data_type(node);
+      // case NODE_DATA_TYPE: return typeres_data_type(node);
 
       default: return;
    }
@@ -21,7 +21,7 @@ void typeres_end(node_t *node) {
 }
 
 void typeres_data_type(node_t *type) {
-   node_def(type, DATA_TYPE);
+   // node_def(type, DATA_TYPE);
 
    // if (node->type->type == NODE_FUNCTION_TYPE) {
    //    type_t type = {

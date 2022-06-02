@@ -21,16 +21,13 @@
 #include "print.h"
 #include "util.h"
 
-#include "pass/init.h"
 #include "pass/globals.h"
-
-// TODO: stop fucking around and make parser take in a type_handler and make data_type just have a type_idx
-//       this will make things so much easier
-//       ;-; ;-; ;-; bonejaw
 
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
 //       type_t has memory leak
 //       node_free dosent free the malloc of the node itself
+//       i think there is many double frees that are going to happen
+// TODO: freeing everything properly
 
 // TODO: 0) Desugar step
 //          I think I should desugar after the check stage and desugar all modules down to a NODE_FILE with renamed names
@@ -187,21 +184,19 @@ int main(int argc, char **argv) {
 
    dynarr_t(FILE *) files = load_files(argc - 2, argv + 2, NULL);
 
-   node_t *AST = parser_parse(dy_len(files), dyi(files));
+   node_t *AST = parser_parse(dy_len(files), dyi(files), symtbl->ty_hdl);
 
    dy_free(files);
 
    globals_pass(AST, symtbl);
 
-   // init_pass(AST, symtbl);
+   printf("%d\n", type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"x", 0, false))->type);
 
-   print(type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"b", 0, false))->base);
-
-   return 0;
+   // return 0;
 
    // if (!checker_check(AST, type_handler)) exit(-1);
 
-   // node_t *NAST = desugar_desugar(AST);
+   // node_t *NAST = desugar_desugar(AST)
    node_t *NAST = AST;
    
    if (!strcmp(argv[1], "build")) {
@@ -216,5 +211,6 @@ int main(int argc, char **argv) {
    }
 
    node_free(AST);
+   // sym_table_free(symtbl);
    // type_handler_free(type_handler);
 }

@@ -75,6 +75,7 @@ typedef enum BASE_TYPE {
 
 typedef enum TYPE_TYPE {
    TYPE_NONE,
+   TYPE_INFER,
    TYPE_MODULE,
    TYPE_BASE,
    TYPE_UNTYPED,
@@ -89,7 +90,9 @@ typedef int type_idx;
 
 typedef struct type_t {
    TYPE_TYPE type;
+
    wchar_t *name;
+   wchar_t *module;
 
    union {
       // Base

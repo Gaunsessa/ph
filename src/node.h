@@ -37,20 +37,8 @@
          dynarr_t(struct node_t *), stmts      \
       /* Types */                              \
       )                                        \
-      NODE(DATA_TYPE,                          \
-         struct node_t *, type                 \
-      )                                        \
       NODE(TYPE_IDX,                           \
          type_idx, type                        \
-      )                                        \
-      NODE(PTR_TYPE,                           \
-         struct node_t *, base                 \
-      )                                        \
-      NODE(FUNCTION_TYPE,                      \
-         wchar_t *, self,                      \
-         dynarr_t(wchar_t *), arg_names,       \
-         dynarr_t(struct node_t *), arg_types, \
-         struct node_t *, ret                  \
       )                                        \
       /* Statements */                         \
       NODE(BLOCK,                              \
