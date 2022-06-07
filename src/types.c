@@ -1,9 +1,5 @@
 #include "types.h"
 
-void type_module_init() {
-   
-}
-
 type_handler_t *type_handler_new() {
    type_handler_t *handler = malloc(sizeof(type_handler_t));
 

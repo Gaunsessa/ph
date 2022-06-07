@@ -22,7 +22,7 @@
 
 void globals_pass(node_t *AST, sym_table_t *tbl);
 
-bool globals_special(node_t *node);
+bool globals_special(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope);
 void globals_start(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 void globals_end(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 

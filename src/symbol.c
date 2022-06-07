@@ -12,6 +12,8 @@ sym_table_t *sym_table_new() {
 void sym_table_push_module(sym_table_t *tbl, wchar_t *name) {
    sym_module_t *mod = malloc(sizeof(sym_module_t));
 
+   mod->name = wcsdup(name);
+
    mod->decls = ht_init_sv(wchar_t, sym_entry_t *);
    mod->types = ht_init_sv(wchar_t, sym_entry_t *);
 
@@ -52,6 +54,8 @@ void sym_table_set(sym_module_t *mod, wchar_t *name, size_t scope, bool typedf, 
 }
 
 type_idx sym_table_get_cur(sym_module_t *mod, wchar_t *name, size_t scope, bool typedf) {
+   if (mod == NULL) return -1;
+
    ht_t(wchar_t *, sym_entry_t *) ht = typedf ? mod->types : (void *)mod->decls;
    if (!ht_exists_sv(ht, name)) return -1;
 
@@ -63,6 +67,8 @@ type_idx sym_table_get_cur(sym_module_t *mod, wchar_t *name, size_t scope, bool 
 }
 
 type_idx sym_table_get(sym_module_t *mod, wchar_t *name, size_t scope, bool typedf) {
+   if (mod == NULL) return -1;
+
    ht_t(wchar_t *, sym_entry_t *) ht = typedf ? mod->types : (void *)mod->decls;
    if (!ht_exists_sv(ht, name)) return -1;
 
@@ -98,6 +104,10 @@ type_idx sym_table_get_both(sym_module_t *mod, wchar_t *name, size_t scope) {
    return ret;
 }
 
+sym_module_t *sym_table_get_module(sym_table_t *tbl, wchar_t *name) {
+   return name == NULL || !ht_exists_sv(tbl->modules, name) ? NULL : ht_get_sv(tbl->modules, name);
+}
+
 void _sym_entry_free(void *ent) {
    sym_entry_t *entry = ent;
 
@@ -111,6 +121,8 @@ void _sym_entry_free(void *ent) {
 
 void _sym_module_free(void *mod) {
    sym_module_t *module = mod;
+
+   free(module->name);
 
    ht_free_func(module->decls, _sym_entry_free);
    ht_free_func(module->types, _sym_entry_free);

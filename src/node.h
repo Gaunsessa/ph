@@ -179,8 +179,8 @@ typedef struct node_t {
 
 #define node_init(...) ({ node_t *n = calloc(1, sizeof(node_t)); memcpy(n, &(node_t) { __VA_ARGS__ }, sizeof(node_t)); n; })
 
-void node_walk(node_t *node, sym_table_t *tbl, size_t scope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope));
-void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope));
+void node_walk(node_t *node, sym_table_t *tbl, size_t scope, bool (*special)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope));
+void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope, bool (*special)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope));
 
 void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node_t *node), void (*end)(node_t *node));
 

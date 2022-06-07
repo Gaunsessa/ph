@@ -31,13 +31,13 @@ void node_walker(node_t *node, bool (*special)(node_t *node), void (*start)(node
    end(node);
 }
 
-void node_walk(node_t *node, sym_table_t *tbl, size_t scope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope)) {
+void node_walk(node_t *node, sym_table_t *tbl, size_t scope, bool (*special)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope)) {
    size_t hscope = scope;
 
    _node_walk(node, tbl, NULL, scope, &hscope, special, start, end);
 }
 
-void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope, bool (*special)(node_t *node), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope)) {
+void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope, bool (*special)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope)) {
    start(node, tbl, mod, scope);
 
    size_t *ohscope = hscope;
@@ -45,7 +45,7 @@ void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope,
       if (!ht_exists_sv(tbl->modules, node->FILE.name))
          sym_table_push_module(tbl, node->FILE.name);
 
-      mod = ht_get_sv(tbl->modules, node->FILE.name);
+      mod = sym_table_get_module(tbl, node->FILE.name);
 
       size_t *nhscope = malloc(sizeof(size_t));
       hscope = nhscope;
@@ -64,7 +64,7 @@ void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope,
       scope = *hscope;
    }
 
-   if (special(node)) goto END;
+   if (special(node, tbl, mod, scope, hscope)) goto END;
 
 #define _NODE(a, b, c, i, ...)                                                                        \
    ({                                                                                                 \

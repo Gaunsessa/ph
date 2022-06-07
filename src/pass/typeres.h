@@ -16,13 +16,18 @@
 #include "util.h"
 #include "lexer.h"
 #include "node.h"
+#include "symbol.h"
+#include "types.h"
+#include "infer.h"
 
-void typeres_resolve(node_t *AST);
+void typeres_pass(node_t *AST, sym_table_t *tbl);
 
-bool typeres_special(node_t *node);
-void typeres_start(node_t *node);
-void typeres_end(node_t *node);
+bool typeres_special(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope);
+void typeres_start(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope);
+void typeres_end(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
-void typeres_data_type(node_t *type);
+void typeres_vardecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t scope);
+
+type_idx typeres_resolve_type(type_idx idx, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
 #endif

@@ -142,8 +142,6 @@ typedef struct type_handler_t {
    dynarr_t(type_t *) allocs;
 } type_handler_t;
 
-void type_module_init();
-
 type_handler_t *type_handler_new();
 
 void type_handler_free(type_handler_t *hnd);

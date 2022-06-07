@@ -22,6 +22,11 @@
 #include "util.h"
 
 #include "pass/globals.h"
+#include "pass/typeres.h"
+
+// TODO: Implement all features of old checker
+//       Then make a basic code gen
+//       Then write the next days todo.
 
 // TODO: Sometimes im not freeing parser_identifier maybe others aswell
 //       type_t has memory leak
@@ -155,7 +160,6 @@ dynarr_t(FILE *) load_files(int amt, char **paths, dynarr_t(FILE *) arr) {
 int main(int argc, char **argv) {
    setlocale(LC_ALL, "");
 
-   type_module_init();
    lexer_module_init();
 
    if (argc < 3) { 
@@ -189,8 +193,13 @@ int main(int argc, char **argv) {
    dy_free(files);
 
    globals_pass(AST, symtbl);
+   typeres_pass(AST, symtbl);
 
-   printf("%d\n", type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"x", 0, false))->type);
+   // printf("%ls\n", type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"x", 0, false))->name);
+   for (int i = 0; i < dy_len(symtbl->ty_hdl->allocs); i++) {
+      type_t *type = dyi(symtbl->ty_hdl->allocs)[i];
+      printf("%ls : %d\n", type->name, type->type);
+   }
 
    // return 0;
 

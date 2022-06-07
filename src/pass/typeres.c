@@ -1,46 +1,75 @@
 #include "typeres.h"
 
-void typeres_resolve(node_t *AST) {
-   node_walker(AST, typeres_special, typeres_start, typeres_end);
+void typeres_pass(node_t *AST, sym_table_t *tbl) {
+   node_walk(AST, tbl, 0, typeres_special, typeres_start, typeres_end);
 }
 
-bool typeres_special(node_t *node) {
-   return false;
-}
-
-void typeres_start(node_t *node) {
+bool typeres_special(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope) {
    switch (node->type) {
-      // case NODE_DATA_TYPE: return typeres_data_type(node);
+      // case NODE_VARIABLE_DECLARATION: 
+         // _node_walk(node->VARIABLE_DECLARATION.expr, tbl, mod, scope, hscope, typeres_special, typeres_start, typeres_end);
+         // return true;
+      default: return false;
+   }
+}
 
+void typeres_start(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   switch (node->type) {
+      case NODE_VARIABLE_DECLARATION: return typeres_vardecl(node, tbl, mod, scope);
+      case NODE_TYPE_IDX:
+         node->TYPE_IDX.type = typeres_resolve_type(node->TYPE_IDX.type, tbl, mod, scope);
+
+         break;
       default: return;
    }
 }
 
-void typeres_end(node_t *node) {
-
+void typeres_end(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   return;
 }
 
-void typeres_data_type(node_t *type) {
-   // node_def(type, DATA_TYPE);
+void typeres_vardecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   node_def(vdecl, VARIABLE_DECLARATION);
 
-   // if (node->type->type == NODE_FUNCTION_TYPE) {
-   //    type_t type = {
-   //       .type = TYPE_FUNCTION,
-   //       .args = dy_init(struct { wchar_t *name; type_idx type; }),
-   //    };
-   
-   //    for (int i = 0; i < dy_len(node->type->FUNCTION_TYPE.arg_names); i++) {
-   //       struct { wchar_t *name; type_idx type; } arg = { 
-   //          dyi(node->type->FUNCTION_TYPE.arg_names)[i], 
-   //          checker_infer_expression_no_res(ckr, mod, dyi(node->type->FUNCTION_TYPE.arg_types)[i]) 
-   //       };
-   
-   //       dy_push_unsafe(type.args, arg);
-   //    }
-   
-   //    node_replace(node->type, (node_t) {
-   //       .type = NODE_TYPE_IDX,
-   //       .TYPE_IDX = { type_init(ckr->type_handler, type) }
-   //    });
-   // }
+   type_idx tidx = type_get(tbl->ty_hdl, node->type->TYPE_IDX.type)->type == TYPE_INFER ? 
+                     infer_expression(tbl, mod, scope, node->expr) : 
+                     node->type->TYPE_IDX.type;
+   type_t *type  = type_get(tbl->ty_hdl, tidx);
+
+   sym_table_set(
+      mod, 
+      node->ident->IDENTIFIER.value, 
+      scope, 
+      M_COMPARE(node->expr->type, NODE_STRUCT, NODE_ALIAS), 
+      tidx
+   );
+
+   node->type->TYPE_IDX.type = tidx;
+
+   if (type != NULL && M_COMPARE(node->expr->type, NODE_STRUCT, NODE_ALIAS)) {
+      type->name   = wcsdup(node->ident->IDENTIFIER.value);
+      type->module = wcsdup(mod->name);
+   }
+}
+
+type_idx typeres_resolve_type(type_idx idx, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   type_t *type = type_get(tbl->ty_hdl, idx);
+   if (type == NULL) return -1;
+
+   switch (type->type) {
+      case TYPE_INFER: eprint("Cannot resolve type of infer!");
+      case TYPE_NONE: 
+         if (!ht_exists_sv(tbl->modules, type->module)) return -1;
+
+         return sym_table_get_both(sym_table_get_module(tbl, type->module), type->name, scope);
+      case TYPE_PTR: 
+         type->ptr_base = typeres_resolve_type(type->ptr_base, tbl, mod, scope); 
+         break;
+      case TYPE_ARRAY:
+         type->arr_base = typeres_resolve_type(type->arr_base, tbl, mod, scope);
+         break;
+      default: break;
+   }
+
+   return idx;
 }

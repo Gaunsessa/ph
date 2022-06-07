@@ -10,8 +10,7 @@ vec :: struct {
    y: f32
 }
 
-x := vec'{}
+vec2 :: alias vec
 
-main :: (): = {
-
-}
+x: vec
+y: vec2
