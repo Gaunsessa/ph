@@ -23,6 +23,7 @@
 
 #include "pass/globals.h"
 #include "pass/typeres.h"
+#include "pass/checker.h"
 
 // TODO: Implement all features of old checker
 //       Then make a basic code gen
@@ -183,6 +184,15 @@ int main(int argc, char **argv) {
 
    // print(sym_table_get(symmod, L"joe", 3, false));
 
+   // printf(
+   //    "%d\n",
+   //    type_cmp(
+   //       symtbl->ty_hdl, 
+   //       type_init(symtbl->ty_hdl, (type_t) { .type = TYPE_PTR, .ptr_base = BASE_F32 }),
+   //       type_init(symtbl->ty_hdl, (type_t) { .type = TYPE_PTR, .ptr_base = BASE_INT })
+   //    )
+   // );
+
 
    // return 0;
 
@@ -194,11 +204,12 @@ int main(int argc, char **argv) {
 
    globals_pass(AST, symtbl);
    typeres_pass(AST, symtbl);
+   checker_pass(AST, symtbl);
 
    // printf("%ls\n", type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"x", 0, false))->name);
-   for (int i = 0; i < dy_len(symtbl->ty_hdl->allocs); i++) {
+   for (int i = 15; i < dy_len(symtbl->ty_hdl->allocs); i++) {
       type_t *type = dyi(symtbl->ty_hdl->allocs)[i];
-      printf("%ls : %d\n", type->name, type->type);
+      printf("ID: %d | NAME: %ls | TYPE: %d\n", i, type->name, type->type);
    }
 
    // return 0;

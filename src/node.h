@@ -81,6 +81,9 @@
       NODE(NUMBER_LITERAL,                     \
          size_t, value                         \
       )                                        \
+      NODE(BOOL_LITERAL,                       \
+         bool, value                           \
+      )                                        \
       NODE(FLOAT_LITERAL,                      \
          size_t, integer,                      \
          size_t, fraction                      \

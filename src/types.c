@@ -33,6 +33,46 @@ type_t *type_get(type_handler_t *hnd, type_idx idx) {
    return dyi(hnd->allocs)[idx];
 }
 
+bool type_cmp(type_handler_t *hnd, type_idx t1, type_idx t2) {
+   if (t1 < 0 || t2 < 0) return false;
+
+   type_t *type1 = type_get(hnd, t1);
+   type_t *type2 = type_get(hnd, t2);
+
+   if (type1->type != type2->type) return false;
+
+   switch (type1->type) {
+      case TYPE_BASE:
+         return type1->base == type2->base;
+      case TYPE_PTR:
+         return type_cmp(hnd, type1->ptr_base, type2->ptr_base);
+      case TYPE_ARRAY:
+         return type1->length == type2->length && type_cmp(hnd, type1->arr_base, type2->arr_base); 
+      case TYPE_FUNCTION:
+         if (dy_len(type1->args) != dy_len(type2->args) || !type_cmp(hnd, type1->ret, type2->ret)) return false;
+
+         for (int i = 0; i < dy_len(type1->args); i++)
+            if (!type_cmp(hnd, dyi(type1->args)[i].type, dyi(type2->args)[i].type) ||
+                wcscmp(dyi(type1->args)[i].name, dyi(type2->args)[i].name) != 0)
+               return false;
+
+         return true;
+      // case TYPE_STRUCT:
+      //    if (dy_len(t1->feilds) != dy_len(t2->feilds)) return false;
+
+      //    for (int i = 0; i < dy_len(t1->feilds); i++) {
+      //       if (!type_cmp(mod, dyi(t1->feilds)[i].type, dyi(t2->feilds)[i].type))
+      //          return false;
+
+      //       if (wcscmp(dyi(t1->feilds)[i].name, dyi(t2->feilds)[i].name) != 0)
+      //          return false;
+      //    }
+
+      //    return true;
+      default: eprint("Unreachable Statement!", type1->type);
+   }
+}
+
 // True = equal, False = not equal
 // bool type_cmp(module_t *mod, type_idx t1, type_idx t2) {
    // ERROR("UNIMPLMENTED!");

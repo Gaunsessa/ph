@@ -14,3 +14,15 @@ vec2 :: alias vec
 
 x: vec
 y: vec2
+
+main :: (): = {
+   x: f32 = 10
+
+   coom(x)
+
+   if true -> coom(x)
+}
+
+coom :: (x: f32): = {
+
+}

@@ -286,6 +286,8 @@ node_t *parser_statement(parser_t *p) {
       case TOKEN_STRING:
       case TOKEN_FLOAT:
       case TOKEN_HEX:
+      case TOKEN_TRUE:
+      case TOKEN_FALSE:
       case TOKEN_NUMBER: return parser_expression(p);
       case TOKEN_UNDERSCORE:
       case TOKEN_IDENTIFIER:
@@ -348,6 +350,8 @@ node_t *parser_expression(parser_t *p) {
       case TOKEN_BANG:
       case TOKEN_TILDE:
       case TOKEN_UNDERSCORE:
+      case TOKEN_TRUE:
+      case TOKEN_FALSE:
       case TOKEN_IDENTIFIER: return _parser_binary_expression(p, 0);
       case TOKEN_ALIAS: return parser_alias(p);
       case TOKEN_STRUCT: return parser_struct(p);
@@ -915,6 +919,8 @@ node_t *parser_literal(parser_t *p) {
    switch (lookahead(0).type) {
       case TOKEN_HEX:
       case TOKEN_NUMBER: return node_init(NODE_NUMBER_LITERAL, .NUMBER_LITERAL = { parser_eat(p, TOKEN_NUMBER, TOKEN_HEX).num });
+      case TOKEN_TRUE:
+      case TOKEN_FALSE: return node_init(NODE_BOOL_LITERAL, .BOOL_LITERAL = { parser_eat(p, TOKEN_TRUE, TOKEN_FALSE).type == TOKEN_TRUE });
       case TOKEN_STRING: return node_init(NODE_STRING_LITERAL, .STRING_LITERAL = { parser_eat(p, TOKEN_STRING).str });
       case TOKEN_FLOAT:;
          token_t tok = parser_eat(p, TOKEN_FLOAT);

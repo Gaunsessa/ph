@@ -27,6 +27,9 @@
       TOKEN(HEX, L"")                    \
       TOKEN(IDENTIFIER, L"")             \
                                          \
+      TOKEN(TRUE, L"true")               \
+      TOKEN(FALSE, L"false")             \
+                                         \
       TOKEN(NEWLINE, L"\n")              \
       TOKEN(SEMI_COLON, L";")            \
       TOKEN(COMMA, L",")                 \

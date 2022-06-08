@@ -151,5 +151,6 @@ type_t *type_get(type_handler_t *hnd, type_idx idx);
 
 // struct module_t;
 // bool type_cmp(struct module_t *mod, type_idx t1, type_idx t2);
+bool type_cmp(type_handler_t *hnd, type_idx t1, type_idx t2);
 
 #endif

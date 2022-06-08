@@ -47,7 +47,7 @@ void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope,
 
       mod = sym_table_get_module(tbl, node->FILE.name);
 
-      size_t *nhscope = malloc(sizeof(size_t));
+      size_t *nhscope = calloc(1, sizeof(size_t));
       hscope = nhscope;
    }
 

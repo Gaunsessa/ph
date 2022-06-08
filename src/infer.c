@@ -5,6 +5,7 @@ type_idx infer_expression(sym_table_t *tbl, sym_module_t *mod, size_t scope, nod
       case NODE_STRING_LITERAL: return BASE_STRING;
       case NODE_NUMBER_LITERAL: return BASE_INT;
       case NODE_FLOAT_LITERAL: return BASE_F32;
+      case NODE_BOOL_LITERAL: return BASE_BOOL;
 
       case NODE_IDENTIFIER: {
          node_def(expr, IDENTIFIER);
@@ -46,6 +47,9 @@ type_idx infer_expression(sym_table_t *tbl, sym_module_t *mod, size_t scope, nod
       case NODE_ALIAS: {
          node_def(expr, ALIAS);
 
+         // type_t *type = type_get(tbl->ty_hdl, node->type->TYPE_IDX.type);
+
+         // return sym_table_get(mod, type->name, scope, true);
          return node->type->TYPE_IDX.type;
       } break;
 

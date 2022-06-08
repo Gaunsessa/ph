@@ -49,6 +49,9 @@ void typeres_vardecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t 
    if (type != NULL && M_COMPARE(node->expr->type, NODE_STRUCT, NODE_ALIAS)) {
       type->name   = wcsdup(node->ident->IDENTIFIER.value);
       type->module = wcsdup(mod->name);
+      // type->name = L"ALIAS";
+
+      if (node->expr->type == NODE_ALIAS) type->type = TYPE_ALIAS;
    }
 }
 
