@@ -31,9 +31,12 @@ void typeres_end(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope
 void typeres_vardecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
    node_def(vdecl, VARIABLE_DECLARATION);
 
-   type_idx tidx = type_get(tbl->ty_hdl, node->type->TYPE_IDX.type)->type == TYPE_INFER ? 
-                     infer_expression(tbl, mod, scope, node->expr) : 
-                     node->type->TYPE_IDX.type;
+   type_idx tidx = typeres_resolve_type(
+      type_get(tbl->ty_hdl, node->type->TYPE_IDX.type)->type == TYPE_INFER ? 
+         infer_expression(tbl, mod, scope, node->expr) : 
+         node->type->TYPE_IDX.type,
+      tbl, mod, scope
+   );
    type_t *type  = type_get(tbl->ty_hdl, tidx);
 
    sym_table_set(

@@ -206,7 +206,7 @@ int main(int argc, char **argv) {
    typeres_pass(AST, symtbl);
    checker_pass(AST, symtbl);
 
-   // printf("%ls\n", type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"x", 0, false))->name);
+   printf("%d\n", type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"b", 0, false))->type);
    for (int i = 15; i < dy_len(symtbl->ty_hdl->allocs); i++) {
       type_t *type = dyi(symtbl->ty_hdl->allocs)[i];
       printf("ID: %d | NAME: %ls | TYPE: %d\n", i, type->name, type->type);
@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
    } else if (!strcmp(argv[1], "run")) {
       // compile_and_run(cgen_generate(NAST));
    } else if (!strcmp(argv[1], "dump")) {
-      print_node(AST);
+      // print_node(AST);
    } else {
       printf("Invalid command: %s!\n", argv[1]);
       exit(-1);

@@ -1,5 +1,7 @@
 module test
 
-test_func :: (x: int): int = {
+meme :: 32
+
+test_func :: (x: int): f32 = {
    
 }

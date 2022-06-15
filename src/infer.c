@@ -20,7 +20,11 @@ type_idx infer_expression(sym_table_t *tbl, sym_module_t *mod, size_t scope, nod
       case NODE_PATH_EXPRESSION: {
          node_def(expr, PATH_EXPRESSION);
 
-         return sym_table_get_both(sym_table_get_module(tbl, node->module->IDENTIFIER.value), node->expr->IDENTIFIER.value, 0);
+         if (node->expr->type == NODE_CALL_EXPRESSION) {
+            type_t *type  = type_get(tbl->ty_hdl, sym_table_get_both(sym_table_get_module(tbl, node->module->IDENTIFIER.value), node->expr->CALL_EXPRESSION.func->IDENTIFIER.value, 0));
+
+            return type != NULL && type->type == TYPE_FUNCTION ? type->ret : -1;
+         } else return sym_table_get_both(sym_table_get_module(tbl, node->module->IDENTIFIER.value), node->expr->IDENTIFIER.value, 0);
       } break;
       case NODE_STRUCT_LITERAL: {
          node_def(expr, STRUCT_LITERAL);
@@ -51,6 +55,28 @@ type_idx infer_expression(sym_table_t *tbl, sym_module_t *mod, size_t scope, nod
 
          // return sym_table_get(mod, type->name, scope, true);
          return node->type->TYPE_IDX.type;
+      } break;
+      case NODE_CAST_EXPRESSION: {
+         node_def(expr, CAST_EXPRESSION);
+
+         return infer_expression(tbl, mod, scope, node->type);
+      } break;
+      case NODE_FEILD_EXPRESSION: {
+         node_def(expr, FEILD_EXPRESSION);
+
+         type_t *type = type_get(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->expr));
+         if (type == NULL) return -1;
+
+         if (type->type == TYPE_PTR)
+            type = type_get(tbl->ty_hdl, type->ptr_base);
+
+         if (type == NULL || type->type != TYPE_STRUCT) return -1;
+
+         for (int i = 0; i < dy_len(type->feilds); i++)
+            if (!wcscmp(dyi(type->feilds)[i].name, node->member))
+               return dyi(type->feilds)[i].type;
+
+         return -1;
       } break;
 
       default: 

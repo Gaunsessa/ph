@@ -20,6 +20,8 @@
 #include "types.h"
 #include "infer.h"
 
+#include "typeres.h"
+
 typedef struct ckr_scope_t {
    dynarr_t(wchar_t *) decls;
    type_idx ret;
@@ -38,6 +40,8 @@ void checker_start(node_t *node, checker_t *ckr, sym_table_t *tbl, sym_module_t 
 void checker_end(node_t *node, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
 bool checker_scope_exists(checker_t *ckr, size_t scope, wchar_t *name);
+
+void checker_node(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
 #define NODE(ident, ...) void checker_##ident(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope);
    NODE_TYPES
