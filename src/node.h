@@ -17,6 +17,10 @@
 #include "types.h"
 #include "symbol.h"
 
+// NODE(TYPE_IDX,                           \
+//          type_idx, type                        \
+//       )                                        
+
 #define NODE_TYPES                             \
       /* Others */                             \
       NODE(NONE)                               \
@@ -37,8 +41,26 @@
          dynarr_t(struct node_t *), stmts      \
       /* Types */                              \
       )                                        \
-      NODE(TYPE_IDX,                           \
-         type_idx, type                        \
+      NODE(TYPE_BASE,                          \
+         struct node_t *, type,                \
+         type_idx, res                         \
+      )                                        \
+      NODE(TYPE_NAME,                          \
+         wchar_t *, name,                      \
+         wchar_t *, module                     \
+      )                                        \
+      NODE(TYPE_PTR,                           \
+         struct node_t *, base                 \
+      )                                        \
+      NODE(TYPE_FUNCTION,                      \
+         wchar_t *, self,                      \
+         dynarr_t(wchar_t *), arg_names,       \
+         dynarr_t(struct node_t *), arg_types, \
+         struct node_t *, ret                  \
+      )                                        \
+      NODE(TYPE_STRUCT,                        \
+         dynarr_t(wchar_t *), feild_names,     \
+         dynarr_t(struct node_t *), feild_types \
       )                                        \
       /* Statements */                         \
       NODE(BLOCK,                              \

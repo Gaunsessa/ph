@@ -25,6 +25,8 @@
 #include "pass/typeres.h"
 #include "pass/checker.h"
 
+// TODO: serparate the symbol table and types from the ast
+
 // TODO: Implement all features of old checker
 //       Then make a basic code gen
 //       Then write the next days todo.
@@ -206,8 +208,8 @@ int main(int argc, char **argv) {
    typeres_pass(AST, symtbl);
    checker_pass(AST, symtbl);
 
-   printf("%d\n", type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"b", 0, false))->type);
-   for (int i = 15; i < dy_len(symtbl->ty_hdl->allocs); i++) {
+   // printf("%d\n", type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"b", 0, false))->type);
+   for (int i = 16; i < dy_len(symtbl->ty_hdl->allocs); i++) {
       type_t *type = dyi(symtbl->ty_hdl->allocs)[i];
       printf("ID: %d | NAME: %ls | TYPE: %d\n", i, type->name, type->type);
    }

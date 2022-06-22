@@ -68,12 +68,11 @@ node_t *parser_defer(parser_t *p);
 node_t *parser_arrow_block(parser_t *p);
 
 node_t *parser_type(parser_t *p);
-type_idx _parser_type(parser_t *p);
-type_idx parser_base_type(parser_t *p);
-type_idx parser_ptr_type(parser_t *p);
-type_idx parser_array_type(parser_t *p);
-type_idx parser_function_type(parser_t *p);
-type_idx parser_struct_type(parser_t *p);
+node_t *parser_base_type(parser_t *p);
+node_t *parser_ptr_type(parser_t *p);
+node_t *parser_array_type(parser_t *p);
+node_t *parser_function_type(parser_t *p);
+node_t *parser_struct_type(parser_t *p);
 
 node_t *parser_struct(parser_t *p);
 

@@ -116,7 +116,12 @@ void checker_STRING_LITERAL(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_mod
 
 void checker_SOURCE(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
 void checker_FILE(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
-void checker_TYPE_IDX(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+
+void checker_TYPE_BASE(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+void checker_TYPE_NAME(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+void checker_TYPE_PTR(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+void checker_TYPE_FUNCTION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+void checker_TYPE_STRUCT(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {}
 
 void checker_VARIABLE_DECLARATION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
    node_def(n, VARIABLE_DECLARATION);
@@ -125,9 +130,9 @@ void checker_VARIABLE_DECLARATION(node_t *n, checker_t *ckr, sym_table_t *tbl, s
       error("Redeclaration of variable!");
 
    // TODO
-   // if (node->expr->type != NODE_NONE && 
-   //     type_cmp(tbl->ty_hdl, node->type->TYPE_IDX.type, infer_expression(tbl, mod, scope, node->expr)))
-   //    error("Variable decl types do not match!");
+   if (node->expr->type != NODE_NONE && node->type->type != NODE_NONE &&
+       !type_cmp(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->type), infer_expression(tbl, mod, scope, node->expr)))
+      error("Variable decl types do not match!");
 
    checker_scope_push(ckr, scope, node->ident->IDENTIFIER.value);
 }
@@ -146,7 +151,14 @@ void checker_FOR(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod,
 
 void checker_BREAK(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
 void checker_CONTINUE(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
-void checker_RETURN(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
+
+void checker_RETURN(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   node_def(n, RETURN);
+
+   if (!type_cmp(tbl->ty_hdl, dyi(ckr->scopes)[scope]->ret, infer_expression(tbl, mod, scope, node->value)))
+      error("Invalid return type!");
+}
+
 void checker_DEFER(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
 void checker_IMPL(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
 
@@ -279,7 +291,26 @@ void checker_NOT_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_mod
 void checker_DEREF_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
 void checker_ADDR_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
 void checker_CAST_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
-void checker_FUNCTION_DECLARATION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+
+// TODO: man the checker scope system is fucking ass fix that shit
+void checker_FUNCTION_DECLARATION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   node_def(n, FUNCTION_DECLARATION);
+
+   type_t *type = type_get(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->type));
+   if (type == NULL) return;
+
+   while (dy_len(ckr->scopes) <= scope) {
+      ckr_scope_t *scp = malloc(sizeof(ckr_scope_t));
+
+      scp->decls = dy_init(wchar_t *);
+      scp->ret = -1;
+
+      dy_push(ckr->scopes, scp);
+   }
+
+   dyi(ckr->scopes)[scope]->ret = type->ret;
+}
+
 void checker_STRUCT(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
 void checker_ALIAS(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
 void checker_UNINIT(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }

@@ -27,6 +27,7 @@ void typeres_start(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t sco
 void typeres_end(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
 void typeres_vardecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t scope);
+void typeres_funcdecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
 type_idx typeres_resolve_type(type_idx idx, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 

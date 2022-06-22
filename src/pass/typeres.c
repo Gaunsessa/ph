@@ -14,12 +14,11 @@ bool typeres_special(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t s
 }
 
 void typeres_start(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   // if (scope == 0) return;
+
    switch (node->type) {
       case NODE_VARIABLE_DECLARATION: return typeres_vardecl(node, tbl, mod, scope);
-      case NODE_TYPE_IDX:
-         node->TYPE_IDX.type = typeres_resolve_type(node->TYPE_IDX.type, tbl, mod, scope);
-
-         break;
+      case NODE_FUNCTION_DECLARATION: return typeres_funcdecl(node, tbl, mod, scope);
       default: return;
    }
 }
@@ -32,9 +31,7 @@ void typeres_vardecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t 
    node_def(vdecl, VARIABLE_DECLARATION);
 
    type_idx tidx = typeres_resolve_type(
-      type_get(tbl->ty_hdl, node->type->TYPE_IDX.type)->type == TYPE_INFER ? 
-         infer_expression(tbl, mod, scope, node->expr) : 
-         node->type->TYPE_IDX.type,
+      infer_expression(tbl, mod, scope, node->type->type != NODE_NONE ? node->type : node->expr),
       tbl, mod, scope
    );
    type_t *type  = type_get(tbl->ty_hdl, tidx);
@@ -47,7 +44,7 @@ void typeres_vardecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t 
       tidx
    );
 
-   node->type->TYPE_IDX.type = tidx;
+   // node->type->TYPE_IDX.type = tidx;
 
    if (type != NULL && M_COMPARE(node->expr->type, NODE_STRUCT, NODE_ALIAS)) {
       type->name   = wcsdup(node->ident->IDENTIFIER.value);
@@ -56,6 +53,19 @@ void typeres_vardecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t 
 
       if (node->expr->type == NODE_ALIAS) type->type = TYPE_ALIAS;
    }
+}
+
+void typeres_funcdecl(node_t *fdecl, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   node_def(fdecl, FUNCTION_DECLARATION);
+
+   type_t *ftype = type_get(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->type));
+   if (ftype == NULL) eprint("Cannot infer type!");
+
+   for (int i = 0; i < dy_len(ftype->args); i++)
+      sym_table_set(mod, dyi(ftype->args)[i].name, scope, false, dyi(ftype->args)[i].type);
+
+   if (ftype->self.name != NULL)
+      sym_table_set(mod, ftype->self.name, scope, false, ftype->self.type);
 }
 
 type_idx typeres_resolve_type(type_idx idx, sym_table_t *tbl, sym_module_t *mod, size_t scope) {

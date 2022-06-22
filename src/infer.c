@@ -12,11 +12,6 @@ type_idx infer_expression(sym_table_t *tbl, sym_module_t *mod, size_t scope, nod
 
          return sym_table_get_both(mod, node->value, scope);
       } break;
-      case NODE_TYPE_IDX: {
-         node_def(expr, TYPE_IDX);
-
-         return node->type;
-      } break;
       case NODE_PATH_EXPRESSION: {
          node_def(expr, PATH_EXPRESSION);
 
@@ -36,25 +31,12 @@ type_idx infer_expression(sym_table_t *tbl, sym_module_t *mod, size_t scope, nod
 
          return infer_expression(tbl, mod, scope, node->type);
       } break;
-      case NODE_STRUCT: {
-         node_def(expr, STRUCT);
-
-         return node->type->TYPE_IDX.type;
-      } break;
       case NODE_CALL_EXPRESSION: {
          node_def(expr, CALL_EXPRESSION);
 
          type_t *type = type_get(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->func));
 
          return type == NULL ? -1 : type->ret;
-      } break;
-      case NODE_ALIAS: {
-         node_def(expr, ALIAS);
-
-         // type_t *type = type_get(tbl->ty_hdl, node->type->TYPE_IDX.type);
-
-         // return sym_table_get(mod, type->name, scope, true);
-         return node->type->TYPE_IDX.type;
       } break;
       case NODE_CAST_EXPRESSION: {
          node_def(expr, CAST_EXPRESSION);
@@ -77,6 +59,83 @@ type_idx infer_expression(sym_table_t *tbl, sym_module_t *mod, size_t scope, nod
                return dyi(type->feilds)[i].type;
 
          return -1;
+      } break;
+      case NODE_STRUCT: {
+         node_def(expr, STRUCT);
+
+         return infer_expression(tbl, mod, scope, node->type);
+      }
+      case NODE_TYPE_BASE: {
+         node_def(expr, TYPE_BASE);
+
+         if (node->res > 0) return node->res;
+         else {
+            type_idx tidx = infer_expression(tbl, mod, scope, node->type);
+
+            node->res = tidx;
+
+            return tidx;
+         }
+      } break;
+      case NODE_TYPE_NAME: {
+         node_def(expr, TYPE_NAME);
+
+#define TYPE(ident, str, ...) if (!wcscmp(node->name, str)) return BASE_##ident;
+         BASE_TYPES
+#undef TYPE
+
+         return sym_table_get(sym_table_get_module(tbl, node->module), node->name, scope, true);
+      } break;
+      case NODE_TYPE_FUNCTION: {
+         node_def(expr, TYPE_FUNCTION);
+
+         type_idx tidx = type_init(tbl->ty_hdl, (type_t) {
+            TYPE_FUNCTION,
+            .args = dy_init(struct { wchar_t *name; type_idx type; }),
+            .ret  = node->ret->type != NODE_NONE ? 
+               infer_expression(tbl, mod, scope, node->ret) :
+               BASE_VOID,
+         });
+
+         type_t *type = type_get(tbl->ty_hdl, tidx);
+
+         if (node->self != NULL) {
+            type->self.name = node->self;
+            type->self.type = sym_table_get(mod, node->self, scope, true);
+         }
+
+         for (int i = 0; i < dy_len(node->arg_names); i++) {
+            struct { wchar_t *name; type_idx type; } arg;
+
+            arg.name = dyi(node->arg_names)[i];
+            arg.type = infer_expression(tbl, mod, scope, dyi(node->arg_types)[i]);
+
+            dy_push_unsafe(type->args, arg);
+         }
+
+         return tidx;
+      } break;
+      case NODE_TYPE_STRUCT: {
+         node_def(expr, TYPE_STRUCT);
+
+         type_idx tidx = type_init(tbl->ty_hdl, (type_t) {
+            TYPE_STRUCT,
+            .feilds = dy_init(struct { wchar_t *name; type_idx type; }),
+            .funcs  = dy_init(struct { wchar_t *name; type_idx type; }),
+         });
+
+         type_t *type = type_get(tbl->ty_hdl, tidx);
+
+         for (int i = 0; i < dy_len(node->feild_names); i++) {
+            struct { wchar_t *name; type_idx type; } feild;
+
+            feild.name = dyi(node->feild_names)[i];
+            feild.type = infer_expression(tbl, mod, scope, dyi(node->feild_types)[i]);
+
+            dy_push_unsafe(type->feilds, feild);
+         }
+
+         return tidx;
       } break;
 
       default: 

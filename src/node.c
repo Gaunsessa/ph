@@ -38,8 +38,6 @@ void node_walk(node_t *node, sym_table_t *tbl, size_t scope, bool (*special)(nod
 }
 
 void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope, bool (*special)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope, size_t *hscope), void (*start)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope), void (*end)(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope)) {
-   start(node, tbl, mod, scope);
-
    size_t *ohscope = hscope;
    if (node->type == NODE_FILE) {
       if (!ht_exists_sv(tbl->modules, node->FILE.name))
@@ -54,7 +52,8 @@ void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope,
    if (mod != NULL && M_COMPARE(
       node->type, 
       NODE_BLOCK, NODE_IMPL, 
-      NODE_IF,    NODE_FOR
+      NODE_IF,    NODE_FOR,
+      NODE_FUNCTION_DECLARATION
    )) {
       (*hscope)++;
 
@@ -63,6 +62,8 @@ void _node_walk(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope,
 
       scope = *hscope;
    }
+
+   start(node, tbl, mod, scope);
 
    if (special(node, tbl, mod, scope, hscope)) goto END;
 

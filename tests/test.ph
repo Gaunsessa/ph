@@ -10,19 +10,16 @@ vec :: struct {
    y: f32
 }
 
-vec2 :: alias vec
-
-x: vec
-y: vec2
+// vec2 :: alias vec
 
 main :: (): = {
-   x: f32 = 10
+   x := frog((int)frog(32))
 
-   coom(x)
-
-   if true -> coom(x)
+   b := vec'{ 0.0, 0.0 }
 }
 
-coom :: (x: f32): = {
+frog :: (x: int): f32 = {
+   // y := x * 2
 
+   return x
 }
