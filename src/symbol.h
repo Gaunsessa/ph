@@ -63,6 +63,8 @@ type_idx sym_table_get_both(sym_module_t *mod, wchar_t *name, size_t scope);
 
 sym_module_t *sym_table_get_module(sym_table_t *tbl, wchar_t *name);
 
+size_t sym_table_get_parent(sym_module_t *mod, size_t scope);
+
 void sym_table_free(sym_table_t *tbl);
 
 #endif

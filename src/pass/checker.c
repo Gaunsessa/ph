@@ -52,6 +52,8 @@ void checker_start(node_t *node, checker_t *ckr, sym_table_t *tbl, sym_module_t 
       return;
    }
 
+   checker_scope_push(check, scope);
+
    switch (node->type) {
 #define NODE(ident, ...) case NODE_##ident: return checker_##ident(node, check, tbl, mod, scope);
       NODE_TYPES
@@ -69,7 +71,18 @@ void checker_end(node_t *node, checker_t *ckr, sym_table_t *tbl, sym_module_t *m
    }
 }
 
-void checker_scope_push(checker_t *ckr, size_t scope, wchar_t *name) {
+void checker_scope_push(checker_t *ckr, size_t scope) {
+   while (dy_len(ckr->scopes) <= scope) {
+      ckr_scope_t *scp = malloc(sizeof(ckr_scope_t));
+
+      scp->decls = dy_init(wchar_t *);
+      scp->ret = -1;
+
+      dy_push(ckr->scopes, scp);
+   }
+}
+
+void checker_scope_set(checker_t *ckr, size_t scope, wchar_t *name) {
    while (dy_len(ckr->scopes) <= scope) {
       ckr_scope_t *scp = malloc(sizeof(ckr_scope_t));
 
@@ -114,11 +127,26 @@ void checker_BOOL_LITERAL(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_modul
 void checker_FLOAT_LITERAL(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
 void checker_STRING_LITERAL(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
 
+void checker_STRUCT(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+void checker_ALIAS(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+void checker_UNINIT(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+
 void checker_SOURCE(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
 void checker_FILE(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
 
 void checker_TYPE_BASE(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
-void checker_TYPE_NAME(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
+
+void checker_TYPE_NAME(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   node_def(n, TYPE_NAME);
+
+#define TYPE(ident, str, ...) if (!wcscmp(node->name, str)) return;
+   BASE_TYPES
+#undef TYPE
+
+   if (sym_table_get(sym_table_get_module(tbl, node->module), node->name, scope, true) < 0)
+      error("Unknown type: %ls!", node->name);
+}
+
 void checker_TYPE_PTR(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
 void checker_TYPE_FUNCTION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
 void checker_TYPE_STRUCT(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {}
@@ -134,7 +162,7 @@ void checker_VARIABLE_DECLARATION(node_t *n, checker_t *ckr, sym_table_t *tbl, s
        !type_cmp(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->type), infer_expression(tbl, mod, scope, node->expr)))
       error("Variable decl types do not match!");
 
-   checker_scope_push(ckr, scope, node->ident->IDENTIFIER.value);
+   checker_scope_set(ckr, scope, node->ident->IDENTIFIER.value);
 }
 
 void checker_IF(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
@@ -155,12 +183,33 @@ void checker_CONTINUE(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t 
 void checker_RETURN(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
    node_def(n, RETURN);
 
-   if (!type_cmp(tbl->ty_hdl, dyi(ckr->scopes)[scope]->ret, infer_expression(tbl, mod, scope, node->value)))
+   type_idx retidx = dyi(ckr->scopes)[scope]->ret;
+
+   if (retidx < 0) {
+      size_t csco = scope;
+
+      while ((csco = sym_table_get_parent(mod, csco)) != 0)
+         if (dyi(ckr->scopes)[csco]->ret != -1) {
+            retidx = dyi(ckr->scopes)[csco]->ret;
+
+            break;
+         }
+   }
+
+   if (!type_cmp(tbl->ty_hdl, retidx, node->value->type == NODE_NONE ? BASE_VOID : infer_expression(tbl, mod, scope, node->value)))
       error("Invalid return type!");
 }
 
 void checker_DEFER(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
-void checker_IMPL(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
+
+void checker_IMPL(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   node_def(n, IMPL);
+
+   type_t *type = type_get(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->type));
+   if (type == NULL) return;
+
+   if (type->type != TYPE_STRUCT) error("Impls may only be on structs!");
+}
 
 void checker_IDENTIFIER(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
    node_def(n, IDENTIFIER);
@@ -207,7 +256,32 @@ void checker_STRUCT_LITERAL(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_mod
 }
 
 void checker_BINARY_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
-   // TODO
+   node_def(n, BINARY_EXPRESSION);
+
+   type_t *t1 = type_get(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->left));
+   type_t *t2 = type_get(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->right));
+
+   switch (node->op) {
+      case TOKEN_PLUS:
+      case TOKEN_MINUS:
+      case TOKEN_ASTERISK:
+      case TOKEN_FORWARD_SLASH:
+         if (!type_is_numeric(t1) || !type_is_numeric(t2)) 
+            error("Operands must be numeric!");
+
+         break;
+      // case TOKEN_AND:
+      // case TOKEN_AND_AND:
+      // case TOKEN_OR:
+      // case TOKEN_OR_OR:
+      // case TOKEN_EQUALS_EQUALS:
+      // case TOKEN_NOT_EQUALS:
+      // case TOKEN_GREATER_THAN:
+      // case TOKEN_GREATER_THAN_EQUALS:
+      // case TOKEN_LESS_THAN:
+      // case TOKEN_LESS_THAN_EQUALS:;
+         // return BASE_BOOL;
+   }
 }
 
 void checker_CALL_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
@@ -282,7 +356,33 @@ void checker_FEILD_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_m
    error("Unkown feild!");
 }
 
-void checker_METHOD_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
+void checker_METHOD_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) {
+   node_def(n, METHOD_EXPRESSION);
+
+   type_t *type = type_get(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->expr));
+   if (type == NULL) return;
+
+   if (type->type != TYPE_STRUCT) error("Only structs have methods!");
+
+   type_idx funcidx = -1;
+   for (int i = 0; i < dy_len(type->funcs); i++)
+      if (!wcscmp(dyi(type->funcs)[i].name, node->member))
+         funcidx = dyi(type->funcs)[i].type;
+
+   if (funcidx < 0) error("Unknown method!");
+
+   type_t *funct = type_get(tbl->ty_hdl, funcidx);
+
+   if (dy_len(funct->args) != dy_len(node->args))
+      error("Invalid amount of arguments!");
+
+   for (int i = 0; i < dy_len(node->args); i++) {
+      type_idx argt = infer_expression(tbl, mod, scope, dyi(node->args)[i]);
+      type_idx typt = dyi(funct->args)[i].type;
+
+      if (!type_cmp(tbl->ty_hdl, typt, argt)) error("Invalid argument type!");
+   }
+}
 
 void checker_SUBSCRIPT_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
 void checker_SIGN_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }
@@ -299,18 +399,5 @@ void checker_FUNCTION_DECLARATION(node_t *n, checker_t *ckr, sym_table_t *tbl, s
    type_t *type = type_get(tbl->ty_hdl, infer_expression(tbl, mod, scope, node->type));
    if (type == NULL) return;
 
-   while (dy_len(ckr->scopes) <= scope) {
-      ckr_scope_t *scp = malloc(sizeof(ckr_scope_t));
-
-      scp->decls = dy_init(wchar_t *);
-      scp->ret = -1;
-
-      dy_push(ckr->scopes, scp);
-   }
-
    dyi(ckr->scopes)[scope]->ret = type->ret;
 }
-
-void checker_STRUCT(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
-void checker_ALIAS(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { }
-void checker_UNINIT(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope) { ERROR("UNIMPLEMENTED!"); }

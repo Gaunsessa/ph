@@ -208,11 +208,13 @@ int main(int argc, char **argv) {
    typeres_pass(AST, symtbl);
    checker_pass(AST, symtbl);
 
-   // printf("%d\n", type_get(symtbl->ty_hdl, sym_table_get(ht_get_sv(symtbl->modules, L"main"), L"b", 0, false))->type);
    for (int i = 16; i < dy_len(symtbl->ty_hdl->allocs); i++) {
       type_t *type = dyi(symtbl->ty_hdl->allocs)[i];
       printf("ID: %d | NAME: %ls | TYPE: %d\n", i, type->name, type->type);
    }
+
+   // printf("%d\n", type_get(symtbl->ty_hdl, sym_table_get_both(ht_get_sv(symtbl->modules, L"main"), L"test", 0))->ret);
+
 
    // return 0;
 

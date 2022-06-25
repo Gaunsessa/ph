@@ -41,6 +41,9 @@ bool type_cmp(type_handler_t *hnd, type_idx t1, type_idx t2) {
 
    if (type1->type != type2->type) return false;
 
+   if (type1->name != NULL && type2->name != NULL && !wcscmp(type1->name, type2->name)) 
+      return true;
+
    switch (type1->type) {
       case TYPE_BASE:
          return type1->base == type2->base;
@@ -57,83 +60,39 @@ bool type_cmp(type_handler_t *hnd, type_idx t1, type_idx t2) {
                return false;
 
          return true;
-      // case TYPE_STRUCT:
-      //    if (dy_len(t1->feilds) != dy_len(t2->feilds)) return false;
+      case TYPE_STRUCT:
+         if (dy_len(type1->feilds) != dy_len(type2->feilds)) return false;
 
-      //    for (int i = 0; i < dy_len(t1->feilds); i++) {
-      //       if (!type_cmp(mod, dyi(t1->feilds)[i].type, dyi(t2->feilds)[i].type))
-      //          return false;
+         for (int i = 0; i < dy_len(type1->feilds); i++) {
+            if (!type_cmp(hnd, dyi(type1->feilds)[i].type, dyi(type2->feilds)[i].type))
+               return false;
 
-      //       if (wcscmp(dyi(t1->feilds)[i].name, dyi(t2->feilds)[i].name) != 0)
-      //          return false;
-      //    }
+            // if (wcscmp(dyi(type1->feilds)[i].name, dyi(type2->feilds)[i].name) != 0)
+            //    return false;
+         }
 
-      //    return true;
+         return true;
       default: eprint("Unreachable Statement!", type1->type);
    }
 }
 
-// True = equal, False = not equal
-// bool type_cmp(module_t *mod, type_idx t1, type_idx t2) {
-   // ERROR("UNIMPLMENTED!");
+bool type_is_numeric(type_t* type) {
+   return type_is_integer(type) || type_is_float(type);
+}
 
-   // if (t1 == NULL || t2 == NULL) return false;
+bool type_is_float(type_t *type) {
+   return type->type == TYPE_BASE && M_COMPARE(type->base, BASE_F32, BASE_F64);
+}
 
-   // // if (t1->type == TYPE_ALIAS) t1 = checker_resolve_type(mod, t1);
-   // // if (t2->type == TYPE_ALIAS) t2 = checker_resolve_type(mod, t2);
+bool type_is_integer(type_t *type) {
+   return type->type == TYPE_BASE && M_COMPARE(
+      type->base, 
+      BASE_INT, 
+      BASE_I8, BASE_I16, BASE_I32, BASE_I64, 
+      BASE_U8, BASE_U16, BASE_U32, BASE_U64
+   );
+}
 
-   // if (t1 == NULL || t2 == NULL) return false;
-
-   // if (t1->type == TYPE_UNTYPED || t2->type == TYPE_UNTYPED) {
-   //    // if ((type_is_integer(t1) && type_is_integer(t2)) || ((type_is_float(t1) && type_is_float(t2))))
-   //    return true;
-   //    // else return false;
-   // }
-
-   // if (t1->type == TYPE_TYPE_REF) t1 = type_deref_ref(t1);
-   // if (t2->type == TYPE_TYPE_REF) t2 = type_deref_ref(t2);
-
-   // if (!(t1->type == TYPE_ALIAS || t2->type == TYPE_ALIAS) && t1->type != t2->type) 
-   //    return false;
-
-   // if (t1->distinct || t2->distinct) {
-   //    if (t1->name == NULL || t2->name == NULL) 
-   //       return false;
-
-   //    return !wcscmp(t1->name, t2->name);
-   // }
-
-   // switch (t1->type) {
-   //    case TYPE_BASE:
-   //       return t1->base == t2->base;
-   //    case TYPE_PTR:
-   //       return type_cmp(mod, t1->ptr_base, t2->ptr_base);
-   //    case TYPE_ARRAY:
-   //       return t1->length == t2->length ? type_cmp(mod, t1->arr_base, t2->arr_base) : false; 
-   //    case TYPE_FUNCTION:
-   //       if (dy_len(t1->args) != dy_len(t2->args) || !type_cmp(mod, t1->ret, t2->ret)) return false;
-
-   //       for (int i = 0; i < dy_len(t1->args); i++) {
-   //          if (!type_cmp(mod, dyi(t1->args)[i].type, dyi(t2->args)[i].type))
-   //             return false;
-
-   //          if (wcscmp(dyi(t1->args)[i].name, dyi(t2->args)[i].name) != 0)
-   //             return false;
-   //       }
-
-   //       return true;
-   //    case TYPE_STRUCT:
-   //       if (dy_len(t1->feilds) != dy_len(t2->feilds)) return false;
-
-   //       for (int i = 0; i < dy_len(t1->feilds); i++) {
-   //          if (!type_cmp(mod, dyi(t1->feilds)[i].type, dyi(t2->feilds)[i].type))
-   //             return false;
-
-   //          if (wcscmp(dyi(t1->feilds)[i].name, dyi(t2->feilds)[i].name) != 0)
-   //             return false;
-   //       }
-
-   //       return true;
-   //    default: eprint("Unreachable Statement!", t1->type);
-   // }
-// }
+bool type_is_ptr(type_t *type) {
+   return type->type == TYPE_PTR;
+}

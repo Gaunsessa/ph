@@ -26,7 +26,7 @@ void globals_start(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t sco
             mod, 
             node->VARIABLE_DECLARATION.ident->IDENTIFIER.value,
             scope, 
-            M_COMPARE(node->type, NODE_STRUCT, NODE_ALIAS), 
+            M_COMPARE(node->VARIABLE_DECLARATION.expr->type, NODE_STRUCT, NODE_ALIAS), 
             res
          );
 

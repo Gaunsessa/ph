@@ -35,6 +35,7 @@
       TOKEN(COMMA, L",")                 \
       TOKEN(BACK_SLASH, L"\\")           \
       TOKEN(UNDERSCORE, L"_")            \
+      TOKEN(OP, L"op{")                  \
                                          \
       TOKEN(PLUS, L"+")                  \
       TOKEN(MINUS, L"-")                 \

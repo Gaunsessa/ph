@@ -39,6 +39,8 @@ bool checker_special(node_t *node, checker_t *ckr, sym_table_t *tbl, sym_module_
 void checker_start(node_t *node, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 void checker_end(node_t *node, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
+void checker_scope_push(checker_t *ckr, size_t scope);
+void checker_scope_set(checker_t *ckr, size_t scope, wchar_t *name);
 bool checker_scope_exists(checker_t *ckr, size_t scope, wchar_t *name);
 
 void checker_node(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_module_t *mod, size_t scope);

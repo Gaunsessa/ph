@@ -26,8 +26,10 @@ bool typeres_special(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t s
 void typeres_start(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 void typeres_end(node_t *node, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
+void typeres_typebase(node_t *btyp, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 void typeres_vardecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 void typeres_funcdecl(node_t *vdecl, sym_table_t *tbl, sym_module_t *mod, size_t scope);
+void typeres_impl(node_t *impl, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 
 type_idx typeres_resolve_type(type_idx idx, sym_table_t *tbl, sym_module_t *mod, size_t scope);
 

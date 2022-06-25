@@ -108,6 +108,12 @@ sym_module_t *sym_table_get_module(sym_table_t *tbl, wchar_t *name) {
    return name == NULL || !ht_exists_sv(tbl->modules, name) ? NULL : ht_get_sv(tbl->modules, name);
 }
 
+size_t sym_table_get_parent(sym_module_t *mod, size_t scope) {
+   struct sinf_t *sinf = ht_get(mod->sinf, scope);
+
+   return sinf->parent == NULL ? 0 : sinf->parent->id;
+}
+
 void _sym_entry_free(void *ent) {
    sym_entry_t *entry = ent;
 

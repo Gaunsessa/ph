@@ -153,4 +153,9 @@ type_t *type_get(type_handler_t *hnd, type_idx idx);
 // bool type_cmp(struct module_t *mod, type_idx t1, type_idx t2);
 bool type_cmp(type_handler_t *hnd, type_idx t1, type_idx t2);
 
+bool type_is_numeric(type_t* type);
+bool type_is_float(type_t *type);
+bool type_is_integer(type_t *type);
+bool type_is_ptr(type_t *type);
+
 #endif
