@@ -1,9 +1,37 @@
 module main
 
-// Hello World
+-32 + 32
 
-printf :: (fmt: ^u8): = ---
 
-main :: (): int = {
-   printf((^u8)"Hello World!\n")
+
+
+
+
+
+
+
+
+a: int = 32
+
+a: Type : struct {
+   x: f32
 }
+
+b :: struct {
+   x: f32
+}
+
+
+y: a = (struct { x: f32 })'{ x = 32.0 }
+z: a = b'{}
+
+func :: (): = {
+   y: x = struct { x = 5.6 }
+
+   x :: struct {
+
+   }
+
+
+}
+

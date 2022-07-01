@@ -11,13 +11,13 @@ import test
 // b: vec
 
 main :: (): = {
-   x: ^vec
+   // x: ^vec
 
    // b := x.x
 
    // x := test'meme
 
-   // test'test_func(ppap((int)test'test_func(x)))
+   test'test_func(ppap((int)test'test_func(x)))
    // ppap(x)
 }
 

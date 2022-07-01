@@ -228,13 +228,14 @@ int main(int argc, char **argv) {
    } else if (!strcmp(argv[1], "run")) {
       // compile_and_run(cgen_generate(NAST));
    } else if (!strcmp(argv[1], "dump")) {
-      // print_node(AST);
+      print_node(AST);
    } else {
       printf("Invalid command: %s!\n", argv[1]);
       exit(-1);
    }
 
    node_free(AST);
+
    // sym_table_free(symtbl);
    // type_handler_free(type_handler);
 }

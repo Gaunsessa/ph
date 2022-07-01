@@ -17,6 +17,11 @@
 #include "util.h"
 #include "lexer.h"
 
+// TODO: simplify the type struct
+// move integers to sizes and unsigned
+// remove annonmyos structs
+// make an aattribute system kinda like ecs for types
+
 /*
    -- Types --
 

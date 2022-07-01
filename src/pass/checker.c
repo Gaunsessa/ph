@@ -266,6 +266,7 @@ void checker_BINARY_EXPRESSION(node_t *n, checker_t *ckr, sym_table_t *tbl, sym_
       case TOKEN_MINUS:
       case TOKEN_ASTERISK:
       case TOKEN_FORWARD_SLASH:
+      case TOKEN_MOD:
          if (!type_is_numeric(t1) || !type_is_numeric(t2)) 
             error("Operands must be numeric!");
 
